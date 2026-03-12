@@ -1,0 +1,105 @@
+[
+    {
+        "id": 1,
+        "query": "trộm cắp tài sản bị xử lý thế nào",
+        "expected_keywords": [
+            "Điều 173",
+            "Bộ luật Hình sự",
+            "tội phạm",
+            "hình phạt"
+        ],
+        "category": "hình sự"
+    },
+    {
+        "id": 2,
+        "query": "năng lực hành vi dân sự là gì",
+        "expected_keywords": [
+            "Điều 19",
+            "Bộ luật Dân sự",
+            "năng lực",
+            "hành vi"
+        ],
+        "category": "dân sự"
+    },
+    {
+        "id": 3,
+        "query": "thẩm quyền tuyên bố người mất năng lực hành vi",
+        "expected_keywords": [
+            "Tòa án",
+            "mất năng lực",
+            "yêu cầu"
+        ],
+        "category": "dân sự"
+    },
+    {
+        "id": 4,
+        "query": "sử dụng hình ảnh cá nhân không cần đồng ý",
+        "expected_keywords": [
+            "Điều 32",
+            "Bộ luật Dân sự",
+            "hình ảnh",
+            "đồng ý"
+        ],
+        "category": "dân sự"
+    },
+    {
+        "id": 5,
+        "query": "hợp đồng vô hiệu khi nào",
+        "expected_keywords": [
+            "vô hiệu",
+            "Bộ luật Dân sự",
+            "giao dịch"
+        ],
+        "category": "dân sự"
+    },
+    {
+        "id": 6,
+        "query": "quyền sở hữu tài sản theo pháp luật",
+        "expected_keywords": [
+            "sở hữu",
+            "tài sản",
+            "quyền"
+        ],
+        "category": "dân sự"
+    },
+    {
+        "id": 7,
+        "query": "thời hiệu khởi kiện tranh chấp hợp đồng",
+        "expected_keywords": [
+            "thời hiệu",
+            "khởi kiện",
+            "năm"
+        ],
+        "category": "dân sự"
+    },
+    {
+        "id": 8,
+        "query": "trách nhiệm bồi thường thiệt hại ngoài hợp đồng",
+        "expected_keywords": [
+            "bồi thường",
+            "thiệt hại",
+            "trách nhiệm"
+        ],
+        "category": "dân sự"
+    },
+    {
+        "id": 9,
+        "query": "tội cố ý gây thương tích",
+        "expected_keywords": [
+            "Điều 134",
+            "thương tích",
+            "hình phạt"
+        ],
+        "category": "hình sự"
+    },
+    {
+        "id": 10,
+        "query": "quyền thừa kế theo di chúc",
+        "expected_keywords": [
+            "thừa kế",
+            "di chúc",
+            "tài sản"
+        ],
+        "category": "dân sự"
+    }
+]

@@ -1,0 +1,65 @@
+﻿# ============================================================
+# RAG Legal System - Root Requirements
+# Generated: 2026-03-02  |  Python 3.12  |  CUDA 12.4
+# Install PyTorch CUDA first:
+#   pip install torch==2.6.0+cu124 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+# Then install the rest:
+#   pip install -r requirements.txt
+# ============================================================
+
+# --- Core ML / Embeddings ---
+# torch==2.6.0+cu124  <-- install via pytorch.org CUDA wheel (see above)
+sentence-transformers==5.2.3
+transformers==5.2.0
+tokenizers==0.22.2
+safetensors==0.7.0
+accelerate>=0.27.0
+
+# --- Vector DB ---
+qdrant-client==1.17.0
+
+# --- LLM (HTTP API - no ollama package needed) ---
+requests==2.32.5
+httpx==0.28.1
+
+# --- File Processing ---
+PyMuPDF==1.27.1
+pypdf==6.7.4
+python-docx==1.2.0
+docx2txt==0.9
+
+# --- Vietnamese NLP ---
+pyvi==0.1.1
+sentencepiece==0.2.1
+tiktoken==0.12.0
+
+# --- Search ---
+rank-bm25==0.2.2
+scikit-learn==1.8.0
+numpy==2.4.2
+scipy==1.17.1
+
+# --- Web / API ---
+fastapi==0.135.0
+uvicorn==0.41.0
+python-multipart==0.0.22
+starlette==0.52.1
+aiofiles==24.1.0
+
+# --- Database ---
+SQLAlchemy==2.0.47
+
+# --- Data ---
+pandas==2.3.3
+
+# --- Utils ---
+python-dotenv==1.2.1
+pydantic==2.12.5
+tqdm==4.67.3
+joblib==1.5.3
+PyYAML==6.0.3
+rich==14.3.3
+
+# --- Testing ---
+pytest==9.0.2
+pytest-asyncio==1.3.0

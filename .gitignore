@@ -8,8 +8,13 @@ __pycache__/
 !.env.example
 
 .codex/
+.chainlit/
+.files/
+.orchestra-skills.json
 
 web_app/frontend/node_modules/
+web_app/frontend/dist/
 
 data/**/*.parquet
 data/qdrant_db/
+*.log

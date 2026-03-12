@@ -198,6 +198,7 @@ class LegalRAGPipeline:
         self._initialized = False
         self.embedding_model_name = embedding_model_name or DEFAULT_MODEL
         self.normalize_embeddings = normalize_embeddings
+        self.rerank_alpha = max(0.0, min(1.0, float(os.getenv("RERANKER_ALPHA", "1.0"))))
 
     def initialize(self):
         if self._initialized:
@@ -248,7 +249,11 @@ class LegalRAGPipeline:
         from src.reranker import LegalReranker
 
         if self._reranker is None:
-            self._reranker = LegalReranker()
+            self._reranker = LegalReranker(
+                model_name=os.getenv("RERANKER_MODEL", "AITeamVN/Vietnamese_Reranker"),
+                max_length=int(os.getenv("RERANKER_MAX_LENGTH", "2304")),
+                batch_size=int(os.getenv("RERANKER_BATCH_SIZE", "8")),
+            )
 
         docs = [
             {
@@ -265,7 +270,7 @@ class LegalRAGPipeline:
             query=question,
             documents=docs,
             top_k=top_k,
-            rrf_weight=0.6,
+            rrf_weight=self.rerank_alpha,
         )
         elapsed = time.time() - start
 
@@ -348,14 +353,33 @@ class LegalRAGPipeline:
         query_embedding = self.embedding_model.encode_query(question)
         retrieval_pool_k = 100 if use_reranker else max(top_k * 2, top_k)
 
-        base_results = self.qdrant_store.hybrid_search(
-            query=question,
-            query_embedding=query_embedding,
-            top_k=retrieval_pool_k,
-            dense_weight=intent_result.dense_weight,
-            sparse_weight=intent_result.sparse_weight,
-            filter_conditions=effective_filters,
-        )
+        try:
+            base_results = self.qdrant_store.hybrid_search(
+                query=question,
+                query_embedding=query_embedding,
+                top_k=retrieval_pool_k,
+                dense_weight=intent_result.dense_weight,
+                sparse_weight=intent_result.sparse_weight,
+                filter_conditions=effective_filters,
+            )
+        except Exception as exc:
+            if effective_filters.get("is_active") is True:
+                logger.warning(
+                    "[PIPELINE] is_active filter failed (likely strict index requirement), retry without it: %s",
+                    exc,
+                )
+                fallback_filters = dict(effective_filters)
+                fallback_filters.pop("is_active", None)
+                base_results = self.qdrant_store.hybrid_search(
+                    query=question,
+                    query_embedding=query_embedding,
+                    top_k=retrieval_pool_k,
+                    dense_weight=intent_result.dense_weight,
+                    sparse_weight=intent_result.sparse_weight,
+                    filter_conditions=fallback_filters,
+                )
+            else:
+                raise
         if not base_results and effective_filters.get("is_active") is True:
             # Backward compatibility for legacy indexes without is_active payload.
             fallback_filters = dict(effective_filters)

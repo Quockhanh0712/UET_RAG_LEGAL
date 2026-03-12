@@ -1,0 +1,513 @@
+{
+  "model": "truro7/vn-law-embedding",
+  "normalize_embeddings": true,
+  "collection": "legal_documents__truro7_vn_law_embedding__d768",
+  "dense_weight": 0.6,
+  "sparse_weight": 0.4,
+  "filter": {
+    "is_active": true
+  },
+  "top_k": 5,
+  "queries": [
+    {
+      "query": "Công an xã xử phạt lỗi không mang bằng lái xe có đúng không?",
+      "results": [
+        {
+          "score": 0.5,
+          "doc_id": "171/2013/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 48 > Khoan 10",
+          "citation_full": "Nghị định 171/2013/NĐ-CP - NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắ t _______________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Xử lý vi phạm hành chính ngày 20 tháng 6 năm 2012; Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 2008; Că | Dieu 48 > Khoan 10",
+          "title": "NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắ t _______________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Xử lý vi phạm hành chính ngày 20 tháng 6 năm 2012; Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 2008; Că",
+          "law_family": "NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắ t _______________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "07-TT/LBTL-ĐC",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 23 > Khoan 1",
+          "citation_full": "Thông tư liên tịch 07-TT/LBTL-ĐC - THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành | Dieu 23 > Khoan 1",
+          "title": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành",
+          "law_family": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "71/2012/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 41 > Khoan 000",
+          "citation_full": "Nghị định 71/2012/NĐ-CP - NGHỊ ĐỊNH Sửa đổi, bổ sung một số điều của Nghị định số 34/2010/NĐ - CP ngày 02 tháng 4 năm 2010 của Chính phủ quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ _____________________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Giao thông đường bộ | Dieu 41 > Khoan 000",
+          "title": "NGHỊ ĐỊNH Sửa đổi, bổ sung một số điều của Nghị định số 34/2010/NĐ - CP ngày 02 tháng 4 năm 2010 của Chính phủ quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ _____________________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Giao thông đường bộ",
+          "law_family": "NGHỊ ĐỊNH Sửa đổi"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "06/2012/TT-BGTVT",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 27 > Khoan 3",
+          "citation_full": "Thông tư 06/2012/TT-BGTVT - THÔNG TƯ Quy định trách nhiệm và xử lý vi phạm trong công tác đào tạo, sát hạch, cấp giấy phép lái xe cơ giới đường bộ _______________________________ Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 2008; Căn cứ Luật Cán bộ, công chức ngày 13 tháng 11 năm 2008; Căn cứ Luật Viên chức ngày 29 thá | Dieu 27 > Khoan 3",
+          "title": "THÔNG TƯ Quy định trách nhiệm và xử lý vi phạm trong công tác đào tạo, sát hạch, cấp giấy phép lái xe cơ giới đường bộ _______________________________ Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 2008; Căn cứ Luật Cán bộ, công chức ngày 13 tháng 11 năm 2008; Căn cứ Luật Viên chức ngày 29 thá",
+          "law_family": "THÔNG TƯ Quy định trách nhiệm và xử lý vi phạm trong công tác đào tạo"
+        },
+        {
+          "score": 0.25,
+          "doc_id": "26/2001/QH10",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 56 > Khoan 10",
+          "citation_full": "Luật 26/2001/QH10 - LUẬT GIAO THÔNG ĐƯỜNG BỘ Để tăng cường hiệu lực quản lý Nhà nước, đề cao ý thức trách nhiệm của cơ quan, tổ chức, cá nhân nhằm bảo đảm giao thông đường bộ thông suốt, trật tự, an toàn, thuận lợi, phục vụ nhu cầu đi lại của nhân dân và sự nghiệp xây dựng, bảo vệ Tổ quốc; Căn cứ vào Hiến pháp nước Cộn | Dieu 56 > Khoan 10",
+          "title": "LUẬT GIAO THÔNG ĐƯỜNG BỘ Để tăng cường hiệu lực quản lý Nhà nước, đề cao ý thức trách nhiệm của cơ quan, tổ chức, cá nhân nhằm bảo đảm giao thông đường bộ thông suốt, trật tự, an toàn, thuận lợi, phục vụ nhu cầu đi lại của nhân dân và sự nghiệp xây dựng, bảo vệ Tổ quốc; Căn cứ vào Hiến pháp nước Cộn",
+          "law_family": "LUẬT GIAO THÔNG ĐƯỜNG BỘ Để tăng cường hiệu lực quản lý Nhà nước, đề cao ý thức trách nhiệm của cơ quan, tổ chức, cá nhân nhằm bảo đảm giao thông đường bộ thông suốt, trật tự, an toàn, thuận lợi, phục vụ nhu cầu đi lại của nhân dân và sự nghiệp xây dựng, bảo vệ Tổ quốc; Căn cứ vào Hiến pháp nước Cộn"
+        }
+      ]
+    },
+    {
+      "query": "Phải thực hiện thao tác nạp mẫu vào bình chứa và xử lý mẫu sơ bộ bằng hóa chất như thế nào?",
+      "results": [
+        {
+          "score": 0.5,
+          "doc_id": "108/2017/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 46 > Khoan 4",
+          "citation_full": "Nghị định 108/2017/NĐ-CP - NGHỊ ĐỊNH VỀ QUẢN LÝ PHÂN BÓN Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014 và Luật sửa đổi, bổ sung | Dieu 46 > Khoan 4",
+          "title": "NGHỊ ĐỊNH VỀ QUẢN LÝ PHÂN BÓN Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014 và Luật sửa đổi, bổ sung",
+          "law_family": "NGHỊ ĐỊNH VỀ QUẢN LÝ PHÂN BÓN Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "07-TT/LBTL-ĐC",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 23 > Khoan 1",
+          "citation_full": "Thông tư liên tịch 07-TT/LBTL-ĐC - THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành | Dieu 23 > Khoan 1",
+          "title": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành",
+          "law_family": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "108/2017/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 46 > Khoan 3",
+          "citation_full": "Nghị định 108/2017/NĐ-CP - NGHỊ ĐỊNH VỀ QUẢN LÝ PHÂN BÓN Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014 và Luật sửa đổi, bổ sung | Dieu 46 > Khoan 3",
+          "title": "NGHỊ ĐỊNH VỀ QUẢN LÝ PHÂN BÓN Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014 và Luật sửa đổi, bổ sung",
+          "law_family": "NGHỊ ĐỊNH VỀ QUẢN LÝ PHÂN BÓN Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "87/2018/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 56 > Khoan 4",
+          "citation_full": "Nghị định 87/2018/NĐ-CP - NGHỊ ĐỊNH Về kinh doanh khí ________ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật thương mại ngày 14 tháng 6 năm 2005; Căn cứ Luật chất lượng sản phẩm, hàng hoá ngày 21 tháng 11 năm 2007; Căn cứ Luật giá ngày 20 tháng 6 năm 2012; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; T | Dieu 56 > Khoan 4",
+          "title": "NGHỊ ĐỊNH Về kinh doanh khí ________ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật thương mại ngày 14 tháng 6 năm 2005; Căn cứ Luật chất lượng sản phẩm, hàng hoá ngày 21 tháng 11 năm 2007; Căn cứ Luật giá ngày 20 tháng 6 năm 2012; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; T",
+          "law_family": "NGHỊ ĐỊNH Về kinh doanh khí ________ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        },
+        {
+          "score": 0.25,
+          "doc_id": "87/2018/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 51 > Khoan 6",
+          "citation_full": "Nghị định 87/2018/NĐ-CP - NGHỊ ĐỊNH Về kinh doanh khí ________ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật thương mại ngày 14 tháng 6 năm 2005; Căn cứ Luật chất lượng sản phẩm, hàng hoá ngày 21 tháng 11 năm 2007; Căn cứ Luật giá ngày 20 tháng 6 năm 2012; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; T | Dieu 51 > Khoan 6",
+          "title": "NGHỊ ĐỊNH Về kinh doanh khí ________ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật thương mại ngày 14 tháng 6 năm 2005; Căn cứ Luật chất lượng sản phẩm, hàng hoá ngày 21 tháng 11 năm 2007; Căn cứ Luật giá ngày 20 tháng 6 năm 2012; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; T",
+          "law_family": "NGHỊ ĐỊNH Về kinh doanh khí ________ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        }
+      ]
+    },
+    {
+      "query": "Trình tự đánh giá chất lượng hàng năm đối với Kiểm soát viên được quy định như thế nào?",
+      "results": [
+        {
+          "score": 0.6,
+          "doc_id": "01/2022/TT-BQP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 5 > Khoan 2",
+          "citation_full": "Thông tư 01/2022/TT-BQP - THÔNG TƯ Quy định về quản lý người giữ chức chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh tại doanh nghiệp ngày 26 tháng 11 | Dieu 5 > Khoan 2",
+          "title": "THÔNG TƯ Quy định về quản lý người giữ chức chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh tại doanh nghiệp ngày 26 tháng 11 ",
+          "law_family": "THÔNG TƯ Quy định về quản lý người giữ chức chức vụ"
+        },
+        {
+          "score": 0.5833334,
+          "doc_id": "01/2022/TT-BQP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 5 > Khoan 2",
+          "citation_full": "Thông tư 01/2022/TT-BQP - THÔNG TƯ Quy định về quản lý người giữ chức chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh tại doanh nghiệp ngày 26 tháng 11 | Dieu 5 > Khoan 2",
+          "title": "THÔNG TƯ Quy định về quản lý người giữ chức chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh tại doanh nghiệp ngày 26 tháng 11 ",
+          "law_family": "THÔNG TƯ Quy định về quản lý người giữ chức chức vụ"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "07-TT/LBTL-ĐC",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 23 > Khoan 1",
+          "citation_full": "Thông tư liên tịch 07-TT/LBTL-ĐC - THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành | Dieu 23 > Khoan 1",
+          "title": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành",
+          "law_family": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993"
+        },
+        {
+          "score": 0.45,
+          "doc_id": "01/2021/TT-BQP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 5 > Khoan 2",
+          "citation_full": "Thông tư 01/2021/TT-BQP - THÔNG TƯ Quy định về quản lý người giữ chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý 1/01/clip_image001. png\" width=\"114\" /> Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh | Dieu 5 > Khoan 2",
+          "title": "THÔNG TƯ Quy định về quản lý người giữ chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý 1/01/clip_image001. png\" width=\"114\" /> Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh",
+          "law_family": "THÔNG TƯ Quy định về quản lý người giữ chức vụ"
+        },
+        {
+          "score": 0.44444445,
+          "doc_id": "01/2021/TT-BQP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 5 > Khoan 2",
+          "citation_full": "Thông tư 01/2021/TT-BQP - THÔNG TƯ Quy định về quản lý người giữ chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý 1/01/clip_image001. png\" width=\"114\" /> Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh | Dieu 5 > Khoan 2",
+          "title": "THÔNG TƯ Quy định về quản lý người giữ chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý 1/01/clip_image001. png\" width=\"114\" /> Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng vốn nhà nước đầu tư vào sản xuất, kinh doanh",
+          "law_family": "THÔNG TƯ Quy định về quản lý người giữ chức vụ"
+        }
+      ]
+    },
+    {
+      "query": "Tử tù chết sau khi tiêm thuốc độc mà không có thân nhân nhận xác thì được hỗ trợ mai táng như thế nào?",
+      "results": [
+        {
+          "score": 0.5,
+          "doc_id": "41/2019/QH14",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 83 > Khoan 7",
+          "citation_full": "Luật 41/2019/QH14 - LUẬT THI HÀNH ÁN HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 83 > Khoan 7",
+          "title": "LUẬT THI HÀNH ÁN HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT THI HÀNH ÁN HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "41/2019/QH14",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 82 > Khoan 3",
+          "citation_full": "Luật 41/2019/QH14 - LUẬT THI HÀNH ÁN HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 82 > Khoan 3",
+          "title": "LUẬT THI HÀNH ÁN HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT THI HÀNH ÁN HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "53/2010/QH12",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 59 > Khoan 3",
+          "citation_full": "Luật 53/2010/QH12 - LUẬT Thi hành án hình sự ___________ Căn cứ Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 51/2001/QH10; Quốc hội ban hành Luật thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 59 > Khoan 3",
+          "title": "LUẬT Thi hành án hình sự ___________ Căn cứ Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 51/2001/QH10; Quốc hội ban hành Luật thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT Thi hành án hình sự ___________ Căn cứ Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 51/2001/QH10; Quốc hội ban hành Luật thi hành án hình sự. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "02/2020/TTLT-BCA-BQP-BYT-BNG-TANDTC-VKSNDTC",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 83 > Khoan 2",
+          "citation_full": "Thông tư liên tịch 02/2020/TTLT-BCA-BQP-BYT-BNG-TANDTC-VKSNDTC - THÔNG TƯ LIÊN TỊCH Quy định về việc phối hợp tổ chức thi hành án tử hình bằng hình thức tiêm thuốc độc Căn cứ Bộ luật Tố tụng hình sự ngày 27 tháng 11 năm 2015; Căn cứ Luật Ban hành văn bản quy phạm pháp luật ngày 22 tháng 6 năm 2015; Căn cứ Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019; Căn cứ | Dieu 83 > Khoan 2",
+          "title": "THÔNG TƯ LIÊN TỊCH Quy định về việc phối hợp tổ chức thi hành án tử hình bằng hình thức tiêm thuốc độc Căn cứ Bộ luật Tố tụng hình sự ngày 27 tháng 11 năm 2015; Căn cứ Luật Ban hành văn bản quy phạm pháp luật ngày 22 tháng 6 năm 2015; Căn cứ Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019; Căn cứ ",
+          "law_family": "THÔNG TƯ LIÊN TỊCH Quy định về việc phối hợp tổ chức thi hành án tử hình bằng hình thức tiêm thuốc độc Căn cứ Bộ luật Tố tụng hình sự ngày 27 tháng 11 năm 2015"
+        },
+        {
+          "score": 0.25,
+          "doc_id": "02/2020/TTLT-BCA-BQP-BYT-BNG-TANDTC-VKSNDTC",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 83 > Khoan 3",
+          "citation_full": "Thông tư liên tịch 02/2020/TTLT-BCA-BQP-BYT-BNG-TANDTC-VKSNDTC - THÔNG TƯ LIÊN TỊCH Quy định về việc phối hợp tổ chức thi hành án tử hình bằng hình thức tiêm thuốc độc Căn cứ Bộ luật Tố tụng hình sự ngày 27 tháng 11 năm 2015; Căn cứ Luật Ban hành văn bản quy phạm pháp luật ngày 22 tháng 6 năm 2015; Căn cứ Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019; Căn cứ | Dieu 83 > Khoan 3",
+          "title": "THÔNG TƯ LIÊN TỊCH Quy định về việc phối hợp tổ chức thi hành án tử hình bằng hình thức tiêm thuốc độc Căn cứ Bộ luật Tố tụng hình sự ngày 27 tháng 11 năm 2015; Căn cứ Luật Ban hành văn bản quy phạm pháp luật ngày 22 tháng 6 năm 2015; Căn cứ Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019; Căn cứ ",
+          "law_family": "THÔNG TƯ LIÊN TỊCH Quy định về việc phối hợp tổ chức thi hành án tử hình bằng hình thức tiêm thuốc độc Căn cứ Bộ luật Tố tụng hình sự ngày 27 tháng 11 năm 2015"
+        }
+      ]
+    },
+    {
+      "query": "Trách nhiệm của Bộ Khoa học và Công nghệ về quản lý và phát triển công nghiệp an ninh được quy định như thế nào?",
+      "results": [
+        {
+          "score": 0.75,
+          "doc_id": "38/2024/QH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 80 > Khoan 3",
+          "citation_full": "Luật 38/2024/QH15 - LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 80 > Khoan 3",
+          "title": "LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.5833334,
+          "doc_id": "38/2024/QH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 80 > Khoan 2",
+          "citation_full": "Luật 38/2024/QH15 - LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 80 > Khoan 2",
+          "title": "LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "07-TT/LBTL-ĐC",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 23 > Khoan 1",
+          "citation_full": "Thông tư liên tịch 07-TT/LBTL-ĐC - THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành | Dieu 23 > Khoan 1",
+          "title": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành",
+          "law_family": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993"
+        },
+        {
+          "score": 0.42424244,
+          "doc_id": "38/2024/QH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 80 > Khoan 1",
+          "citation_full": "Luật 38/2024/QH15 - LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 80 > Khoan 1",
+          "title": "LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.2,
+          "doc_id": "38/2024/QH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 68 > Khoan 5",
+          "citation_full": "Luật 38/2024/QH15 - LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 68 > Khoan 5",
+          "title": "LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT CÔNG NGHIỆP QUỐC PHÒNG, AN NINH VÀ ĐỘNG VIÊN CÔNG NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Công nghiệp quốc phòng, an ninh và động viên công nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "Đập phá biển báo “khu vực biên giới” bị phạt thế nào?",
+      "results": [
+        {
+          "score": 0.5,
+          "doc_id": "100/2015/QH13",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 346 > Khoan 2",
+          "citation_full": "Bộ luật 100/2015/QH13 - BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Bộ luật hình sự. Phần thứ nhất NHỮNG QUY ĐỊNH CHUNG Chương I ĐIỀU KHOẢN CƠ BẢN | Dieu 346 > Khoan 2",
+          "title": "BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Bộ luật hình sự. Phần thứ nhất NHỮNG QUY ĐỊNH CHUNG Chương I ĐIỀU KHOẢN CƠ BẢN",
+          "law_family": "BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "56/2005/QH11",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 85 > Khoan 2",
+          "citation_full": "Luật 56/2005/QH11 - LUẬT NHÀ Ở Căn cứ vào Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung theo Nghị quyết số 51/2001/QH10 ngày 25 tháng 12 năm 2001 của Quốc hội khoá X, kỳ họp thứ 10; Luật này quy định về nhà ở. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 85 > Khoan 2",
+          "title": "LUẬT NHÀ Ở Căn cứ vào Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung theo Nghị quyết số 51/2001/QH10 ngày 25 tháng 12 năm 2001 của Quốc hội khoá X, kỳ họp thứ 10; Luật này quy định về nhà ở. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT NHÀ Ở Căn cứ vào Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung theo Nghị quyết số 51/2001/QH10 ngày 25 tháng 12 năm 2001 của Quốc hội khoá X, kỳ họp thứ 10; Luật này quy định về nhà ở. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "100/2015/QH13",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 346 > Khoan 000",
+          "citation_full": "Bộ luật 100/2015/QH13 - BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Bộ luật hình sự. Phần thứ nhất NHỮNG QUY ĐỊNH CHUNG Chương I ĐIỀU KHOẢN CƠ BẢN | Dieu 346 > Khoan 000",
+          "title": "BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Bộ luật hình sự. Phần thứ nhất NHỮNG QUY ĐỊNH CHUNG Chương I ĐIỀU KHOẢN CƠ BẢN",
+          "law_family": "BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "27/2023/QH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 138 > Khoan 2",
+          "citation_full": "Luật 27/2023/QH15 - QUỐC HỘI Luật số: 27/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT NHÀ Ở Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. ·Chương I ·NHỮNG QUY ĐỊNH CHUNG oĐiều 1. Phạm vi điều chỉnh 1. Luật này quy định về sở hữu, phát triển, quả | Dieu 138 > Khoan 2",
+          "title": "QUỐC HỘI Luật số: 27/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT NHÀ Ở Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. ·Chương I ·NHỮNG QUY ĐỊNH CHUNG oĐiều 1. Phạm vi điều chỉnh 1. Luật này quy định về sở hữu, phát triển, quả",
+          "law_family": "QUỐC HỘI Luật số: 27/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT NHÀ Ở Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. ·Chương I ·NHỮNG QUY ĐỊNH CHUNG oĐiều 1. Phạm vi điều chỉnh 1. Luật này quy định về sở hữu, phát triển, quả"
+        },
+        {
+          "score": 0.25,
+          "doc_id": "100/2015/QH13",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 346 > Khoan 000",
+          "citation_full": "Bộ luật 100/2015/QH13 - BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Bộ luật hình sự. Phần thứ nhất NHỮNG QUY ĐỊNH CHUNG Chương I ĐIỀU KHOẢN CƠ BẢN | Dieu 346 > Khoan 000",
+          "title": "BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Bộ luật hình sự. Phần thứ nhất NHỮNG QUY ĐỊNH CHUNG Chương I ĐIỀU KHOẢN CƠ BẢN",
+          "law_family": "BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam"
+        }
+      ]
+    },
+    {
+      "query": "Mục tiêu phát triển khu công nghiệp hỗ trợ được quy định như thế nào?",
+      "results": [
+        {
+          "score": 0.8333334,
+          "doc_id": "82/2018/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 34 > Khoan 2",
+          "citation_full": "Nghị định 82/2018/NĐ-CP - NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư; Chính phủ ban hành Nghị định quy định về quản lý khu công nghiệp và khu kinh tế. Chương | Dieu 34 > Khoan 2",
+          "title": "NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư; Chính phủ ban hành Nghị định quy định về quản lý khu công nghiệp và khu kinh tế. Chương",
+          "law_family": "NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        },
+        {
+          "score": 0.5833334,
+          "doc_id": "82/2018/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 35 > Khoan 2",
+          "citation_full": "Nghị định 82/2018/NĐ-CP - NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư; Chính phủ ban hành Nghị định quy định về quản lý khu công nghiệp và khu kinh tế. Chương | Dieu 35 > Khoan 2",
+          "title": "NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư; Chính phủ ban hành Nghị định quy định về quản lý khu công nghiệp và khu kinh tế. Chương",
+          "law_family": "NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "07-TT/LBTL-ĐC",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 23 > Khoan 1",
+          "citation_full": "Thông tư liên tịch 07-TT/LBTL-ĐC - THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành | Dieu 23 > Khoan 1",
+          "title": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành",
+          "law_family": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993"
+        },
+        {
+          "score": 0.45,
+          "doc_id": "82/2018/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 35 > Khoan 3",
+          "citation_full": "Nghị định 82/2018/NĐ-CP - NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư; Chính phủ ban hành Nghị định quy định về quản lý khu công nghiệp và khu kinh tế. Chương | Dieu 35 > Khoan 3",
+          "title": "NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư; Chính phủ ban hành Nghị định quy định về quản lý khu công nghiệp và khu kinh tế. Chương",
+          "law_family": "NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        },
+        {
+          "score": 0.3,
+          "doc_id": "82/2018/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 33 > Khoan 2",
+          "citation_full": "Nghị định 82/2018/NĐ-CP - NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư; Chính phủ ban hành Nghị định quy định về quản lý khu công nghiệp và khu kinh tế. Chương | Dieu 33 > Khoan 2",
+          "title": "NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư ngày 26 tháng 11 năm 2014; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư; Chính phủ ban hành Nghị định quy định về quản lý khu công nghiệp và khu kinh tế. Chương",
+          "law_family": "NGHỊ ĐỊNH QUY ĐỊNH VỀ QUẢN LÝ KHU CÔNG NGHIỆP VÀ KHU KINH TẾ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        }
+      ]
+    },
+    {
+      "query": "Thừa phát lại được tống đạt những giấy tờ, hồ sơ, tài liệu nào?",
+      "results": [
+        {
+          "score": 0.5,
+          "doc_id": "11/2022/QH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 56 > Khoan 3",
+          "citation_full": "Luật 11/2022/QH15 - LUẬT THANH TRA Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thanh tra. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 56 > Khoan 3",
+          "title": "LUẬT THANH TRA Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thanh tra. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT THANH TRA Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thanh tra. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "02/2022/UBTVQH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 19 > Khoan 4",
+          "citation_full": "Pháp lệnh 02/2022/UBTVQH15 - Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Căn cứ Luật Xử lý vi phạm hành chính số 15/2012/QH13 đã được sửa đổi, bổ sung theo Luật số 67/2020/QH14; Ủy ban Thường vụ Quốc hội ban hành Pháp lệnh Xử phạt vi phạm hành chính đối với hành vi cản trở hoạt động tố tụng. Chương I NHỮNG QUY ĐỊN | Dieu 19 > Khoan 4",
+          "title": "Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Căn cứ Luật Xử lý vi phạm hành chính số 15/2012/QH13 đã được sửa đổi, bổ sung theo Luật số 67/2020/QH14; Ủy ban Thường vụ Quốc hội ban hành Pháp lệnh Xử phạt vi phạm hành chính đối với hành vi cản trở hoạt động tố tụng. Chương I NHỮNG QUY ĐỊN",
+          "law_family": "Pháp lệnh Xử phạt vi phạm hành chính đối với hành vi cản trở hoạt động tố tụng"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "64/2014/QH13",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 106 > Khoan 4",
+          "citation_full": "Luật 64/2014/QH13 - LUẬT Sửa đổi, bổ sung một số điều của Luật thi hành án dân sự _________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung một số điều của Luật Thi hành án dân sự số 26/2008/QH12. | Dieu 106 > Khoan 4",
+          "title": "LUẬT Sửa đổi, bổ sung một số điều của Luật thi hành án dân sự _________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung một số điều của Luật Thi hành án dân sự số 26/2008/QH12.",
+          "law_family": "LUẬT Sửa đổi, bổ sung một số điều của Luật thi hành án dân sự _________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung một số điều của Luật Thi hành án dân sự số 26/2008/QH12."
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "07-TT/LBTL-ĐC",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 23 > Khoan 1",
+          "citation_full": "Thông tư liên tịch 07-TT/LBTL-ĐC - THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành | Dieu 23 > Khoan 1",
+          "title": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993. Căn cứ Nghị định số 177/CP ngày 20 - 10 - 1994 của Chính phủ về việc ban hành",
+          "law_family": "THÔNG TƯ LIÊN BỘ THỦY LỢI - TỔNG CỤC ĐỊA CHÍNH Hướng dẫn thủ tục lập hồ sơ giao đất để xây dựng công trình thuỷ lợi Căn cứ Luật đất đai ngày 14 - 7 - 1993"
+        },
+        {
+          "score": 0.25,
+          "doc_id": "64/2010/QH12",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 98 > Khoan 4",
+          "citation_full": "Luật 64/2010/QH12 - LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 98 > Khoan 4",
+          "title": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "Mức phạt khi sử dụng trái phép lòng đường đô thị, hè phố để rửa xe",
+      "results": [
+        {
+          "score": 0.5,
+          "doc_id": "34/2010/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 42 > Khoan 2",
+          "citation_full": "Nghị định 34/2010/NĐ-CP - NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ CHÍNH PHỦ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 2008; Căn cứ Pháp lệnh Xử lý vi phạm hành chính ngày 02 tháng 7 năm 2002 và Pháp lệnh sửa đổi, bổ s | Dieu 42 > Khoan 2",
+          "title": "NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ CHÍNH PHỦ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 2008; Căn cứ Pháp lệnh Xử lý vi phạm hành chính ngày 02 tháng 7 năm 2002 và Pháp lệnh sửa đổi, bổ s",
+          "law_family": "NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ CHÍNH PHỦ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "100/2013/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 25c > Khoan 3",
+          "citation_full": "Nghị định 100/2013/NĐ-CP - NGHỊ ĐỊNH Sửa đổi, bổ sung một số điều của Nghị định số 11/2010/NĐ - CP ngày 24 tháng 02 năm 2010 của Chính phủ quy định về quản lý và bảo vệ kết cấu hạ tầng giao thông đường bộ ________________________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Giao thông đường bộ | Dieu 25c > Khoan 3",
+          "title": "NGHỊ ĐỊNH Sửa đổi, bổ sung một số điều của Nghị định số 11/2010/NĐ - CP ngày 24 tháng 02 năm 2010 của Chính phủ quy định về quản lý và bảo vệ kết cấu hạ tầng giao thông đường bộ ________________________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Giao thông đường bộ ",
+          "law_family": "NGHỊ ĐỊNH Sửa đổi"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "46/2016/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 38 > Khoan 000",
+          "citation_full": "Nghị định 46/2016/NĐ-CP - NGHỊ ĐỊNH Q u y định xử phạt v i phạm hành ch í nh trong lĩnh vực giao thông đường bộ và đường sắt ________________________ Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 20 1 5; Căn cứ Luật Xử lý vi phạm hành chính ngày 20 tháng 6 năm 2012; Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 20 | Dieu 38 > Khoan 000",
+          "title": "NGHỊ ĐỊNH Q u y định xử phạt v i phạm hành ch í nh trong lĩnh vực giao thông đường bộ và đường sắt ________________________ Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 20 1 5; Căn cứ Luật Xử lý vi phạm hành chính ngày 20 tháng 6 năm 2012; Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 20",
+          "law_family": "NGHỊ ĐỊNH Q u y định xử phạt v i phạm hành ch í nh trong lĩnh vực giao thông đường bộ và đường sắt ________________________ Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 20 1 5"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "100/2013/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 25c > Khoan 4",
+          "citation_full": "Nghị định 100/2013/NĐ-CP - NGHỊ ĐỊNH Sửa đổi, bổ sung một số điều của Nghị định số 11/2010/NĐ - CP ngày 24 tháng 02 năm 2010 của Chính phủ quy định về quản lý và bảo vệ kết cấu hạ tầng giao thông đường bộ ________________________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Giao thông đường bộ | Dieu 25c > Khoan 4",
+          "title": "NGHỊ ĐỊNH Sửa đổi, bổ sung một số điều của Nghị định số 11/2010/NĐ - CP ngày 24 tháng 02 năm 2010 của Chính phủ quy định về quản lý và bảo vệ kết cấu hạ tầng giao thông đường bộ ________________________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Giao thông đường bộ ",
+          "law_family": "NGHỊ ĐỊNH Sửa đổi"
+        },
+        {
+          "score": 0.25,
+          "doc_id": "100/2019/NĐ-CP",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 38 > Khoan 000",
+          "citation_full": "Nghị định 100/2019/NĐ-CP - NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắt Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật Xử lý vi phạm hành chính ngày 20 tháng 6 năm 2012; Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 2008; Căn cứ Luật Đường sắt ngày 1 | Dieu 38 > Khoan 000",
+          "title": "NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắt Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật Xử lý vi phạm hành chính ngày 20 tháng 6 năm 2012; Căn cứ Luật Giao thông đường bộ ngày 13 tháng 11 năm 2008; Căn cứ Luật Đường sắt ngày 1",
+          "law_family": "NGHỊ ĐỊNH Quy định xử phạt vi phạm hành chính trong lĩnh vực giao thông đường bộ và đường sắt Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        }
+      ]
+    },
+    {
+      "query": "Hai công ty con chung công ty mẹ có được tham dự gói thầu của nhau không?",
+      "results": [
+        {
+          "score": 0.5,
+          "doc_id": "35/2021/NĐ-CP",
+          "chunk_type": "ProvisionChunk",
+          "legal_path": "Dieu 38",
+          "citation_full": "Nghị định 35/2021/NĐ-CP - CHÍNH PHỦ - - - - - - - CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc - - - - - - - - - - - - - - - Số: 35/2021/NĐ - CP Hà Nội, ngày 29 tháng 3 năm 2021 NGHỊ ĐỊNH QUY ĐỊNH CHI TIẾT VÀ HƯỚNG DẪN THI HÀNH LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ Căn cứ Luật Tổ chức Chính phủ ngày | Dieu 38",
+          "title": "CHÍNH PHỦ - - - - - - - CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc - - - - - - - - - - - - - - - Số: 35/2021/NĐ - CP Hà Nội, ngày 29 tháng 3 năm 2021 NGHỊ ĐỊNH QUY ĐỊNH CHI TIẾT VÀ HƯỚNG DẪN THI HÀNH LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ Căn cứ Luật Tổ chức Chính phủ ngày ",
+          "law_family": "NGHỊ ĐỊNH QUY ĐỊNH CHI TIẾT VÀ HƯỚNG DẪN THI HÀNH LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ Căn cứ Luật Tổ chức Chính phủ ngày"
+        },
+        {
+          "score": 0.5,
+          "doc_id": "68/2014/QH13",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 189 > Khoan 2",
+          "citation_full": "Luật 68/2014/QH13 - LUẬT Doanh nghiệp ______ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Doanh nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 189 > Khoan 2",
+          "title": "LUẬT Doanh nghiệp ______ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Doanh nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT Doanh nghiệp ______ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Doanh nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "59/2020/QH14",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 195 > Khoan 2",
+          "citation_full": "Luật 59/2020/QH14 - LUẬT DOANH NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Doanh nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 195 > Khoan 2",
+          "title": "LUẬT DOANH NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Doanh nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG",
+          "law_family": "LUẬT DOANH NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Doanh nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.33333334,
+          "doc_id": "22/2023/QH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 64 > Khoan 4",
+          "citation_full": "Luật 22/2023/QH15 - QUỐC HỘI Luật số: 22/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT ĐẤU THẦU Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đấu thầu. Chương I QUY ĐỊNH CHUNG | Dieu 64 > Khoan 4",
+          "title": "QUỐC HỘI Luật số: 22/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT ĐẤU THẦU Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đấu thầu. Chương I QUY ĐỊNH CHUNG",
+          "law_family": "QUỐC HỘI Luật số: 22/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT ĐẤU THẦU Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đấu thầu. Chương I QUY ĐỊNH CHUNG"
+        },
+        {
+          "score": 0.25,
+          "doc_id": "22/2023/QH15",
+          "chunk_type": "ClauseChunk",
+          "legal_path": "Dieu 64 > Khoan 3",
+          "citation_full": "Luật 22/2023/QH15 - QUỐC HỘI Luật số: 22/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT ĐẤU THẦU Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đấu thầu. Chương I QUY ĐỊNH CHUNG | Dieu 64 > Khoan 3",
+          "title": "QUỐC HỘI Luật số: 22/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT ĐẤU THẦU Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đấu thầu. Chương I QUY ĐỊNH CHUNG",
+          "law_family": "QUỐC HỘI Luật số: 22/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT ĐẤU THẦU Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đấu thầu. Chương I QUY ĐỊNH CHUNG"
+        }
+      ]
+    }
+  ]
+}

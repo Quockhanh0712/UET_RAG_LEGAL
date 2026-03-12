@@ -1,0 +1,297 @@
+{
+  "model": "truro7/vn-law-embedding",
+  "collection": "legal_documents__truro7_vn_law_embedding__d768",
+  "top_k": 5,
+  "queries": [
+    {
+      "query": "C?ng an x? x? ph?t l?i kh?ng mang b?ng l?i xe c? ??ng kh?ng?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "94/2025/QH15",
+          "citation_full": "Luật 94/2025/QH15 - LUẬT NĂNG LƯỢNG NGUYÊN TỬ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 20 3 /2025/QH15; Quốc hội ban hành Luật Năng lượng nguyên tử. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 47",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT NĂNG LƯỢNG NGUYÊN TỬ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 20 3 /2025/QH15; Quốc hội ban hành Luật Năng lượng nguyên tử. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "64/2010/QH12",
+          "citation_full": "Luật 64/2010/QH12 - LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 19 > Khoan 2",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "54/2014/QH13",
+          "citation_full": "Luật 54/2014/QH13 - LUẬT Hải qua n _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Hải quan. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 34",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT Hải qua n _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Hải quan. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "Ph?i th?c hi?n thao t?c n?p m?u v?o b?nh ch?a v? x? l? m?u s? b? b?ng h?a ch?t nh? th? n?o?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "26/2018/QH14",
+          "citation_full": "Luật 26/2018/QH14 - LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT THỂ DỤC, THỂ THAO ________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung một số điều của Luật Thể dục, thể thao số 77/2006/QH11. | Dieu 22 > Khoan 8",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT THỂ DỤC, THỂ THAO ________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung một số điều của Luật Thể dục, thể thao số 77/2006/QH11."
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "60/2010/QH12",
+          "citation_full": "Luật 60/2010/QH12 - LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 7 > Khoan 3",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "64/2010/QH12",
+          "citation_full": "Luật 64/2010/QH12 - LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 29 > Khoan 3",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "Tr?nh t? ??nh gi? ch?t l??ng h?ng n?m ??i v?i Ki?m so?t vi?n ???c quy ??nh nh? th? n?o?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "54/2014/QH13",
+          "citation_full": "Luật 54/2014/QH13 - LUẬT Hải qua n _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Hải quan. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 34",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT Hải qua n _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Hải quan. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "64/2010/QH12",
+          "citation_full": "Luật 64/2010/QH12 - LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 18",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "07/2022/QH15",
+          "citation_full": "Luật 07/2022/QH15 - LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT SỞ HỮU TRÍ TUỆ ____________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung một số điều của Luật Sở hữu trí tuệ số 50/2005/QH11 đã được sửa đổi, bổ sung một số điều theo Luật số 36/2009/QH12 và Luật | Dieu 41",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT SỞ HỮU TRÍ TUỆ ____________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung một số điều của Luật Sở hữu trí tuệ số 50/2005/QH11 đã được sửa đổi, bổ sung một số điều theo Luật số 36/2009/QH12 và Luật"
+        }
+      ]
+    },
+    {
+      "query": "T? t? ch?t sau khi ti?m thu?c ??c m? kh?ng c? th?n nh?n nh?n x?c th? ???c h? tr? mai t?ng nh? th? n?o?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "64/2010/QH12",
+          "citation_full": "Luật 64/2010/QH12 - LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 18",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "107/2018/NĐ-CP",
+          "citation_full": "Nghị định 107/2018/NĐ-CP - CHÍNH PHỦ _______ Số: 107 /2018/NĐ - CP CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc _________________________________________ Hà Nội, ngày 15 tháng 8 năm 2018 NGHỊ ĐỊNH Về kinh doanh xuất khẩu gạo _________ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật đầu tư | Dieu 6",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "NGHỊ ĐỊNH Về kinh doanh xuất khẩu gạo _________ Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "64/2010/QH12",
+          "citation_full": "Luật 64/2010/QH12 - LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 41 > Khoan 8",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "Tr?ch nhi?m c?a B? Khoa h?c v? C?ng ngh? v? qu?n l? v? ph?t tri?n c?ng nghi?p an ninh ???c quy ??nh nh? th? n?o?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "24/2018/QH14",
+          "citation_full": "Luật 24/2018/QH14 - LUẬT AN NINH MẠNG ____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật An ninh mạng. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 27 > Khoan 2",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT AN NINH MẠNG ____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật An ninh mạng. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "64/2010/QH12",
+          "citation_full": "Luật 64/2010/QH12 - LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 10 > Khoan 3",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "24/2018/QH14",
+          "citation_full": "Luật 24/2018/QH14 - LUẬT AN NINH MẠNG ____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật An ninh mạng. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 4 > Khoan 7",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT AN NINH MẠNG ____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật An ninh mạng. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "??p ph? bi?n b?o khu v?c bi?n gi?i b? ph?t th? n?o?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "39/2024/QH15",
+          "citation_full": "Luật 39/2024/QH15 - LUẬT THỦ ĐÔ - - - - - - - - Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thủ đô. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 3 > Khoan 3",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT THỦ ĐÔ - - - - - - - - Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thủ đô. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "61/2010/QH12",
+          "citation_full": "Luật 61/2010/QH12 - LUẬT Sửa đổi, bổ sung một số điều của Luật Kinh doanh bảo hiểm _________________________ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội ba n hành L u ật s ửa đổi, bổ | Dieu 1 > Khoan 2",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Sửa đổi, bổ sung một số điều của Luật Kinh doanh bảo hiểm _________________________ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội ba n hành L u ật s ửa đổi, bổ"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "60/2010/QH12",
+          "citation_full": "Luật 60/2010/QH12 - LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 44",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "M?c ti?u ph?t tri?n khu c?ng nghi?p h? tr? ???c quy ??nh nh? th? n?o?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "64/2010/QH12",
+          "citation_full": "Luật 64/2010/QH12 - LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 29 > Khoan 3",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Tố tụng hành chính ___________ C ă n c ứ H i ế n phá p nư ớ c C ộn g ho à x ã h ộ i ch ủ n g h ĩ a Việ t Na m n ă m 1992 đ ã đ ược s ửa đ ổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b a n hành Luật Tố tụng hành chính. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "39/2024/QH15",
+          "citation_full": "Luật 39/2024/QH15 - LUẬT THỦ ĐÔ - - - - - - - - Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thủ đô. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 3 > Khoan 3",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT THỦ ĐÔ - - - - - - - - Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Thủ đô. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "61/2010/QH12",
+          "citation_full": "Luật 61/2010/QH12 - LUẬT Sửa đổi, bổ sung một số điều của Luật Kinh doanh bảo hiểm _________________________ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội ba n hành L u ật s ửa đổi, bổ | Dieu 1 > Khoan 1",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Sửa đổi, bổ sung một số điều của Luật Kinh doanh bảo hiểm _________________________ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội ba n hành L u ật s ửa đổi, bổ"
+        }
+      ]
+    },
+    {
+      "query": "Th?a ph?t l?i ???c t?ng ??t nh?ng gi?y t?, h? s?, t?i li?u n?o?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "60/2010/QH12",
+          "citation_full": "Luật 60/2010/QH12 - LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 41 > Khoan 2",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "94/2025/QH15",
+          "citation_full": "Luật 94/2025/QH15 - LUẬT NĂNG LƯỢNG NGUYÊN TỬ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 20 3 /2025/QH15; Quốc hội ban hành Luật Năng lượng nguyên tử. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 47",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT NĂNG LƯỢNG NGUYÊN TỬ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 20 3 /2025/QH15; Quốc hội ban hành Luật Năng lượng nguyên tử. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "60/2010/QH12",
+          "citation_full": "Luật 60/2010/QH12 - LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 73 > Khoan 2",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "M?c ph?t khi s? d?ng tr?i ph?p l?ng ???ng ?? th?, h? ph? ?? r?a xe",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "54/2014/QH13",
+          "citation_full": "Luật 54/2014/QH13 - LUẬT Hải qua n _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Hải quan. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 34",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT Hải qua n _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Hải quan. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "60/2010/QH12",
+          "citation_full": "Luật 60/2010/QH12 - LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 48 > Khoan 2",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Khoáng sản ______ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Quốc hội ban hành Luật Khoáng sản. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "94/2025/QH15",
+          "citation_full": "Luật 94/2025/QH15 - LUẬT NĂNG LƯỢNG NGUYÊN TỬ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 20 3 /2025/QH15; Quốc hội ban hành Luật Năng lượng nguyên tử. Chương I NHỮNG QUY ĐỊNH CHUNG | Dieu 47",
+          "chunk_type": "ProvisionChunk",
+          "law_family": "LUẬT NĂNG LƯỢNG NGUYÊN TỬ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 20 3 /2025/QH15; Quốc hội ban hành Luật Năng lượng nguyên tử. Chương I NHỮNG QUY ĐỊNH CHUNG"
+        }
+      ]
+    },
+    {
+      "query": "Hai c?ng ty con chung c?ng ty m? c? ???c tham d? g?i th?u c?a nhau kh?ng?",
+      "results": [
+        {
+          "rank": 1,
+          "score": 0.5,
+          "doc_id": "62/2010/QH12",
+          "citation_full": "Luật 62/2010/QH12 - LUẬT Sửa đổi, bổ sung một số điều của Luật Chứng khoán __________________________ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b an hà n h L u ật s ửa đổi, bổ s u n | Dieu 12 > Khoan 2",
+          "chunk_type": "ClauseChunk",
+          "law_family": "LUẬT Sửa đổi, bổ sung một số điều của Luật Chứng khoán __________________________ C ăn c ứ H i ế n pháp nư ớ c C ộng h oà xã h ội c h ủ n g h ĩ a Việt Na m n ă m 1992 đã đ ược s ử a đổi, b ổ su n g m ột s ố điều theo N g hị quyết s ố 5 1/2001/ Q H 10; Qu ố c hội b an hà n h L u ật s ửa đổi, bổ s u n"
+        },
+        {
+          "rank": 2,
+          "score": 0.5,
+          "doc_id": "47/2021/NĐ-CP",
+          "citation_full": "Nghị định 47/2021/NĐ-CP - CHÍNH PHỦ 47/2021/NĐ - CP CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc Lập - Tự Do - Hạnh Phúc. . . . . . . . . . . . Hà Nội, ngày 01 tháng 04 năm 20247/2021/NĐ - CP NGHỊ ĐỊNH QUY ĐỊNH CHI TIẾT MỘT SỐ ĐIỀU CỦA LUẬT DOANH NGHIỆP Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015 và Luật sửa đổi, bổ sun | Dieu 13 > Khoan 3",
+          "chunk_type": "ClauseChunk",
+          "law_family": "NGHỊ ĐỊNH QUY ĐỊNH CHI TIẾT MỘT SỐ ĐIỀU CỦA LUẬT DOANH NGHIỆP Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015 và Luật sửa đổi"
+        },
+        {
+          "rank": 3,
+          "score": 0.33333334,
+          "doc_id": "69/2014/NĐ-CP",
+          "citation_full": "Nghị định 69/2014/NĐ-CP - NGHỊ ĐỊNH Về tập đoàn kinh tế nhà nước và tổng công ty nhà nướ c ________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Doanh nghiệp ngày 29 tháng 11 năm 2005; Theo đề nghị của Bộ trưởng Bộ Kế hoạch và Đầu tư, Chính phủ ban hành Nghị định về tập đoàn kinh tế nhà nước v | Dieu 28 > Khoan 2",
+          "chunk_type": "ClauseChunk",
+          "law_family": "NGHỊ ĐỊNH Về tập đoàn kinh tế nhà nước và tổng công ty nhà nướ c ________________ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "run_id": "run_20260312_063309",
+  "generated_at": "2026-03-12T06:38:33.788794+00:00",
+  "collections": {
+    "legal_documents__truro7_vn_law_embedding__d768__run_run_20260312_063309__pilot": {
+      "model_id": "truro7/vn-law-embedding",
+      "stage": "pilot",
+      "bm25_path": "data\\gold\\research\\index_runs\\run_20260312_063309\\bm25\\legal_documents__truro7_vn_law_embedding__d768__run_run_20260312_063309__pilot.json",
+      "bm25_checksum": "2e3925dbc330edca0fbf2208a0ecc4394725d79785c60b949d20e315f2804781"
+    },
+    "legal_documents__huyydangg_dek21_hcmute_embedding__d768__run_run_20260312_063309__pilot": {
+      "model_id": "huyydangg/DEk21_hcmute_embedding",
+      "stage": "pilot",
+      "bm25_path": "data\\gold\\research\\index_runs\\run_20260312_063309\\bm25\\legal_documents__huyydangg_dek21_hcmute_embedding__d768__run_run_20260312_063309__pilot.json",
+      "bm25_checksum": "2e3925dbc330edca0fbf2208a0ecc4394725d79785c60b949d20e315f2804781"
+    }
+  }
+}

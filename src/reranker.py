@@ -22,8 +22,10 @@ logger = logging.getLogger(__name__)
 # Default models
 RERANKER_MODEL = os.getenv(
     "RERANKER_MODEL", 
-    "thanhtantran/Vietnamese_Reranker"  # Vietnamese-specific reranker
+    "AITeamVN/Vietnamese_Reranker"  # Align with backend/main.py default
 )
+RERANKER_MAX_LENGTH = int(os.getenv("RERANKER_MAX_LENGTH", "2304"))
+RERANKER_BATCH_SIZE = int(os.getenv("RERANKER_BATCH_SIZE", "8"))
 
 # Alternative Vietnamese models:
 # - "thanhtantran/Vietnamese_Reranker" - Specifically for Vietnamese (RECOMMENDED)
@@ -55,8 +57,8 @@ class LegalReranker:
         self,
         model_name: str = RERANKER_MODEL,
         use_gpu: bool = True,
-        max_length: int = 512,
-        batch_size: int = 16
+        max_length: int = RERANKER_MAX_LENGTH,
+        batch_size: int = RERANKER_BATCH_SIZE
     ):
         self.model_name = model_name
         self.use_gpu = use_gpu

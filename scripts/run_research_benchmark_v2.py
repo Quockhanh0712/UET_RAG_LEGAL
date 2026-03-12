@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 import math
 import os
 import statistics
@@ -26,7 +27,6 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from src.embeddings import DEFAULT_MODEL, get_embedding_dimension
-from src.legal_rag_pipeline import LegalRAGPipeline
 
 
 DEFAULT_COLLECTION_BASE = os.getenv("QDRANT_COLLECTION", "legal_documents")
@@ -47,6 +47,7 @@ class EmbeddingConfig:
     embedding_dim: int
     normalize_embeddings: Optional[bool]
     collection_name: str
+    bm25_path: Optional[str] = None
 
 
 BENCHMARK_VARIANTS: List[VariantConfig] = [
@@ -197,6 +198,12 @@ def _run_variant(
                 continue
 
             filters = {"is_active": True}
+            law_family = _parse_filter_value(str(q.get("law_family", "")))
+            if law_family is not None:
+                filters["law_family"] = law_family
+            doc_type = _parse_filter_value(str(q.get("doc_type", "")))
+            if doc_type is not None:
+                filters["doc_type"] = doc_type
             start = datetime.now().timestamp()
 
             encode_start = datetime.now().timestamp()
@@ -348,8 +355,12 @@ def _build_embedding_configs(
     normalize_options: List[Optional[bool]],
     collection_base: str,
     collection_by_model: bool,
+    collection_suffix: str = "",
+    bm25_manifest: Optional[Dict[str, str]] = None,
 ) -> List[EmbeddingConfig]:
     configs: List[EmbeddingConfig] = []
+    suffix = str(collection_suffix or "")
+    manifest = bm25_manifest or {}
     for model_id in models:
         try:
             dim = int(get_embedding_dimension(model_id))
@@ -360,12 +371,15 @@ def _build_embedding_configs(
                 collection_name = _collection_name_for_model(collection_base, model_id, dim)
             else:
                 collection_name = collection_base
+            if suffix:
+                collection_name = f"{collection_name}{suffix}"
             configs.append(
                 EmbeddingConfig(
                     model_id=model_id,
                     embedding_dim=dim,
                     normalize_embeddings=normalize_opt,
                     collection_name=collection_name,
+                    bm25_path=manifest.get(collection_name),
                 )
             )
     return configs
@@ -385,6 +399,51 @@ def _model_slug(model_name: str) -> str:
 
 def _collection_name_for_model(base_name: str, model_name: str, dense_dim: int) -> str:
     return f"{base_name}__{_model_slug(model_name)}__d{int(dense_dim)}"
+
+
+def _parse_filter_value(raw: str) -> Optional[object]:
+    text = str(raw or "").strip()
+    if not text:
+        return None
+    if "," in text:
+        values = [part.strip() for part in text.split(",") if part.strip()]
+        return values if values else None
+    return text
+
+
+def _load_bm25_manifest(path: Path) -> Dict[str, str]:
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8") as f:
+        payload = json.load(f)
+    if isinstance(payload, dict):
+        if "collections" in payload and isinstance(payload["collections"], dict):
+            output: Dict[str, str] = {}
+            for collection_name, metadata in payload["collections"].items():
+                if isinstance(metadata, dict):
+                    bm25_path = str(metadata.get("bm25_path", "")).strip()
+                    if bm25_path:
+                        output[str(collection_name)] = bm25_path
+                elif isinstance(metadata, str) and metadata.strip():
+                    output[str(collection_name)] = metadata.strip()
+            return output
+        output = {}
+        for k, v in payload.items():
+            if isinstance(v, str) and v.strip():
+                output[str(k)] = v.strip()
+        return output
+    return {}
+
+
+def _configure_qdrant_env(qdrant_url: str, qdrant_api_key: str, qdrant_timeout: int) -> None:
+    url = str(qdrant_url or "").strip()
+    if not url:
+        return
+    os.environ["QDRANT_USE_CLOUD"] = "true"
+    os.environ["QDRANT_CLOUD_URL"] = url
+    os.environ["QDRANT_API_KEY"] = str(qdrant_api_key or "").strip()
+    os.environ["QDRANT_USE_SERVER"] = "false"
+    os.environ["QDRANT_TIMEOUT"] = str(int(qdrant_timeout))
 
 
 def main() -> None:
@@ -423,11 +482,45 @@ def main() -> None:
         help="Base collection name",
     )
     parser.add_argument(
+        "--collection-suffix",
+        default="",
+        help="Optional suffix appended to collection names (e.g. __run_20260312_120000)",
+    )
+    parser.add_argument(
         "--collection-by-model",
         action="store_true",
         help="Use collection naming pattern base__model_slug__d{dim}",
     )
+    parser.add_argument(
+        "--bm25-manifest",
+        default="",
+        help="Optional JSON manifest mapping collection_name -> bm25_path for sparse consistency",
+    )
+    parser.add_argument(
+        "--qdrant-url",
+        default="",
+        help="Optional Qdrant Cloud URL. When set, benchmark forces cloud mode.",
+    )
+    parser.add_argument(
+        "--qdrant-api-key",
+        default="",
+        help="Optional Qdrant Cloud API key used with --qdrant-url.",
+    )
+    parser.add_argument(
+        "--qdrant-timeout",
+        type=int,
+        default=120,
+        help="Qdrant timeout seconds when --qdrant-url is set.",
+    )
     args = parser.parse_args()
+
+    _configure_qdrant_env(
+        qdrant_url=args.qdrant_url,
+        qdrant_api_key=args.qdrant_api_key,
+        qdrant_timeout=args.qdrant_timeout,
+    )
+    # Import after env configuration so qdrant_store module-level defaults pick cloud settings.
+    from src.legal_rag_pipeline import LegalRAGPipeline
 
     queries_path = Path(args.queries_path)
     labels_path = Path(args.labels_path)
@@ -437,11 +530,14 @@ def main() -> None:
     labels = _load_labels(labels_path)
     embedding_models = _parse_embedding_models(args.embedding_models)
     normalize_options = _parse_normalize_options(args.normalize_options)
+    bm25_manifest = _load_bm25_manifest(Path(args.bm25_manifest)) if args.bm25_manifest else {}
     embedding_configs = _build_embedding_configs(
         embedding_models,
         normalize_options,
         collection_base=args.collection_base,
         collection_by_model=args.collection_by_model,
+        collection_suffix=args.collection_suffix,
+        bm25_manifest=bm25_manifest,
     )
 
     now_utc = datetime.now(timezone.utc)
@@ -465,8 +561,14 @@ def main() -> None:
                         embedding_cfg.model_id,
                         runtime_dim,
                     )
+                    if args.collection_suffix:
+                        embedding_cfg.collection_name = f"{embedding_cfg.collection_name}{args.collection_suffix}"
+                    if bm25_manifest:
+                        embedding_cfg.bm25_path = bm25_manifest.get(embedding_cfg.collection_name)
             pipeline.qdrant_store.collection_name = embedding_cfg.collection_name
             pipeline.qdrant_store.dense_dim = int(embedding_cfg.embedding_dim)
+            if embedding_cfg.bm25_path:
+                pipeline.qdrant_store.set_bm25_path(embedding_cfg.bm25_path, load_if_exists=True)
         except Exception as exc:
             note = f"Retrieval infra unavailable: {exc}"
             for variant in BENCHMARK_VARIANTS:

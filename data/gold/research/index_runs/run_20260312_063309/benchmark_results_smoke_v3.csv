@@ -1,0 +1,23 @@
+run_id,variant_id,embedding_model_id,embedding_dim,normalize_embeddings,status,num_queries,Recall@20,nDCG@10,MRR@10,citation_valid_rate,latency_p95_ms,encode_p95_ms,notes,created_at
+run_20260312_065112,B0,truro7/vn-law-embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,B1,truro7/vn-law-embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,B2,truro7/vn-law-embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,B3,truro7/vn-law-embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,G1,truro7/vn-law-embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,G2,truro7/vn-law-embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,G3,truro7/vn-law-embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,C1,truro7/vn-law-embedding,0,true,pending-chunk-index,1,,,,,,,Requires dedicated chunked index collection for fair comparison.,2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,C2,truro7/vn-law-embedding,0,true,pending-chunk-index,1,,,,,,,Requires dedicated chunked index collection for fair comparison.,2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,C3,truro7/vn-law-embedding,0,true,pending-chunk-index,1,,,,,,,Requires dedicated chunked index collection for fair comparison.,2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,C4,truro7/vn-law-embedding,0,true,pending-chunk-index,1,,,,,,,Requires dedicated chunked index collection for fair comparison.,2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,B0,huyydangg/DEk21_hcmute_embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,B1,huyydangg/DEk21_hcmute_embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,B2,huyydangg/DEk21_hcmute_embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,B3,huyydangg/DEk21_hcmute_embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,G1,huyydangg/DEk21_hcmute_embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,G2,huyydangg/DEk21_hcmute_embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,G3,huyydangg/DEk21_hcmute_embedding,0,true,infra-pending,1,,,,,,,"Retrieval infra unavailable: Cannot send a request, as the client has been closed.",2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,C1,huyydangg/DEk21_hcmute_embedding,0,true,pending-chunk-index,1,,,,,,,Requires dedicated chunked index collection for fair comparison.,2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,C2,huyydangg/DEk21_hcmute_embedding,0,true,pending-chunk-index,1,,,,,,,Requires dedicated chunked index collection for fair comparison.,2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,C3,huyydangg/DEk21_hcmute_embedding,0,true,pending-chunk-index,1,,,,,,,Requires dedicated chunked index collection for fair comparison.,2026-03-12T06:51:12.501051+00:00
+run_20260312_065112,C4,huyydangg/DEk21_hcmute_embedding,0,true,pending-chunk-index,1,,,,,,,Requires dedicated chunked index collection for fair comparison.,2026-03-12T06:51:12.501051+00:00

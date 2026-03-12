@@ -1,0 +1,46 @@
+{
+  "run_id": "run_20260312_override_1q",
+  "created_at": "2026-03-12T15:56:06.608107+00:00",
+  "model": "truro7/vn-law-embedding",
+  "collection": "legal_rag_vn",
+  "collection_status": "green",
+  "collection_points_count": 100507,
+  "qdrant_url": "https://f9f847f9-cf96-4fb9-8336-8904be998599.us-east4-0.gcp.cloud.qdrant.io:6333",
+  "top_k": 5,
+  "use_reranker": true,
+  "reranker_model": "AITeamVN/Vietnamese_Reranker",
+  "reranker_alpha": "1.0",
+  "use_graph": false,
+  "require_active_only": true,
+  "rows": [
+    {
+      "run_id": "run_20260312_override_1q",
+      "query": "Cong an xa xu phat loi khong mang bang lai xe co dung khong?",
+      "status": "error",
+      "top_k": 5,
+      "results": [],
+      "retrieval_time_ms": 280.22519999649376,
+      "rerank_time_ms": 0.0,
+      "used_reranker": false,
+      "generation_time_ms": 0.0,
+      "error": "Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Bad request: Index required but not found for \\\\\"is_active\\\\\" of one of the following types: [bool]. Help: Create an index for this key or use a different filter.\"},\"time\":0.00038 ...' | fallback_error: Unexpected Response: 400 (Bad Request)\nRaw response content:\nb'{\"status\":{\"error\":\"Bad request: Index required but not found for \\\\\"is_active\\\\\" of one of the following types: [bool]. Help: Create an index for this key or use a different filter.\"},\"time\":0.00004 ...'"
+    }
+  ],
+  "summary": {
+    "query_total": 1,
+    "status_ok": 0,
+    "fallback_count": 1,
+    "hard_fail_count": 1,
+    "retrieval_p50_ms": 280.22519999649376,
+    "retrieval_p95_ms": 280.22519999649376,
+    "generation_p50_ms": 0.0,
+    "generation_p95_ms": 0.0,
+    "rerank_used_count": 0,
+    "rerank_p50_ms": 0.0,
+    "rerank_p95_ms": 0.0,
+    "gate_min3_results": false,
+    "gate_top1_citation": false,
+    "gate_llm_or_fallback": false,
+    "gate_reranker_used": false
+  }
+}

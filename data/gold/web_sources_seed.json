@@ -1,0 +1,27 @@
+[
+  {
+    "name": "VBPL",
+    "url": "https://vbpl.vn",
+    "purpose": "official legal lookup"
+  },
+  {
+    "name": "Cong Bao",
+    "url": "https://congbao.chinhphu.vn",
+    "purpose": "gazette verification"
+  },
+  {
+    "name": "Chinh Phu",
+    "url": "https://chinhphu.vn",
+    "purpose": "government decrees and circulars"
+  },
+  {
+    "name": "BTP",
+    "url": "https://moj.gov.vn",
+    "purpose": "legal ministry references"
+  },
+  {
+    "name": "Thu Vien Phap Luat",
+    "url": "https://thuvienphapluat.vn",
+    "purpose": "cross-reference titles and status"
+  }
+]

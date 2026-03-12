@@ -12,6 +12,7 @@ Features:
 import os
 import logging
 import re
+import time
 from typing import List, Dict, Optional, Tuple, Sequence
 from dataclasses import dataclass
 import hashlib
@@ -91,8 +92,10 @@ class BM25Encoder:
         self.b = b
         self.vocab = {}
         self.idf = {}
+        self.doc_freq = {}
         self.avg_doc_len = 0
         self.doc_count = 0
+        self.total_doc_len = 0
         
         # Try to load pyvi for Vietnamese tokenization
         try:
@@ -113,33 +116,43 @@ class BM25Encoder:
             tokens.append(word.replace("_", " "))
         return tokens
     
-    def fit(self, documents: List[str]):
-        """Build vocabulary and IDF from documents"""
-        import math
-        
-        self.doc_count = len(documents)
-        doc_freq = {}
-        total_len = 0
-        
+    def _update_stats(self, documents: List[str]):
         for doc in documents:
             tokens = self.tokenize(doc)
-            total_len += len(tokens)
-            
-            # Count unique tokens per doc for DF
+            self.doc_count += 1
+            self.total_doc_len += len(tokens)
+
             unique_tokens = set(tokens)
             for token in unique_tokens:
-                doc_freq[token] = doc_freq.get(token, 0) + 1
-                
+                self.doc_freq[token] = self.doc_freq.get(token, 0) + 1
                 if token not in self.vocab:
                     self.vocab[token] = len(self.vocab)
-        
-        self.avg_doc_len = total_len / self.doc_count if self.doc_count > 0 else 1
-        
-        # Calculate IDF
-        for token, df in doc_freq.items():
+
+    def _recompute_idf(self):
+        import math
+
+        self.avg_doc_len = self.total_doc_len / self.doc_count if self.doc_count > 0 else 1
+        self.idf = {}
+        for token, df in self.doc_freq.items():
             self.idf[token] = math.log((self.doc_count - df + 0.5) / (df + 0.5) + 1)
-        
-        logger.info(f"[BM25] Vocabulary size: {len(self.vocab)}")
+
+    def fit(self, documents: List[str]):
+        """Build vocabulary and IDF from documents (full reset)."""
+        self.vocab = {}
+        self.idf = {}
+        self.doc_freq = {}
+        self.avg_doc_len = 0
+        self.doc_count = 0
+        self.total_doc_len = 0
+        self.partial_fit(documents)
+
+    def partial_fit(self, documents: List[str]):
+        """Incrementally update vocabulary and IDF."""
+        if not documents:
+            return
+        self._update_stats(documents)
+        self._recompute_idf()
+        logger.info(f"[BM25] Vocabulary size: {len(self.vocab)} | docs={self.doc_count}")
     
     def encode(self, text: str) -> Tuple[List[int], List[float]]:
         """Encode text to sparse vector (indices, values)"""
@@ -175,8 +188,10 @@ class BM25Encoder:
         data = {
             "vocab": self.vocab,
             "idf": self.idf,
+            "doc_freq": self.doc_freq,
             "avg_doc_len": self.avg_doc_len,
             "doc_count": self.doc_count,
+            "total_doc_len": self.total_doc_len,
             "k1": self.k1,
             "b": self.b
         }
@@ -193,8 +208,10 @@ class BM25Encoder:
             data = json.load(f)
         self.vocab = data["vocab"]
         self.idf = data["idf"]
+        self.doc_freq = data.get("doc_freq", {})
         self.avg_doc_len = data["avg_doc_len"]
         self.doc_count = data["doc_count"]
+        self.total_doc_len = data.get("total_doc_len", int(self.avg_doc_len * self.doc_count))
         self.k1 = data.get("k1", 1.5)
         self.b = data.get("b", 0.75)
         logger.info(f"[BM25] Loaded encoder with {len(self.vocab)} vocab")
@@ -222,7 +239,8 @@ class QdrantLegalStore:
         timeout: int = QDRANT_TIMEOUT,
         use_cloud: bool = QDRANT_USE_CLOUD,
         cloud_url: str = QDRANT_CLOUD_URL,
-        api_key: str = QDRANT_API_KEY
+        api_key: str = QDRANT_API_KEY,
+        bm25_path: Optional[str] = None,
     ):
         self.path = path
         self.collection_name = collection_name
@@ -252,13 +270,19 @@ class QdrantLegalStore:
 
         # BM25 encoder for sparse vectors
         self.bm25_encoder = BM25Encoder()
-        self.bm25_path = os.path.join(path, "bm25_encoder.json")
+        self.bm25_path = bm25_path or os.path.join(path, "bm25_encoder.json")
 
         # Load BM25 if exists
         if os.path.exists(self.bm25_path):
             self.bm25_encoder.load(self.bm25_path)
 
         logger.info(f"[QDRANT] Ready (cloud={use_cloud}, server={use_server})")
+
+    def set_bm25_path(self, path: str, load_if_exists: bool = True):
+        """Set BM25 artifact path explicitly (used for collection-scoped sparse consistency)."""
+        self.bm25_path = str(path)
+        if load_if_exists and os.path.exists(self.bm25_path):
+            self.bm25_encoder.load(self.bm25_path)
     
     def _remove_lock_file(self):
         """Remove Qdrant lock file to allow reconnection"""
@@ -380,42 +404,46 @@ class QdrantLegalStore:
         self,
         chunks: List,  # List[LegalChunk]
         embeddings: List[List[float]],
-        batch_size: int = 100
+        batch_size: int = 100,
+        fit_bm25: bool = True,
+        upsert_batch_ladder: Optional[List[int]] = None,
+        max_retries_per_batch: int = 3,
+        max_consecutive_failures: int = 3,
     ):
         """Add documents with dense and sparse vectors"""
         if not chunks:
             logger.warning("[QDRANT] No chunks to add")
-            return
+            return {
+                "indexed_chunks": 0,
+                "retries": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "consecutive_failures": 0,
+                "upsert_calls": 0,
+            }
         if len(chunks) != len(embeddings):
             raise ValueError(f"Chunks/embeddings length mismatch: {len(chunks)} vs {len(embeddings)}")
 
-        # First, fit BM25 encoder on all documents
-        contents = []
-        for chunk in chunks:
-            content = getattr(chunk, "content", None) or getattr(chunk, "text", "")
-            contents.append(content)
-        self.bm25_encoder.fit(contents)
-        self.bm25_encoder.save(self.bm25_path)
-        
-        # Add in batches
-        total = len(chunks)
-        for i in range(0, total, batch_size):
-            batch_chunks = chunks[i:i + batch_size]
-            batch_embeddings = embeddings[i:i + batch_size]
-            
-            points = []
-            for j, (chunk, dense_vec) in enumerate(zip(batch_chunks, batch_embeddings)):
+        if fit_bm25:
+            # Fit BM25 encoder on the provided document set.
+            contents = []
+            for chunk in chunks:
                 content = getattr(chunk, "content", None) or getattr(chunk, "text", "")
-                # Generate sparse vector
-                sparse_indices, sparse_values = self.bm25_encoder.encode(content)
-                
-                # Create point ID from chunk_id hash
-                point_id = int(hashlib.md5(chunk.chunk_id.encode()).hexdigest()[:16], 16)
-                
-                # Prepare payload (metadata)
-                payload = chunk.to_dict()
-                
-                point = PointStruct(
+                contents.append(content)
+            self.bm25_encoder.fit(contents)
+            self.bm25_encoder.save(self.bm25_path)
+        elif not self.bm25_encoder.vocab:
+            raise RuntimeError("BM25 encoder is empty; fit it before calling add_documents(..., fit_bm25=False)")
+        
+        # Build points once, then upsert with optional adaptive batch strategy.
+        points: List[PointStruct] = []
+        for chunk, dense_vec in zip(chunks, embeddings):
+            content = getattr(chunk, "content", None) or getattr(chunk, "text", "")
+            sparse_indices, sparse_values = self.bm25_encoder.encode(content)
+            point_id = int(hashlib.md5(chunk.chunk_id.encode()).hexdigest()[:16], 16)
+            payload = chunk.to_dict()
+            points.append(
+                PointStruct(
                     id=point_id,
                     vector={
                         "dense": dense_vec,
@@ -424,17 +452,189 @@ class QdrantLegalStore:
                             values=sparse_values
                         )
                     },
-                    payload=payload
+                    payload=payload,
                 )
-                points.append(point)
-            
-            # Upsert batch
-            self.client.upsert(
-                collection_name=self.collection_name,
-                points=points
             )
-            
-            logger.info(f"[QDRANT] Indexed {min(i + batch_size, total)}/{total} documents")
+
+        metrics = self._upsert_points_adaptive(
+            points=points,
+            default_batch_size=batch_size,
+            upsert_batch_ladder=upsert_batch_ladder,
+            max_retries_per_batch=max_retries_per_batch,
+            max_consecutive_failures=max_consecutive_failures,
+        )
+        return metrics
+
+    def _upsert_points_adaptive(
+        self,
+        points: List[PointStruct],
+        default_batch_size: int = 100,
+        upsert_batch_ladder: Optional[List[int]] = None,
+        max_retries_per_batch: int = 3,
+        max_consecutive_failures: int = 3,
+    ) -> Dict[str, int]:
+        if not points:
+            return {
+                "indexed_chunks": 0,
+                "retries": 0,
+                "timeouts": 0,
+                "errors": 0,
+                "consecutive_failures": 0,
+            }
+
+        ladder = [int(x) for x in (upsert_batch_ladder or []) if int(x) > 0]
+        if not ladder:
+            ladder = [int(default_batch_size)]
+        ladder = sorted(list(dict.fromkeys(ladder)), reverse=True)
+        if int(default_batch_size) > 0 and int(default_batch_size) not in ladder:
+            ladder.append(int(default_batch_size))
+            ladder = sorted(list(dict.fromkeys(ladder)), reverse=True)
+
+        current_level = 0
+        cursor = 0
+        total = len(points)
+        retries = 0
+        timeouts = 0
+        errors = 0
+        consecutive_failures = 0
+        upsert_calls = 0
+
+        while cursor < total:
+            batch_size = ladder[current_level]
+            batch_points = points[cursor:cursor + batch_size]
+            attempt = 0
+            success = False
+            last_err: Optional[Exception] = None
+
+            while attempt <= max_retries_per_batch:
+                try:
+                    upsert_calls += 1
+                    self.client.upsert(
+                        collection_name=self.collection_name,
+                        points=batch_points,
+                        wait=True,
+                    )
+                    success = True
+                    break
+                except Exception as exc:
+                    last_err = exc
+                    retries += 1
+                    err_text = str(exc).lower()
+                    if "timeout" in err_text:
+                        timeouts += 1
+                    else:
+                        errors += 1
+                    attempt += 1
+                    if attempt <= max_retries_per_batch:
+                        time.sleep(min(2.0 ** attempt, 8.0))
+
+            if success:
+                cursor += len(batch_points)
+                consecutive_failures = 0
+                logger.info(
+                    "[QDRANT] Indexed %s/%s documents (upsert_batch=%s)",
+                    min(cursor, total),
+                    total,
+                    batch_size,
+                )
+                continue
+
+            consecutive_failures += 1
+            if current_level + 1 < len(ladder):
+                current_level += 1
+                logger.warning(
+                    "[QDRANT] Upsert failed at batch=%s, degrading to batch=%s. err=%s",
+                    batch_size,
+                    ladder[current_level],
+                    last_err,
+                )
+                continue
+
+            logger.error(
+                "[QDRANT] Upsert failed at smallest batch=%s (consecutive_failures=%s): %s",
+                batch_size,
+                consecutive_failures,
+                last_err,
+            )
+            if consecutive_failures > max_consecutive_failures:
+                raise RuntimeError(
+                    f"Upsert failed > {max_consecutive_failures} consecutive times at batch={batch_size}: {last_err}"
+                )
+
+        return {
+            "indexed_chunks": total,
+            "retries": retries,
+            "timeouts": timeouts,
+            "errors": errors,
+            "consecutive_failures": consecutive_failures,
+            "upsert_calls": upsert_calls,
+        }
+
+    def point_count(self, collection_name: Optional[str] = None) -> int:
+        target = collection_name or self.collection_name
+        info = self.client.get_collection(target)
+        return int(getattr(info, "points_count", 0) or 0)
+
+    def point_count_via_scroll(self, collection_name: Optional[str] = None) -> int:
+        target = collection_name or self.collection_name
+        count_result = self.client.count(
+            collection_name=target,
+            exact=True,
+        )
+        return int(getattr(count_result, "count", 0) or 0)
+
+    def set_alias(self, alias_name: str, target_collection: str):
+        self.client.update_collection_aliases(
+            change_aliases_operations=[
+                models.CreateAliasOperation(
+                    create_alias=models.CreateAlias(
+                        collection_name=target_collection,
+                        alias_name=alias_name,
+                    )
+                )
+            ]
+        )
+
+    def delete_alias(self, alias_name: str):
+        self.client.update_collection_aliases(
+            change_aliases_operations=[
+                models.DeleteAliasOperation(
+                    delete_alias=models.DeleteAlias(alias_name=alias_name)
+                )
+            ]
+        )
+
+    def swap_alias(self, alias_name: str, new_collection: str):
+        old_collection = None
+        aliases = self.client.get_aliases().aliases
+        for alias in aliases:
+            if alias.alias_name == alias_name:
+                old_collection = alias.collection_name
+                break
+
+        ops = []
+        if old_collection:
+            ops.append(
+                models.DeleteAliasOperation(
+                    delete_alias=models.DeleteAlias(alias_name=alias_name)
+                )
+            )
+        ops.append(
+            models.CreateAliasOperation(
+                create_alias=models.CreateAlias(
+                    collection_name=new_collection,
+                    alias_name=alias_name,
+                )
+            )
+        )
+        self.client.update_collection_aliases(change_aliases_operations=ops)
+
+    def resolve_alias(self, alias_name: str) -> Optional[str]:
+        aliases = self.client.get_aliases().aliases
+        for alias in aliases:
+            if alias.alias_name == alias_name:
+                return alias.collection_name
+        return None
     
     def hybrid_search(
         self,

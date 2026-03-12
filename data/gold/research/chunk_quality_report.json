@@ -1,0 +1,9 @@
+{
+  "evaluated_docs": 1255,
+  "total_chunks": 251368,
+  "provision_id_valid_rate": 1.0,
+  "structured_chunk_rate": 0.9981779701473537,
+  "citation_full_rate": 1.0,
+  "non_cross_dieu_rate": 1.0,
+  "fallback_chunk_rate": 0.0018220298526463194
+}

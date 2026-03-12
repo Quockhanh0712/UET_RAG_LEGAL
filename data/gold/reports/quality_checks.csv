@@ -1,0 +1,7 @@
+check_name,value,target,status
+law_count_or_ratio,"count=290, ratio=0.2311",count>=40 OR ratio>=0.25,PASS
+recent_ratio,0.4446,>=0.55 (year>=2015),WARN
+active_ratio,1.0000,>=0.95,PASS
+duplicate_doc_id,0,==0,PASS
+duplicate_content_hash,0,==0,PASS
+missing_issue_date_ratio,0.0000,<=0.05,PASS

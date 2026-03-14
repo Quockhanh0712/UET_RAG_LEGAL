@@ -77,10 +77,9 @@ def _apply_chunk_policy(chunks: List, chunk_policy: str) -> List:
     if policy != "c3":
         return chunks
 
-    # C3 production profile:
-    # - keep article-level ProvisionChunk
-    # - keep clause-level ClauseChunk (Khoan)
-    # - drop point-level ClauseChunk (Diem) to avoid vector-space dilution
+    # C3 production profile under article-first chunking:
+    # - keep only article/article_window ProvisionChunk
+    # - never index clause-level chunks into production retrieval
     grouped: Dict[str, List] = defaultdict(list)
     for chunk in chunks:
         grouped[str(getattr(chunk, "doc_id", "") or "UNKNOWN")].append(chunk)
@@ -90,10 +89,7 @@ def _apply_chunk_policy(chunks: List, chunk_policy: str) -> List:
         structured = []
         for c in doc_chunks:
             chunk_type = str(getattr(c, "chunk_type", "") or "")
-            segment_level = str(getattr(c, "segment_level", "") or "").lower()
             if chunk_type == "ProvisionChunk":
-                structured.append(c)
-            elif chunk_type == "ClauseChunk" and segment_level == "clause":
                 structured.append(c)
         if structured:
             selected.extend(structured)
@@ -230,6 +226,7 @@ def _upload_for_model(
     min_structured_rate: float,
     min_citation_rate: float,
     min_non_cross_rate: float,
+    payload_profile: str,
 ) -> Dict[str, str]:
     normalize_label = "auto" if normalize_embeddings is None else ("true" if normalize_embeddings else "false")
 
@@ -242,6 +239,7 @@ def _upload_for_model(
         use_cloud=True,
         cloud_url=cloud_url,
         api_key=api_key,
+        payload_profile=payload_profile,
     )
     store.create_collection(force_recreate=force_recreate)
 
@@ -372,6 +370,7 @@ def _upload_for_model(
         "quality_structured": f"{quality_metrics['structured_chunk_rate']:.4f}",
         "quality_citation": f"{quality_metrics['citation_full_rate']:.4f}",
         "quality_non_cross": f"{quality_metrics['non_cross_dieu_rate']:.4f}",
+        "payload_profile": payload_profile,
     }
 
 
@@ -393,6 +392,7 @@ def main() -> None:
     parser.add_argument("--qdrant-url", required=True)
     parser.add_argument("--qdrant-api-key", required=True)
     parser.add_argument("--collection-base", default="legal_documents")
+    parser.add_argument("--payload-profile", choices=("lean", "full"), default="lean")
     parser.add_argument("--embedding-batch-size", type=int, default=8)
     parser.add_argument("--upsert-batch-size", type=int, default=50)
     parser.add_argument("--force-recreate", action="store_true")
@@ -421,7 +421,8 @@ def main() -> None:
 
     print(
         f"[INFO] input_docs={input_total} selected_docs={selected_total} loaded_docs={len(records)} "
-        f"chunk_policy={args.chunk_policy} doc_batch_size={args.doc_batch_size} max_chunks={args.max_chunks}"
+        f"chunk_policy={args.chunk_policy} doc_batch_size={args.doc_batch_size} max_chunks={args.max_chunks} "
+        f"payload_profile={args.payload_profile}"
     )
 
     results = []
@@ -445,13 +446,15 @@ def main() -> None:
             min_structured_rate=args.min_structured_rate,
             min_citation_rate=args.min_citation_rate,
             min_non_cross_rate=args.min_non_cross_rate,
+            payload_profile=args.payload_profile,
         )
         results.append(result)
         print(
             f"[DONE] model={result['model_id']} collection={result['collection_name']} "
             f"dim={result['dense_dim']} points={result['points_count']} status={result['status']} "
             f"indexed_chunks={result['indexed_chunks']} quality=(p={result['quality_provision']},s={result['quality_structured']},c={result['quality_citation']},x={result['quality_non_cross']}) "
-            f"smoke={result['smoke_passed']}/{result['smoke_total']} hits={result['smoke_hits']}"
+            f"smoke={result['smoke_passed']}/{result['smoke_total']} hits={result['smoke_hits']} "
+            f"payload={result['payload_profile']}"
         )
 
     client = QdrantClient(url=args.qdrant_url, api_key=args.qdrant_api_key)

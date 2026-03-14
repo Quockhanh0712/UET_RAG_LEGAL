@@ -28,6 +28,7 @@ import json
 import shutil
 import base64
 import asyncio
+from dataclasses import replace
 from pathlib import Path
 from typing import List, Dict, Optional, Any
 from datetime import datetime
@@ -62,6 +63,18 @@ from database import (
     get_session_messages,
     get_metrics_stats
 )
+from src.adapters.backend_adapter import build_chat_payload, build_search_payload
+from src.config.runtime_settings import load_runtime_settings
+from src.factories.legal_pipeline_factory import get_legal_pipeline
+from src.legal_rag_pipeline import LegalAnswer
+from src.runtime.qdrant_contract import validate_qdrant_contract
+from src.services.model_profile_registry import (
+    get_default_model_profile_id,
+    get_model_profile,
+    list_model_profiles,
+)
+from src.services.query_rewrite_service import QueryRewriteService
+from src.services.remote_llm_client import RemoteLLMClient
 
 # Environment setup
 os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
@@ -97,6 +110,8 @@ class Config:
     # LLM
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    BACKEND_USE_SHARED_LEGAL_PIPELINE = os.getenv("BACKEND_USE_SHARED_LEGAL_PIPELINE", "false").lower() == "true"
+    BACKEND_RUNTIME_PROFILE = os.getenv("BACKEND_RUNTIME_PROFILE", "chainlit_demo")
     
     # Paths
     UPLOAD_DIR = PROJECT_ROOT / "data" / "uploads"
@@ -136,6 +151,11 @@ class ChatRequest(BaseModel):
     search_mode: str = "hybrid"  # legal, user, hybrid
     top_k: int = 10
     use_reranker: Optional[bool] = None  # None = use global setting
+    model_profile_id: Optional[str] = None
+    query_mode: str = "original"
+    response_mode: str = "chat"
+    require_active_only: bool = True
+    use_graph: bool = False
 
 class ChatResponse(BaseModel):
     answer: str
@@ -154,6 +174,17 @@ class ChatResponse(BaseModel):
     factuality_score: Optional[float] = None
     context_relevance: Optional[float] = None
     quality_feedback: Optional[str] = None
+    model_profile_id: Optional[str] = None
+    query_mode: Optional[str] = None
+    rewrite_used: bool = False
+    rewrite_status: str = "disabled"
+    rewrite_fallback_reason: str = ""
+    rewritten_queries: List[str] = Field(default_factory=list)
+    per_subquery_hits: List[Dict] = Field(default_factory=list)
+    retrieval_union_count: int = 0
+    fallback_used: bool = False
+    fallback_error: str = ""
+    collection: Optional[str] = None
 
 class SearchRequest(BaseModel):
     query: str
@@ -162,6 +193,9 @@ class SearchRequest(BaseModel):
     search_mode: str = "hybrid"  # legal, user, hybrid
     top_k: int = 10
     use_reranker: Optional[bool] = None  # None = use global setting
+    model_profile_id: Optional[str] = None
+    query_mode: str = "original"
+    require_active_only: bool = True
 
 class SearchResponse(BaseModel):
     results: List[Dict]
@@ -169,6 +203,17 @@ class SearchResponse(BaseModel):
     mode: str
     rerank_time: float = 0.0
     reranker_used: bool = False
+    model_profile_id: Optional[str] = None
+    query_mode: Optional[str] = None
+    rewrite_used: bool = False
+    rewrite_status: str = "disabled"
+    rewrite_fallback_reason: str = ""
+    rewritten_queries: List[str] = Field(default_factory=list)
+    per_subquery_hits: List[Dict] = Field(default_factory=list)
+    retrieval_union_count: int = 0
+    fallback_used: bool = False
+    fallback_error: str = ""
+    collection: Optional[str] = None
 
 
 class ScoreRequest(BaseModel):
@@ -226,6 +271,253 @@ _embedding_model = None
 _bm25_encoder = None
 _ollama_client = None
 _chat_history: Dict[str, List[Dict]] = {}  # session_id -> messages
+
+
+def _shared_legal_enabled(search_mode: str) -> bool:
+    return bool(Config.BACKEND_USE_SHARED_LEGAL_PIPELINE and str(search_mode or "").strip().lower() == "legal")
+
+
+def _normalize_query_mode(query_mode: str | None) -> str:
+    value = str(query_mode or "original").strip().lower()
+    if value in {"rewrite_combine", "rewrite+combine", "rewrite"}:
+        return "rewrite_combine"
+    return "original"
+
+
+def _backend_runtime_settings(query_rewriter_enabled: bool, query_rewriter_force: bool):
+    base_settings = load_runtime_settings(Config.BACKEND_RUNTIME_PROFILE)
+    return replace(
+        base_settings,
+        query_rewriter_enabled=bool(query_rewriter_enabled),
+        query_rewriter_force=bool(query_rewriter_force),
+    )
+
+
+def _build_remote_llm(profile_id: str | None) -> RemoteLLMClient:
+    profile = get_model_profile(profile_id)
+    return RemoteLLMClient(
+        provider_type=profile.provider_type,
+        base_url=profile.base_url,
+        model=profile.model,
+        timeout_s=profile.timeout_s,
+        system_prompt=(
+            "Ban la tro ly phap ly Viet Nam. "
+            "Chi duoc tra loi dua tren context da cung cap. "
+            "Neu khong du thong tin, phai noi ro khong tim thay quy dinh lien quan."
+        ),
+    )
+
+
+def _build_query_rewrite_service(profile_id: str | None, query_mode: str) -> QueryRewriteService:
+    normalized_mode = _normalize_query_mode(query_mode)
+    profile = get_model_profile(profile_id)
+    enabled = normalized_mode == "rewrite_combine" and profile.supports_rewrite
+    rewriter = None
+    if enabled:
+        from src.legal_query_rewriter import LegalQueryRewriter
+
+        rewriter = LegalQueryRewriter(
+            provider_type=profile.provider_type,
+            base_url=profile.base_url,
+            model_name=profile.model,
+            timeout_s=profile.timeout_s,
+        )
+    return QueryRewriteService(
+        enabled=enabled,
+        force=enabled,
+        rewriter=rewriter,
+    )
+
+
+def _save_shared_chat_history(
+    *,
+    request: ChatRequest,
+    answer: str,
+    sources: List[Dict[str, Any]],
+    payload: Dict[str, Any],
+) -> None:
+    session_id = request.session_id
+    user_id = request.user_id or "default"
+    user_message_id = str(uuid.uuid4())
+    assistant_message_id = str(uuid.uuid4())
+
+    try:
+        save_chat_session(
+            session_id=session_id,
+            user_id=user_id,
+            title=f"Chat {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        )
+        save_message(
+            message_id=user_message_id,
+            session_id=session_id,
+            role="user",
+            content=request.message,
+        )
+        save_message(
+            message_id=assistant_message_id,
+            session_id=session_id,
+            role="assistant",
+            content=answer,
+        )
+        if sources:
+            save_message_sources(assistant_message_id, sources)
+    except Exception as exc:
+        logger.error("Shared chat database save failed: %s", exc)
+
+    if session_id not in _chat_history:
+        _chat_history[session_id] = []
+    _chat_history[session_id].append(
+        {
+            "id": user_message_id,
+            "role": "user",
+            "content": request.message,
+            "timestamp": datetime.now().isoformat(),
+        }
+    )
+    _chat_history[session_id].append(
+        {
+            "id": assistant_message_id,
+            "role": "assistant",
+            "content": answer,
+            "sources": sources,
+            "timestamp": datetime.now().isoformat(),
+            "search_time": payload.get("search_time"),
+            "generation_time": payload.get("generation_time"),
+            "total_time": payload.get("total_time"),
+            "rerank_time": payload.get("rerank_time"),
+            "reranker_used": payload.get("reranker_used"),
+            "model_profile_id": payload.get("model_profile_id"),
+            "query_mode": payload.get("query_mode"),
+            "rewrite_used": payload.get("rewrite_used"),
+            "rewrite_status": payload.get("rewrite_status"),
+            "rewrite_fallback_reason": payload.get("rewrite_fallback_reason"),
+            "rewritten_queries": payload.get("rewritten_queries", []),
+            "per_subquery_hits": payload.get("per_subquery_hits", []),
+            "retrieval_union_count": payload.get("retrieval_union_count", 0),
+            "fallback_used": payload.get("fallback_used", False),
+            "fallback_error": payload.get("fallback_error", ""),
+            "collection": payload.get("collection"),
+        }
+    )
+
+
+def _run_shared_legal_search(request: SearchRequest) -> SearchResponse:
+    query_mode = _normalize_query_mode(request.query_mode)
+    settings = _backend_runtime_settings(
+        query_rewriter_enabled=(query_mode == "rewrite_combine"),
+        query_rewriter_force=(query_mode == "rewrite_combine"),
+    )
+    settings.apply_env()
+    pipeline = get_legal_pipeline(settings)
+    contract = validate_qdrant_contract(settings, int(pipeline.embedding_model.embedding_dim))
+    query_rewrite_service = _build_query_rewrite_service(request.model_profile_id, query_mode)
+    result = pipeline.search(
+        question=request.query,
+        top_k=request.top_k,
+        filter_conditions=None,
+        use_reranker=bool(request.use_reranker if request.use_reranker is not None else _app_settings.get("reranker_enabled", True)),
+        include_inactive=not request.require_active_only,
+        use_graph_context=False,
+        graph_hops=1,
+        graph_expand_docs=20,
+        query_rewrite_service=query_rewrite_service,
+    )
+    payload = build_search_payload(
+        result,
+        mode=request.search_mode,
+        collection=contract.collection_name,
+        model_profile_id=get_model_profile(request.model_profile_id).id,
+        query_mode=query_mode,
+    )
+    return SearchResponse(**payload)
+
+
+def _run_shared_legal_chat(request: ChatRequest) -> ChatResponse:
+    query_mode = _normalize_query_mode(request.query_mode)
+    settings = _backend_runtime_settings(
+        query_rewriter_enabled=(query_mode == "rewrite_combine"),
+        query_rewriter_force=(query_mode == "rewrite_combine"),
+    )
+    settings.apply_env()
+    pipeline = get_legal_pipeline(settings)
+    contract = validate_qdrant_contract(settings, int(pipeline.embedding_model.embedding_dim))
+    query_rewrite_service = _build_query_rewrite_service(request.model_profile_id, query_mode)
+    llm_client = _build_remote_llm(request.model_profile_id)
+
+    fallback_used = False
+    fallback_error = ""
+    try:
+        result = pipeline.query(
+            question=request.message,
+            top_k=request.top_k,
+            filter_conditions=None,
+            use_reranker=bool(request.use_reranker if request.use_reranker is not None else _app_settings.get("reranker_enabled", True)),
+            include_inactive=not request.require_active_only,
+            use_graph_context=bool(request.use_graph),
+            graph_hops=1,
+            graph_expand_docs=20,
+            query_rewrite_service=query_rewrite_service,
+            llm_client=llm_client,
+        )
+        answer = str(result.answer or "").strip()
+    except Exception as exc:
+        fallback_used = True
+        fallback_error = str(exc)
+        search_result = pipeline.search(
+            question=request.message,
+            top_k=request.top_k,
+            filter_conditions=None,
+            use_reranker=bool(request.use_reranker if request.use_reranker is not None else _app_settings.get("reranker_enabled", True)),
+            include_inactive=not request.require_active_only,
+            use_graph_context=bool(request.use_graph),
+            graph_hops=1,
+            graph_expand_docs=20,
+            query_rewrite_service=query_rewrite_service,
+        )
+        result = LegalAnswer(
+            answer="",
+            citations=list(search_result.citations or []),
+            intent=str(search_result.intent),
+            retrieval_time=float(search_result.retrieval_time),
+            generation_time=0.0,
+            rerank_time=float(search_result.rerank_time),
+            used_reranker=bool(search_result.used_reranker),
+            graph_expansion_used=bool(search_result.graph_expansion_used),
+            graph_mode=str(search_result.graph_mode),
+            rewrite_time=float(search_result.rewrite_time),
+            rewrite_used=bool(search_result.rewrite_used),
+            rewrite_status=str(search_result.rewrite_status),
+            rewrite_fallback_reason=str(search_result.rewrite_fallback_reason),
+            rewritten_queries=list(search_result.rewritten_queries),
+            missing_numbers=list(search_result.missing_numbers),
+            per_subquery_hits=list(search_result.per_subquery_hits),
+            retrieval_union_count=int(search_result.retrieval_union_count),
+        )
+        answer = ""
+    if not answer or answer.lower().startswith("loi khi goi llm") or answer.lower().startswith("llm khong kha dung"):
+        fallback_used = True
+        fallback_error = fallback_error or answer or "answer_generation_failed"
+        answer = (
+            "LLM unavailable or failed. Returning retrieval-only sources. "
+            "Please inspect citations below."
+        )
+
+    payload = build_chat_payload(
+        result,
+        answer=answer,
+        collection=contract.collection_name,
+        model_profile_id=get_model_profile(request.model_profile_id).id,
+        query_mode=query_mode,
+        fallback_used=fallback_used,
+        fallback_error=fallback_error,
+    )
+    _save_shared_chat_history(
+        request=request,
+        answer=answer,
+        sources=payload["sources"],
+        payload=payload,
+    )
+    return ChatResponse(**payload)
 
 
 def get_qdrant_client():
@@ -690,33 +982,79 @@ async def root():
 async def get_status():
     """Get system status"""
     try:
+        if Config.BACKEND_USE_SHARED_LEGAL_PIPELINE:
+            settings = _backend_runtime_settings(query_rewriter_enabled=False, query_rewriter_force=False)
+            settings.apply_env()
+            pipeline = await asyncio.to_thread(get_legal_pipeline, settings)
+            contract = await asyncio.to_thread(
+                validate_qdrant_contract,
+                settings,
+                int(pipeline.embedding_model.embedding_dim),
+            )
+            legal_count = int(pipeline.qdrant_store.get_stats().get("points_count", 0) or 0)
+            client = get_qdrant_client()
+            try:
+                user_info = client.get_collection(Config.USER_COLLECTION)
+                user_count = user_info.points_count
+            except Exception:
+                user_count = 0
+            return {
+                "status": "ok",
+                "backend_mode": "shared_legal_pipeline",
+                "shared_pipeline_enabled": True,
+                "legal_collection": contract.collection_name,
+                "legal_documents": legal_count,
+                "user_collection": Config.USER_COLLECTION,
+                "user_documents": user_count,
+                "embedding_model": settings.embedding_model,
+                "llm_model": Config.OLLAMA_MODEL,
+                "available_model_profiles": [profile.to_public_dict() for profile in list_model_profiles()],
+                "collection_resolved": contract.collection_name,
+                "collection_status": contract.collection_status,
+            }
+
         client = get_qdrant_client()
-        
-        # Get collection stats
         legal_info = client.get_collection(Config.LEGAL_COLLECTION)
-        
         try:
             user_info = client.get_collection(Config.USER_COLLECTION)
             user_count = user_info.points_count
-        except:
+        except Exception:
             user_count = 0
-        
         return {
             "status": "ok",
+            "backend_mode": "legacy",
+            "shared_pipeline_enabled": False,
             "legal_collection": Config.LEGAL_COLLECTION,
             "legal_documents": legal_info.points_count,
             "user_collection": Config.USER_COLLECTION,
             "user_documents": user_count,
             "embedding_model": Config.EMBEDDING_MODEL,
-            "llm_model": Config.OLLAMA_MODEL
+            "llm_model": Config.OLLAMA_MODEL,
+            "available_model_profiles": [profile.to_public_dict() for profile in list_model_profiles()],
+            "collection_resolved": Config.LEGAL_COLLECTION,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/settings/model-profiles")
+async def get_model_profiles():
+    return {
+        "profiles": [profile.to_public_dict() for profile in list_model_profiles()],
+        "default_profile_id": get_default_model_profile_id(),
+    }
+
+
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Chat with the legal AI assistant"""
+    if _shared_legal_enabled(request.search_mode):
+        try:
+            return await asyncio.to_thread(_run_shared_legal_chat, request)
+        except Exception as exc:
+            logger.error("Shared legal chat error: %s", exc)
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+
     start_time = time.time()
     
     try:
@@ -929,6 +1267,13 @@ async def chat(request: ChatRequest):
 @app.post("/api/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
     """Search documents"""
+    if _shared_legal_enabled(request.search_mode):
+        try:
+            return await asyncio.to_thread(_run_shared_legal_search, request)
+        except Exception as exc:
+            logger.error("Shared legal search error: %s", exc)
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+
     start_time = time.time()
     
     try:

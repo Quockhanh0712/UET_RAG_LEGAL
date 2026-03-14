@@ -1,0 +1,199 @@
+# Qdrant Metadata Patch Report
+
+- run_id: `run_20260313_patch_new_cluster_titles_v1`
+- collection: `legal_documents__truro7_vn_law_embedding__d768`
+- dry_run: `False`
+- lean: `True`
+- patched_at: `2026-03-13T10:23:47.234523+00:00`
+- docs_seen: `20`
+- points_seen: `12655`
+- docs_confident: `17`
+- docs_low_confidence: `3`
+- docs_title_changed: `17`
+- docs_family_changed: `17`
+- points_citation_changed: `10244`
+- common_operations: `17`
+- citation_operations: `5592`
+- delete_operations: `20`
+
+## Sample Diffs
+
+### 02/2021/QH15
+- confident: `True`
+- flags: `['dropped_header_prefix', 'trimmed_preamble_tail']`
+- before_title: `QUỐC HỘI Luật số: 02/2021/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA BỘ LUẬT TỐ TỤNG HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc h`
+- after_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA BỘ LUẬT TỐ TỤNG HÌNH SỰ`
+- before_family: `BỘ LUẬT TỐ TỤNG HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam`
+- after_family: `BỘ LUẬT TỐ TỤNG HÌNH SỰ`
+- citation_changed_points: `13`
+
+### 03/2016/QH14
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `LUẬT SỬA ĐỔI, BỔ SUNG ĐiỀu 6 VÀ PHỤ LỤC 4 vỀ DANH MỤC NGÀNH, NGHỀ ĐẦU TƯ KINH DOANH CÓ ĐIỀU KIỆN CỦA LUẬT ĐẦU TƯ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung`
+- after_title: `LUẬT SỬA ĐỔI, BỔ SUNG ĐiỀu 6 VÀ PHỤ LỤC 4 vỀ DANH MỤC NGÀNH, NGHỀ ĐẦU TƯ KINH DOANH CÓ ĐIỀU KIỆN CỦA LUẬT ĐẦU TƯ`
+- before_family: `LUẬT SỬA ĐỔI, BỔ SUNG ĐiỀu 6 VÀ PHỤ LỤC 4 vỀ DANH MỤC NGÀNH, NGHỀ ĐẦU TƯ KINH DOANH CÓ ĐIỀU KIỆN CỦA LUẬT ĐẦU TƯ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung`
+- after_family: `LUẬT SỬA ĐỔI, BỔ SUNG ĐiỀu 6 VÀ PHỤ LỤC 4 vỀ DANH MỤC NGÀNH, NGHỀ ĐẦU TƯ KINH DOANH CÓ ĐIỀU KIỆN CỦA LUẬT ĐẦU TƯ`
+- citation_changed_points: `8`
+
+### 03/2022/QH15
+- confident: `True`
+- flags: `['removed_ocr_noise', 'trimmed_preamble_tail', 'title_truncated']`
+- before_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT ĐẦU TƯ CÔNG, LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ, LUẬT ĐẦU TƯ, LUẬT NHÀ Ở, LUẬT ĐẤU THẦU, LUẬT ĐIỆN LỰC, LUẬT DOANH NGHIỆP, LUẬT THUẾ TIÊU THỤ ĐẶC BIỆT VÀ LUẬT THI HÀNH`
+- after_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT ĐẦU TƯ CÔNG, LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ, LUẬT ĐẦU TƯ, LUẬT NHÀ Ở, LUẬT ĐẤU THẦU, LUẬT ĐIỆN LỰC, LUẬT DOANH NGHIỆP, LUẬT`
+- before_family: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT ĐẦU TƯ CÔNG, LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ, LUẬT ĐẦU TƯ, LUẬT NHÀ Ở, LUẬT ĐẤU THẦU, LUẬT ĐIỆN LỰC, LUẬT DOANH NGHIỆP, LUẬT THUẾ TIÊU THỤ ĐẶC BIỆT VÀ LUẬT THI HÀNH`
+- after_family: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT ĐẦU TƯ CÔNG, LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ, LUẬT ĐẦU TƯ, LUẬT NHÀ Ở, LUẬT ĐẤU THẦU, LUẬT ĐIỆN LỰC, LUẬT DOANH NGHIỆP, LUẬT`
+- citation_changed_points: `62`
+
+### 100/2015/QH13
+- confident: `True`
+- flags: `['removed_ocr_noise', 'trimmed_preamble_tail']`
+- before_title: `BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Bộ luật hình sự. Phần thứ nhất NHỮNG QUY ĐỊNH CHUNG Chương I ĐIỀU KHOẢN CƠ BẢN`
+- after_title: `BỘ LUẬT HÌNH SỰ`
+- before_family: `BỘ LUẬT HÌNH SỰ __ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam`
+- after_family: `BỘ LUẬT HÌNH SỰ`
+- citation_changed_points: `3781`
+
+### 101/2015/QH13
+- confident: `True`
+- flags: `['removed_ocr_noise', 'trimmed_preamble_tail']`
+- before_title: `BỘ LUẬT TỐ TỤNG HÌNH SỰ _________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Bộ luật tố tụng hình sự, Phần thứ nhất NHỮNG QUY ĐỊNH CHUNG Chương I PHẠM VI ĐIỀU CHỈNH, NHIỆM VỤ, HIỆU LỰC CỦ`
+- after_title: `BỘ LUẬT TỐ TỤNG HÌNH SỰ`
+- before_family: `BỘ LUẬT TỐ TỤNG HÌNH SỰ _________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam`
+- after_family: `BỘ LUẬT TỐ TỤNG HÌNH SỰ`
+- citation_changed_points: `1223`
+
+### 27/2023/QH15
+- confident: `False`
+- flags: `['dropped_header_prefix', 'trimmed_preamble_tail', 'low_confidence_title', 'kept_raw_title']`
+- before_title: `QUỐC HỘI Luật số: 27/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT NHÀ Ở Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. ·Chương I ·NHỮNG QUY ĐỊNH C`
+- after_title: `QUỐC HỘI Luật số: 27/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT NHÀ Ở Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. ·Chương I ·NHỮNG QUY ĐỊNH C`
+- before_family: `QUỐC HỘI Luật số: 27/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT NHÀ Ở Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. ·Chương I ·NHỮNG QUY ĐỊNH C`
+- after_family: `QUỐC HỘI Luật số: 27/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT NHÀ Ở Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. ·Chương I ·NHỮNG QUY ĐỊNH C`
+- citation_changed_points: `0`
+
+### 29/2023/QH15
+- confident: `True`
+- flags: `['dropped_header_prefix', 'trimmed_preamble_tail']`
+- before_title: `QUỐC HỘI Luật số: 29/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT KINH DOANH BẤT ĐỘNG SẢN Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Kinh doanh bất đ`
+- after_title: `LUẬT KINH DOANH BẤT ĐỘNG SẢN`
+- before_family: `QUỐC HỘI Luật số: 29/2023/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc LUẬT KINH DOANH BẤT ĐỘNG SẢN Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Kinh doanh bất đ`
+- after_family: `LUẬT KINH DOANH BẤT ĐỘNG SẢN`
+- citation_changed_points: `315`
+
+### 35/2018/QH14
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA 37 LUẬT CÓ LIÊN QUAN ĐẾN QUY HOẠCH Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật sửa đổi, bổ sung một số điều có liên quan đến quy hoạch của Luật G`
+- after_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA 37 LUẬT CÓ LIÊN QUAN ĐẾN QUY HOẠCH`
+- before_family: `Bộ luật Hàng hải Việt Nam s ố 95/2015/QH13`
+- after_family: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA 37 LUẬT CÓ LIÊN QUAN ĐẾN QUY HOẠCH`
+- citation_changed_points: `1025`
+
+### 39/2019/QH14
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `LUẬT ĐẦU TƯ CÔNG Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư công. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_title: `LUẬT ĐẦU TƯ CÔNG`
+- before_family: `LUẬT ĐẦU TƯ CÔNG Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư công. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_family: `LUẬT ĐẦU TƯ CÔNG`
+- citation_changed_points: `414`
+
+### 41/2024/QH15
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `LUẬT BẢO HIỂM XÃ HỘI Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Bảo hiểm xã hội. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_title: `LUẬT BẢO HIỂM XÃ HỘI`
+- before_family: `LUẬT BẢO HIỂM XÃ HỘI Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Bảo hiểm xã hội. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_family: `LUẬT BẢO HIỂM XÃ HỘI`
+- citation_changed_points: `621`
+
+### 43/2024/QH15
+- confident: `True`
+- flags: `['trimmed_preamble_tail', 'title_truncated']`
+- before_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT ĐẤT ĐAI SỐ 31/2024/QH15, LUẬT NHÀ Ở SỐ 27/2023/QH15, LUẬT KINH DOANH BẤT ĐỘNG SẢN SỐ 29/2023/QH15 VÀ LUẬT CÁC TỔ CHỨC TÍN DỤNG SỐ 32/2024/QH15 Căn cứ Hiến pháp nước Cộng hòa xã `
+- after_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT ĐẤT ĐAI SỐ 31/2024/QH15, LUẬT NHÀ Ở SỐ 27/2023/QH15, LUẬT KINH DOANH BẤT ĐỘNG SẢN SỐ 29/2023/QH15 VÀ LUẬT CÁC TỔ CHỨC TÍN DỤNG SỐ`
+- before_family: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT ĐẤT ĐAI SỐ 31/2024/QH15, LUẬT NHÀ Ở SỐ 27/2023/QH15, LUẬT KINH DOANH BẤT ĐỘNG SẢN SỐ 29/2023/QH15 VÀ LUẬT CÁC TỔ CHỨC TÍN DỤNG SỐ 32/2024/QH15 Căn cứ Hiến pháp nước Cộng hòa xã `
+- after_family: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT ĐẤT ĐAI SỐ 31/2024/QH15, LUẬT NHÀ Ở SỐ 27/2023/QH15, LUẬT KINH DOANH BẤT ĐỘNG SẢN SỐ 29/2023/QH15 VÀ LUẬT CÁC TỔ CHỨC TÍN DỤNG SỐ`
+- citation_changed_points: `17`
+
+### 57/2024/QH15
+- confident: `True`
+- flags: `['removed_ocr_noise', 'dropped_header_prefix']`
+- before_title: `1/01/clip_image001. png" width="41" /> QUỐC HỘI CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc Luật số: 57/2024/QH15 1/01/clip_image002. png" width="233" /> LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT QUY `
+- after_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT QUY HOẠCH, LUẬT ĐẦU TƯ, LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ VÀ LUẬT ĐẤU THẦ`
+- before_family: `1/01/clip_image001. png" width="41" /> QUỐC HỘI CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc Luật số: 57/2024/QH15 1/01/clip_image002. png" width="233" /> LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT QUY `
+- after_family: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT QUY HOẠCH, LUẬT ĐẦU TƯ, LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ VÀ LUẬT ĐẤU THẦ`
+- citation_changed_points: `201`
+
+### 58/2024/QH15
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `LUẬT ĐẦU TƯ CÔNG Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư công. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_title: `LUẬT ĐẦU TƯ CÔNG`
+- before_family: `LUẬT ĐẦU TƯ CÔNG Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư công. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_family: `LUẬT ĐẦU TƯ CÔNG`
+- citation_changed_points: `446`
+
+### 59/2020/QH14
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `LUẬT DOANH NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Doanh nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_title: `LUẬT DOANH NGHIỆP`
+- before_family: `LUẬT DOANH NGHIỆP Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Doanh nghiệp. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_family: `LUẬT DOANH NGHIỆP`
+- citation_changed_points: `836`
+
+### 61/2020/QH14
+- confident: `False`
+- flags: `['trimmed_preamble_tail', 'low_confidence_title', 'kept_raw_title']`
+- before_title: `LUẬT ĐẦU TƯ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_title: `LUẬT ĐẦU TƯ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- before_family: `LUẬT ĐẦU TƯ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_family: `LUẬT ĐẦU TƯ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- citation_changed_points: `0`
+
+### 64/2020/QH14
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư theo phương thức đối tác công tư. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_title: `LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ`
+- before_family: `LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Đầu tư theo phương thức đối tác công tư. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_family: `LUẬT ĐẦU TƯ THEO PHƯƠNG THỨC ĐỐI TÁC CÔNG TƯ`
+- citation_changed_points: `370`
+
+### 65/2014/QH13
+- confident: `False`
+- flags: `['removed_ocr_noise', 'trimmed_preamble_tail', 'low_confidence_title', 'kept_raw_title']`
+- before_title: `LUẬT Nhà ở _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_title: `LUẬT Nhà ở _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- before_family: `LUẬT Nhà ở _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- after_family: `LUẬT Nhà ở _____ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Nhà ở. Chương I NHỮNG QUY ĐỊNH CHUNG`
+- citation_changed_points: `0`
+
+### 71/2014/QH13
+- confident: `True`
+- flags: `['removed_ocr_noise', 'trimmed_preamble_tail']`
+- before_title: `LUẬT Sửa đổi, bổ sung một số điều của các luật về thuế _______________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Sửa đổi, bổ sung một số điều của Luật Thuế thu nhập doanh nghiệp số `
+- after_title: `LUẬT Sửa đổi, bổ sung một số điều của các luật về thuế`
+- before_family: `LUẬT Sửa đổi, bổ sung một số điều của các luật về thuế _______________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật Sửa đổi, bổ sung một số điều của Luật Thuế thu nhập doanh nghiệp số `
+- after_family: `LUẬT Sửa đổi, bổ sung một số điều của các luật về thuế`
+- citation_changed_points: `56`
+
+### 86/2025/QH15
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA BỘ LUẬT HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 203/2025/QH15; Quốc hội ban hành Luật sửa đổi, bổ sun`
+- after_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA BỘ LUẬT HÌNH SỰ`
+- before_family: `BỘ LUẬT HÌNH SỰ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam đã được sửa đổi`
+- after_family: `BỘ LUẬT HÌNH SỰ`
+- citation_changed_points: `668`
+
+### LUẬTSỐ51/2024/QH15
+- confident: `True`
+- flags: `['removed_ocr_noise', 'dropped_header_prefix', 'trimmed_preamble_tail']`
+- before_title: `QUỐC HỘI - - - - - - - CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc - - - - - - - - - - - - - - - Luật số: 51/2024/QH15 Hà Nội, ngày 27 tháng 11 năm 2024 LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT BẢO H`
+- after_title: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT BẢO HIỂM Y TẾ`
+- before_family: `QUỐC HỘI - - - - - - - CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM Độc lập - Tự do - Hạnh phúc - - - - - - - - - - - - - - - Luật số: 51/2024/QH15 Hà Nội, ngày 27 tháng 11 năm 2024 LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT BẢO H`
+- after_family: `LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA LUẬT BẢO HIỂM Y TẾ`
+- citation_changed_points: `188`

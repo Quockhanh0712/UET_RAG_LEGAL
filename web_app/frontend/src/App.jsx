@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
+import LegalLabArea from './components/LegalLabArea';
 import QualityDashboard from './components/QualityDashboard';
 import LegalOCR from './components/LegalOCR';
 import Toast from './components/Toast';
@@ -25,6 +26,19 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [searchMode, setSearchMode] = useState('hybrid'); // legal, user, hybrid
   const [rerankerEnabled, setRerankerEnabled] = useState(true); // Vietnamese Reranker toggle
+  const [modelProfiles, setModelProfiles] = useState([]);
+  const [selectedModelProfileId, setSelectedModelProfileId] = useState(() => localStorage.getItem('selectedModelProfileId') || 'qwen3_8b_ollama_remote');
+  const [queryMode, setQueryMode] = useState(() => localStorage.getItem('queryMode') || 'original');
+  const [labTab, setLabTab] = useState(() => localStorage.getItem('labTab') || 'search');
+  const [requireActiveOnly, setRequireActiveOnly] = useState(() => {
+    const saved = localStorage.getItem('requireActiveOnly');
+    return saved ? JSON.parse(saved) : true;
+  });
+  const [topK, setTopK] = useState(() => {
+    const saved = localStorage.getItem('topK');
+    return saved ? Number(saved) : 5;
+  });
+  const [searchRuns, setSearchRuns] = useState([]);
 
   // Documents state
   const [documents, setDocuments] = useState([]);
@@ -47,6 +61,26 @@ function App() {
     localStorage.setItem('userId', userId);
   }, [userId]);
 
+  useEffect(() => {
+    localStorage.setItem('selectedModelProfileId', selectedModelProfileId);
+  }, [selectedModelProfileId]);
+
+  useEffect(() => {
+    localStorage.setItem('queryMode', queryMode);
+  }, [queryMode]);
+
+  useEffect(() => {
+    localStorage.setItem('labTab', labTab);
+  }, [labTab]);
+
+  useEffect(() => {
+    localStorage.setItem('requireActiveOnly', JSON.stringify(requireActiveOnly));
+  }, [requireActiveOnly]);
+
+  useEffect(() => {
+    localStorage.setItem('topK', String(topK));
+  }, [topK]);
+
   // Apply dark mode
   useEffect(() => {
     localStorage.setItem('darkMode', JSON.stringify(darkMode));
@@ -63,6 +97,7 @@ function App() {
     fetchDocuments();
     fetchSessions();
     fetchRerankerSettings();
+    fetchModelProfiles();
   }, []);
 
   const fetchRerankerSettings = async () => {
@@ -100,6 +135,20 @@ function App() {
     }
   };
 
+  const fetchModelProfiles = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/settings/model-profiles`);
+      const data = await res.json();
+      const profiles = data.profiles || [];
+      setModelProfiles(profiles);
+      if (profiles.length > 0 && !profiles.some((item) => item.id === selectedModelProfileId)) {
+        setSelectedModelProfileId(data.default_profile_id || profiles[0].id);
+      }
+    } catch (error) {
+      console.error('Failed to fetch model profiles:', error);
+    }
+  };
+
   const fetchDocuments = async () => {
     try {
       const res = await fetch(`${API_BASE}/documents?user_id=${userId}`);
@@ -134,6 +183,21 @@ function App() {
         timestamp: msg.timestamp,
         searchTime: msg.search_time,
         genTime: msg.generation_time,
+        totalTime: msg.total_time,
+        rerankTime: msg.rerank_time,
+        rerankerUsed: msg.reranker_used,
+        modelProfileId: msg.model_profile_id,
+        modelProfileLabel: (modelProfiles || []).find((item) => item.id === msg.model_profile_id)?.label,
+        queryMode: msg.query_mode,
+        rewriteUsed: msg.rewrite_used,
+        rewriteStatus: msg.rewrite_status,
+        rewriteFallbackReason: msg.rewrite_fallback_reason,
+        rewrittenQueries: msg.rewritten_queries || [],
+        perSubqueryHits: msg.per_subquery_hits || [],
+        retrievalUnionCount: msg.retrieval_union_count,
+        fallbackUsed: msg.fallback_used,
+        fallbackError: msg.fallback_error,
+        collection: msg.collection,
       }));
 
       setMessages(loadedMessages);
@@ -146,11 +210,92 @@ function App() {
   const startNewChat = () => {
     setSessionId(uuidv4());
     setMessages([]);
+    setSearchRuns([]);
     fetchSessions();
   };
 
+  const isSharedLegalMode = currentView === 'chat' && searchMode === 'legal' && !!systemStatus?.shared_pipeline_enabled;
+
   const sendMessage = async (content) => {
     if (!content.trim() || isLoading) return;
+
+    if (isSharedLegalMode) {
+      const userMessage = {
+        id: uuidv4(),
+        role: 'user',
+        content: content.trim(),
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, userMessage]);
+      setIsLoading(true);
+
+      try {
+        const res = await fetch(`${API_BASE}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: content.trim(),
+            user_id: userId,
+            session_id: sessionId,
+            search_mode: 'legal',
+            top_k: topK,
+            use_reranker: rerankerEnabled,
+            model_profile_id: selectedModelProfileId,
+            query_mode: queryMode,
+            response_mode: 'chat',
+            require_active_only: requireActiveOnly,
+            use_graph: false,
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Shared legal chat failed');
+        }
+
+        const selectedProfile = modelProfiles.find((item) => item.id === data.model_profile_id || item.id === selectedModelProfileId);
+        const assistantMessage = {
+          id: uuidv4(),
+          role: 'assistant',
+          content: data.answer,
+          sources: data.sources || [],
+          timestamp: new Date().toISOString(),
+          searchTime: data.search_time,
+          genTime: data.generation_time,
+          totalTime: data.total_time,
+          rerankTime: data.rerank_time,
+          rerankerUsed: data.reranker_used,
+          modelProfileId: data.model_profile_id || selectedModelProfileId,
+          modelProfileLabel: selectedProfile?.label,
+          queryMode: data.query_mode || queryMode,
+          rewriteUsed: data.rewrite_used,
+          rewriteStatus: data.rewrite_status,
+          rewriteFallbackReason: data.rewrite_fallback_reason,
+          rewrittenQueries: data.rewritten_queries || [],
+          perSubqueryHits: data.per_subquery_hits || [],
+          retrievalUnionCount: data.retrieval_union_count,
+          fallbackUsed: data.fallback_used,
+          fallbackError: data.fallback_error,
+          collection: data.collection,
+        };
+        setMessages(prev => [...prev, assistantMessage]);
+        fetchSessions();
+      } catch (error) {
+        console.error('Shared legal chat error:', error);
+        const errorMessage = {
+          id: uuidv4(),
+          role: 'assistant',
+          content: '❌ Có lỗi xảy ra khi xử lý legal pipeline. Vui lòng thử lại.',
+          sources: [],
+          timestamp: new Date().toISOString(),
+          isError: true,
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
 
     // Add user message
     const userMessage = {
@@ -220,6 +365,62 @@ function App() {
       };
 
       setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const runLegalSearch = async (content) => {
+    if (!content.trim() || isLoading) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: content.trim(),
+          user_id: userId,
+          session_id: sessionId,
+          search_mode: 'legal',
+          top_k: topK,
+          use_reranker: rerankerEnabled,
+          model_profile_id: selectedModelProfileId,
+          query_mode: queryMode,
+          require_active_only: requireActiveOnly,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Search failed');
+      }
+      setSearchRuns(prev => [
+        {
+          id: uuidv4(),
+          query: content.trim(),
+          timestamp: new Date().toISOString(),
+          results: data.results || [],
+          trace: {
+            rewrite_used: data.rewrite_used,
+            rewrite_status: data.rewrite_status,
+            rewrite_fallback_reason: data.rewrite_fallback_reason,
+            rewritten_queries: data.rewritten_queries || [],
+            per_subquery_hits: data.per_subquery_hits || [],
+            retrieval_union_count: data.retrieval_union_count,
+            search_time_ms: Number(data.search_time || 0) * 1000,
+            rerank_time_ms: Number(data.rerank_time || 0) * 1000,
+          },
+          modelProfileId: data.model_profile_id || selectedModelProfileId,
+          queryMode: data.query_mode || queryMode,
+          collection: data.collection,
+        },
+        ...prev,
+      ]);
+    } catch (error) {
+      console.error('Shared legal search error:', error);
+      setToast({
+        type: 'error',
+        message: `❌ Search thất bại: ${error.message}`,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -434,17 +635,44 @@ ${new Date().toLocaleString('vi-VN')}
 
       {/* Main Content Area */}
       {currentView === 'chat' ? (
-        <ChatArea
-          messages={messages}
-          isLoading={isLoading}
-          onSendMessage={sendMessage}
-          onExport={exportAnswer}
-          onCopy={copyToClipboard}
-          onRegenerate={regenerateAnswer}
-          onUploadFile={uploadFile}
-          systemStatus={systemStatus}
-          onScore={scoreAnswer}
-        />
+        isSharedLegalMode ? (
+          <LegalLabArea
+            messages={messages}
+            isLoading={isLoading}
+            onSendChat={sendMessage}
+            onRunSearch={runLegalSearch}
+            onExport={exportAnswer}
+            onCopy={copyToClipboard}
+            onRegenerate={regenerateAnswer}
+            onScore={scoreAnswer}
+            systemStatus={systemStatus}
+            modelProfiles={modelProfiles}
+            selectedModelProfileId={selectedModelProfileId}
+            setSelectedModelProfileId={setSelectedModelProfileId}
+            queryMode={queryMode}
+            setQueryMode={setQueryMode}
+            labTab={labTab}
+            setLabTab={setLabTab}
+            rerankerEnabled={rerankerEnabled}
+            requireActiveOnly={requireActiveOnly}
+            setRequireActiveOnly={setRequireActiveOnly}
+            topK={topK}
+            setTopK={setTopK}
+            searchRuns={searchRuns}
+          />
+        ) : (
+          <ChatArea
+            messages={messages}
+            isLoading={isLoading}
+            onSendMessage={sendMessage}
+            onExport={exportAnswer}
+            onCopy={copyToClipboard}
+            onRegenerate={regenerateAnswer}
+            onUploadFile={uploadFile}
+            systemStatus={systemStatus}
+            onScore={scoreAnswer}
+          />
+        )
       ) : currentView === 'ocr' ? (
         <LegalOCR />
       ) : (

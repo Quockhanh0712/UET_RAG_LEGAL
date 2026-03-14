@@ -13,7 +13,7 @@ import os
 import logging
 import re
 import time
-from typing import List, Dict, Optional, Tuple, Sequence
+from typing import Any, List, Dict, Optional, Tuple, Sequence
 from dataclasses import dataclass
 import hashlib
 
@@ -48,6 +48,144 @@ RERANKER_TOP_K = int(os.getenv("RERANKER_TOP_K", "20"))  # Fetch more for rerank
 # Hybrid search weights
 DEFAULT_DENSE_WEIGHT = 0.6
 DEFAULT_SPARSE_WEIGHT = 0.4
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return bool(default)
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _runtime_qdrant_config() -> Dict[str, Any]:
+    return {
+        "path": os.getenv("QDRANT_PATH", QDRANT_PATH),
+        "host": os.getenv("QDRANT_HOST", QDRANT_HOST),
+        "port": int(os.getenv("QDRANT_PORT", str(QDRANT_PORT))),
+        "use_server": _env_bool("QDRANT_USE_SERVER", QDRANT_USE_SERVER),
+        "collection_name": os.getenv("QDRANT_COLLECTION", COLLECTION_NAME),
+        "dense_dim": int(os.getenv("QDRANT_DENSE_DIM", str(DENSE_DIM))),
+        "timeout": int(os.getenv("QDRANT_TIMEOUT", str(QDRANT_TIMEOUT))),
+        "use_cloud": _env_bool("QDRANT_USE_CLOUD", QDRANT_USE_CLOUD),
+        "cloud_url": os.getenv("QDRANT_CLOUD_URL", QDRANT_CLOUD_URL),
+        "api_key": os.getenv("QDRANT_API_KEY", QDRANT_API_KEY),
+        "payload_profile": os.getenv("QDRANT_PAYLOAD_PROFILE", "full"),
+    }
+
+
+def _qdrant_runtime_signature() -> Tuple[Any, ...]:
+    cfg = _runtime_qdrant_config()
+    return (
+        cfg["path"],
+        cfg["host"],
+        int(cfg["port"]),
+        bool(cfg["use_server"]),
+        bool(cfg["use_cloud"]),
+        str(cfg["cloud_url"]),
+        str(cfg["collection_name"]),
+        int(cfg["dense_dim"]),
+        int(cfg["timeout"]),
+        str(cfg["payload_profile"]).strip().lower(),
+    )
+
+LEAN_QDRANT_PAYLOAD_FIELDS: Tuple[str, ...] = (
+    "chunk_id",
+    "content",
+    "doc_id",
+    "so_ky_hieu",
+    "van_ban_id",
+    "ten_van_ban",
+    "loai_van_ban",
+    "doc_type",
+    "doc_type_rank",
+    "co_quan_ban_hanh",
+    "co_quan",
+    "chuc_danh",
+    "nguoi_ky",
+    "law_family",
+    "ngay_ban_hanh",
+    "ngay_co_hieu_luc",
+    "ngay_het_hieu_luc",
+    "is_active",
+    "status_label",
+    "chuong",
+    "ten_chuong",
+    "dieu_so",
+    "tieu_de_dieu",
+    "khoan_so",
+    "diem_so",
+    "legal_path",
+    "chunk_type",
+    "segment_level",
+    "fallback_reason",
+    "provision_id",
+    "parent_provision_id",
+    "citation_base",
+    "citation_full",
+    "chunk_index",
+    "total_chunks",
+    "char_start",
+    "char_end",
+    "token_len_est",
+    "token_len_model",
+    "overflow_index",
+    "overflow_total",
+    "window_char_start",
+    "window_char_end",
+    "clause_spans",
+    "encoder_profile",
+)
+
+
+def _payload_value_is_present(value: Any) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, tuple, set, dict)):
+        return len(value) > 0
+    return True
+
+
+def build_qdrant_payload(chunk_or_payload: Any, profile: str = "full") -> Dict[str, Any]:
+    if hasattr(chunk_or_payload, "to_dict"):
+        payload = dict(chunk_or_payload.to_dict())
+    else:
+        payload = dict(chunk_or_payload or {})
+
+    normalized_profile = str(profile or "full").strip().lower()
+    if normalized_profile in {"full", "raw"}:
+        return payload
+    if normalized_profile not in {"lean", "serving"}:
+        raise ValueError(f"Unsupported Qdrant payload profile: {profile}")
+
+    doc_id = str(payload.get("doc_id") or payload.get("van_ban_id") or "").strip()
+    if doc_id:
+        payload["doc_id"] = doc_id
+        if not str(payload.get("van_ban_id") or "").strip():
+            payload["van_ban_id"] = doc_id
+        if not str(payload.get("so_ky_hieu") or "").strip():
+            payload["so_ky_hieu"] = doc_id
+
+    legal_path = str(payload.get("legal_path") or payload.get("path") or "").strip()
+    if legal_path:
+        payload["legal_path"] = legal_path
+
+    if not str(payload.get("co_quan") or "").strip() and str(payload.get("co_quan_ban_hanh") or "").strip():
+        payload["co_quan"] = payload.get("co_quan_ban_hanh")
+    if not str(payload.get("co_quan_ban_hanh") or "").strip() and str(payload.get("co_quan") or "").strip():
+        payload["co_quan_ban_hanh"] = payload.get("co_quan")
+
+    lean_payload: Dict[str, Any] = {}
+    for field_name in LEAN_QDRANT_PAYLOAD_FIELDS:
+        value = payload.get(field_name)
+        if not _payload_value_is_present(value):
+            continue
+        if isinstance(value, str):
+            value = value.strip()
+        lean_payload[field_name] = value
+
+    return lean_payload
 
 
 def model_slug(model_name: str) -> str:
@@ -229,54 +367,65 @@ class QdrantLegalStore:
     
     def __init__(
         self,
-        path: str = QDRANT_PATH,
-        collection_name: str = COLLECTION_NAME,
-        dense_dim: int = DENSE_DIM,
+        path: Optional[str] = None,
+        collection_name: Optional[str] = None,
+        dense_dim: Optional[int] = None,
         force_unlock: bool = True,
-        use_server: bool = QDRANT_USE_SERVER,
-        host: str = QDRANT_HOST,
-        port: int = QDRANT_PORT,
-        timeout: int = QDRANT_TIMEOUT,
-        use_cloud: bool = QDRANT_USE_CLOUD,
-        cloud_url: str = QDRANT_CLOUD_URL,
-        api_key: str = QDRANT_API_KEY,
+        use_server: Optional[bool] = None,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        timeout: Optional[int] = None,
+        use_cloud: Optional[bool] = None,
+        cloud_url: Optional[str] = None,
+        api_key: Optional[str] = None,
         bm25_path: Optional[str] = None,
+        payload_profile: Optional[str] = None,
     ):
-        self.path = path
-        self.collection_name = collection_name
-        self.dense_dim = int(dense_dim)
-        self.use_server = use_server
-        self.use_cloud = use_cloud
-        self.timeout = int(timeout)
-        self.cloud_url = cloud_url
-        self.api_key = api_key
+        runtime_cfg = _runtime_qdrant_config()
+        self.path = str(path or runtime_cfg["path"])
+        self.collection_name = str(collection_name or runtime_cfg["collection_name"])
+        self.dense_dim = int(dense_dim if dense_dim is not None else runtime_cfg["dense_dim"])
+        self.use_server = bool(runtime_cfg["use_server"] if use_server is None else use_server)
+        self.use_cloud = bool(runtime_cfg["use_cloud"] if use_cloud is None else use_cloud)
+        self.timeout = int(runtime_cfg["timeout"] if timeout is None else timeout)
+        self.cloud_url = str(runtime_cfg["cloud_url"] if cloud_url is None else cloud_url)
+        self.api_key = str(runtime_cfg["api_key"] if api_key is None else api_key)
+        self.payload_profile = str(payload_profile or runtime_cfg["payload_profile"]).strip().lower()
+        host = str(host or runtime_cfg["host"])
+        port = int(runtime_cfg["port"] if port is None else port)
+        self.runtime_signature = _qdrant_runtime_signature()
 
         # Initialize Qdrant client
-        if use_cloud and cloud_url:
+        if self.use_cloud and self.cloud_url:
             # Qdrant Cloud mode
-            self.client = QdrantClient(url=cloud_url, api_key=api_key, timeout=self.timeout)
-            logger.info(f"[QDRANT] Connected to Cloud: {cloud_url[:50]}...")
-        elif use_server:
+            self.client = QdrantClient(url=self.cloud_url, api_key=self.api_key, timeout=self.timeout)
+            logger.info(f"[QDRANT] Connected to Cloud: {self.cloud_url[:50]}...")
+        elif self.use_server:
             # Server mode - connect to Qdrant server (Docker)
             self.client = QdrantClient(host=host, port=port, timeout=self.timeout)
             logger.info(f"[QDRANT] Connected to server at {host}:{port}")
         else:
             # Local mode - SQLite storage
-            os.makedirs(path, exist_ok=True)
+            os.makedirs(self.path, exist_ok=True)
             if force_unlock:
                 self._remove_lock_file()
-            self.client = QdrantClient(path=path, timeout=self.timeout)
-            logger.info(f"[QDRANT] Initialized local storage at {path}")
+            self.client = QdrantClient(path=self.path, timeout=self.timeout)
+            logger.info(f"[QDRANT] Initialized local storage at {self.path}")
 
         # BM25 encoder for sparse vectors
         self.bm25_encoder = BM25Encoder()
-        self.bm25_path = bm25_path or os.path.join(path, "bm25_encoder.json")
+        self.bm25_path = bm25_path or os.path.join(self.path, "bm25_encoder.json")
 
         # Load BM25 if exists
         if os.path.exists(self.bm25_path):
             self.bm25_encoder.load(self.bm25_path)
 
-        logger.info(f"[QDRANT] Ready (cloud={use_cloud}, server={use_server})")
+        logger.info(
+            "[QDRANT] Ready (cloud=%s, server=%s, payload_profile=%s)",
+            self.use_cloud,
+            self.use_server,
+            self.payload_profile,
+        )
 
     def set_bm25_path(self, path: str, load_if_exists: bool = True):
         """Set BM25 artifact path explicitly (used for collection-scoped sparse consistency)."""
@@ -325,7 +474,8 @@ class QdrantLegalStore:
             },
             sparse_vectors_config={
                 "sparse": SparseVectorParams()
-            }
+            },
+            on_disk_payload=True,
         )
         
         # Create payload indexes for filtering
@@ -341,8 +491,11 @@ class QdrantLegalStore:
             ("van_ban_id", "keyword"),
             ("loai_van_ban", "keyword"),
             ("doc_type", "keyword"),
+            ("doc_type_rank", "integer"),
             ("chunk_type", "keyword"),
             ("segment_level", "keyword"),
+            ("status_label", "keyword"),
+            ("law_family", "keyword"),
             ("co_quan", "keyword"),
             ("co_quan_ban_hanh", "keyword"),
             ("nguoi_ky", "keyword"),
@@ -356,6 +509,9 @@ class QdrantLegalStore:
             ("ngay_co_hieu_luc", "keyword"),
             ("ngay_het_hieu_luc", "keyword"),
             ("token_len_est", "integer"),
+            ("token_len_model", "integer"),
+            ("overflow_index", "integer"),
+            ("overflow_total", "integer"),
             ("encoder_profile", "keyword"),
         ]
         
@@ -441,7 +597,7 @@ class QdrantLegalStore:
             content = getattr(chunk, "content", None) or getattr(chunk, "text", "")
             sparse_indices, sparse_values = self.bm25_encoder.encode(content)
             point_id = int(hashlib.md5(chunk.chunk_id.encode()).hexdigest()[:16], 16)
-            payload = chunk.to_dict()
+            payload = build_qdrant_payload(chunk, profile=self.payload_profile)
             points.append(
                 PointStruct(
                     id=point_id,
@@ -1113,16 +1269,22 @@ def _get_lock():
 def get_qdrant_store(max_retries: int = 3) -> QdrantLegalStore:
     """Get singleton Qdrant store instance with retry logic"""
     global _qdrant_store
-    
+
+    desired_signature = _qdrant_runtime_signature()
+
     # Return existing instance if available
     if _qdrant_store is not None:
-        return _qdrant_store
+        if getattr(_qdrant_store, "runtime_signature", None) == desired_signature:
+            return _qdrant_store
+        reset_qdrant_store()
     
     lock = _get_lock()
     with lock:
         # Double-check after acquiring lock
         if _qdrant_store is not None:
-            return _qdrant_store
+            if getattr(_qdrant_store, "runtime_signature", None) == desired_signature:
+                return _qdrant_store
+            reset_qdrant_store()
         
         import time
         last_error = None

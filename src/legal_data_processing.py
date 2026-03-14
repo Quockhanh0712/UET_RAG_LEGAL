@@ -13,7 +13,7 @@ import os
 import re
 import unicodedata
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 
@@ -40,6 +40,34 @@ _LAW_FAMILY_PATTERN = re.compile(
     r"(B[\u1ed9o]\s*lu[\u1eada]t[^.;,\n]*|L[u\u1ead]t[^.;,\n]*|Ph[\u00e1a]p\s*l[\u1ec7e]nh[^.;,\n]*|Ngh[\u1ecbi]\s*\u0111[\u1ecbi]nh[^.;,\n]*|Th[\u00f4o]ng\s*t[\u01b0u][^.;,\n]*|Quy\s*ch[\u1ebfe][^.;,\n]*)",
     re.IGNORECASE,
 )
+
+_DOC_TITLE_TOKEN_PATTERN = re.compile(
+    r"\b(BO LUAT|LUAT|PHAP LENH|NGHI DINH|THONG TU|QUY CHE)\b"
+)
+
+_PREAMBLE_MARKERS: List[str] = [
+    " CAN CU ",
+    " CHUONG I",
+    " DIEU 1",
+    " QUOC HOI BAN HANH",
+    " CHINH PHU BAN HANH",
+    " UY BAN THUONG VU QUOC HOI BAN HANH",
+]
+
+_LOW_CONFIDENCE_MARKERS: List[str] = [
+    "CAN CU",
+    "CHUONG I",
+    "DIEU 1",
+    "CLIP_IMAGE",
+]
+
+_TRAILING_ISSUER_MARKERS: List[str] = [
+    " CHINH PHU",
+    " QUOC HOI",
+    " UY BAN THUONG VU QUOC HOI",
+    " THU TUONG CHINH PHU",
+    " BO TRUONG",
+]
 
 
 def _is_nan(value: Any) -> bool:
@@ -201,6 +229,102 @@ def build_citation_base(
     return base or "Van ban phap luat"
 
 
+def build_citation_full(citation_base: str, legal_path: str) -> str:
+    base = normalize_whitespace(citation_base)
+    path = normalize_whitespace(legal_path)
+    if path and path.lower() != "document":
+        return f"{base} | {path}" if base else path
+    return base or "Van ban phap luat"
+
+
+def _clip_title(text: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+    clipped = text[: max_chars + 1]
+    if " " in clipped:
+        clipped = clipped.rsplit(" ", 1)[0]
+    return clipped.rstrip(" -_;:,./")
+
+
+def _find_title_start(ascii_text: str) -> Optional[int]:
+    fallback = None
+    for match in _DOC_TITLE_TOKEN_PATTERN.finditer(ascii_text):
+        if fallback is None:
+            fallback = match.start()
+        tail = ascii_text[match.start() : match.start() + 48]
+        if re.match(r"(BO LUAT|LUAT|PHAP LENH|NGHI DINH|THONG TU|QUY CHE)\s+SO\b", tail):
+            continue
+        if re.match(r"(BO LUAT|LUAT|PHAP LENH|NGHI DINH|THONG TU|QUY CHE)\s*:\s*\d", tail):
+            continue
+        return match.start()
+    return fallback
+
+
+def clean_serving_title(
+    ten_van_ban: str,
+    loai_van_ban: str = "",
+    so_ky_hieu: str = "",
+    max_chars: int = 180,
+) -> Tuple[str, List[str], bool]:
+    raw = normalize_whitespace(str(ten_van_ban or ""))
+    flags: List[str] = []
+    if not raw:
+        fallback = normalize_whitespace(" ".join([str(loai_van_ban or ""), str(so_ky_hieu or "")]))
+        return fallback or "Van ban phap luat", ["empty_title"], False
+
+    text = str(raw).replace("\u00a0", " ")
+    text = re.sub(r"\d+/\d+/clip_image\d+\.\s*\w+\"?\s*(?:width|height)?=?\"?\d*\"?\s*/?>?", " ", text, flags=re.IGNORECASE)
+    text = re.sub(r"clip_image\d+", " ", text, flags=re.IGNORECASE)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = re.sub(r"[_]{2,}", " ", text)
+    text = re.sub(r"(?:-\s*){4,}", " ", text)
+    text = normalize_whitespace(text)
+    if text != raw:
+        flags.append("removed_ocr_noise")
+
+    ascii_text = strip_accents(text).upper()
+    start = _find_title_start(ascii_text)
+    if start is not None and start > 0:
+        text = text[start:].lstrip(" -_:;,./")
+        ascii_text = strip_accents(text).upper()
+        flags.append("dropped_header_prefix")
+
+    cut_positions = [idx for marker in _PREAMBLE_MARKERS if (idx := ascii_text.find(marker)) >= 0]
+    if cut_positions:
+        text = text[: min(cut_positions)].rstrip(" -_:;,./")
+        ascii_text = strip_accents(text).upper()
+        flags.append("trimmed_preamble_tail")
+
+    if ";" in text:
+        semi_idx = text.find(";")
+        if semi_idx >= 24:
+            text = text[:semi_idx].rstrip(" -_:;,./")
+            ascii_text = strip_accents(text).upper()
+            flags.append("trimmed_semicolon_tail")
+
+    for marker in _TRAILING_ISSUER_MARKERS:
+        if ascii_text.endswith(marker):
+            trim_chars = len(marker)
+            text = text[:-trim_chars].rstrip(" -_:;,./")
+            ascii_text = strip_accents(text).upper()
+            flags.append("trimmed_trailing_issuer")
+            break
+
+    text = normalize_whitespace(text)
+    if len(text) > max_chars:
+        text = _clip_title(text, max_chars=max_chars)
+        ascii_text = strip_accents(text).upper()
+        flags.append("title_truncated")
+
+    has_doc_type = bool(_DOC_TITLE_TOKEN_PATTERN.search(ascii_text))
+    has_low_confidence_marker = any(marker in ascii_text for marker in _LOW_CONFIDENCE_MARKERS)
+    low_confidence = (len(text) < 12) or (not has_doc_type) or has_low_confidence_marker
+    if low_confidence:
+        flags.append("low_confidence_title")
+
+    return text or raw, list(dict.fromkeys(flags)), not low_confidence
+
+
 def compute_document_hash(record: Dict[str, Any]) -> str:
     payload = {
         "so_ky_hieu": record.get("so_ky_hieu", ""),
@@ -256,6 +380,14 @@ def normalize_document_row(
         # Fallback title extraction for datasets without explicit title field.
         candidate = re.split(r"\b(?:\u0110i\u1ec1u|Dieu)\b", toan_van_clean, maxsplit=1)[0].strip()
         ten_van_ban = normalize_whitespace(candidate)[:300]
+
+    cleaned_title, _, title_confident = clean_serving_title(
+        ten_van_ban=ten_van_ban,
+        loai_van_ban=loai_van_ban,
+        so_ky_hieu=so_ky_hieu,
+    )
+    if title_confident and cleaned_title:
+        ten_van_ban = cleaned_title
 
     doc_type, doc_type_rank = normalize_doc_type(loai_van_ban)
     law_family = derive_law_family(ten_van_ban, loai_van_ban, so_ky_hieu)
@@ -376,7 +508,7 @@ class IngestionStateStore:
         records: Iterable[Dict[str, Any]],
     ) -> Dict[str, Dict[str, Any]]:
         state = self.load()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         for record in records:
             doc_id = record.get("doc_id", "UNKNOWN")

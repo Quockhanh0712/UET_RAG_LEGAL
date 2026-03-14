@@ -111,10 +111,7 @@ def _apply_chunk_policy(chunks: List, chunk_policy: str) -> List:
         structured = []
         for chunk in doc_chunks:
             chunk_type = str(getattr(chunk, "chunk_type", "") or "")
-            segment_level = str(getattr(chunk, "segment_level", "") or "").lower()
             if chunk_type == "ProvisionChunk":
-                structured.append(chunk)
-            elif chunk_type == "ClauseChunk" and segment_level == "clause":
                 structured.append(chunk)
         selected.extend(structured if structured else doc_chunks)
     return selected

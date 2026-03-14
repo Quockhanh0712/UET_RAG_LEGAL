@@ -1,0 +1,35 @@
+# Qdrant Metadata Patch Report
+
+- run_id: `run_20260313_metadata_apply_pilot2`
+- collection: `legal_documents__truro7_vn_law_embedding__d768`
+- dry_run: `False`
+- patched_at: `2026-03-13T07:58:29.295853+00:00`
+- docs_seen: `2`
+- points_seen: `155938`
+- docs_confident: `2`
+- docs_low_confidence: `0`
+- docs_title_changed: `2`
+- docs_family_changed: `2`
+- points_citation_changed: `114`
+- common_operations: `2`
+- citation_operations: `21`
+
+## Sample Diffs
+
+### '20/2018/NĐ-CP
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `NGHỊ ĐỊNH BAN HÀNH ĐIỀU LỆ TỔ CHỨC VÀ HOẠT ĐỘNG CỦA TẬP ĐOÀN HÓA CHẤT VIỆT NAM Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật doanh nghiệp ngày 26 tháng 11 năm 2014; Căn cứ Luật quản lý, sử dụng vốn `
+- after_title: `NGHỊ ĐỊNH BAN HÀNH ĐIỀU LỆ TỔ CHỨC VÀ HOẠT ĐỘNG CỦA TẬP ĐOÀN HÓA CHẤT VIỆT NAM`
+- before_family: `NGHỊ ĐỊNH BAN HÀNH ĐIỀU LỆ TỔ CHỨC VÀ HOẠT ĐỘNG CỦA TẬP ĐOÀN HÓA CHẤT VIỆT NAM Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015`
+- after_family: `NGHỊ ĐỊNH BAN HÀNH ĐIỀU LỆ TỔ CHỨC VÀ HOẠT ĐỘNG CỦA TẬP ĐOÀN HÓA CHẤT VIỆT NAM`
+- citation_changed_points: `3`
+
+### 01-BXD/CSXD
+- confident: `True`
+- flags: `['trimmed_preamble_tail']`
+- before_title: `THÔNG TƯ Hướng dẫn về quản lý xây dựng các công trình có vốn đầu tư trực tiếp của nước ngoài và nhà thầu nước ngoài nhận thầu xây dựng tại Việt Nam Căn cứ Luật Đầu tư nước ngoài tại Việt Nam; Căn cứ Nghị định số 12/CP ng`
+- after_title: `THÔNG TƯ Hướng dẫn về quản lý xây dựng các công trình có vốn đầu tư trực tiếp của nước ngoài và nhà thầu nước ngoài nhận thầu xây dựng tại Việt Nam`
+- before_family: `THÔNG TƯ Hướng dẫn về quản lý xây dựng các công trình có vốn đầu tư trực tiếp của nước ngoài và nhà thầu nước ngoài nhận thầu xây dựng tại Việt Nam Căn cứ Luật Đầu tư nước ngoài tại Việt Nam`
+- after_family: `THÔNG TƯ Hướng dẫn về quản lý xây dựng các công trình có vốn đầu tư trực tiếp của nước ngoài và nhà thầu nước ngoài nhận thầu xây dựng tại Việt Nam`
+- citation_changed_points: `111`

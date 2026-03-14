@@ -1,4 +1,4 @@
-# Chainlit Hybrid Demo Runbook (Qdrant Cloud Europe)
+# Chainlit Hybrid Demo Runbook (Qdrant Cloud AWS, Shared Runtime)
 
 ## 1) Setup
 
@@ -27,7 +27,7 @@ Set runtime env for this demo profile only (PowerShell session):
 
 ```powershell
 $env:QDRANT_USE_CLOUD="true"
-$env:QDRANT_CLOUD_URL="https://1df90f40-14fc-47a1-b351-3b6a0c624664.europe-west3-0.gcp.cloud.qdrant.io:6333"
+$env:QDRANT_CLOUD_URL="https://718fe745-9ec6-416e-ab74-88304640f37d.us-east-1-1.aws.cloud.qdrant.io:6333"
 $env:QDRANT_API_KEY="<YOUR_QDRANT_API_KEY>"
 $env:QDRANT_COLLECTION="legal_documents"
 $env:QDRANT_COLLECTION_BY_MODEL="true"
@@ -45,6 +45,14 @@ $env:CHAINLIT_TOP_K="5"
 $env:CHAINLIT_USE_RERANKER="true"
 $env:CHAINLIT_USE_GRAPH="false"
 $env:CHAINLIT_REQUIRE_ACTIVE_ONLY="true"
+
+# Query rewrite is feature-flagged. Keep off by default, enable when testing
+# complex multi-actor / multi-liability legal questions.
+$env:QUERY_REWRITER_ENABLED="false"
+$env:QUERY_REWRITER_URL="http://222.255.250.24:8080/v1/completions"
+$env:QUERY_REWRITER_TIMEOUT_S="20"
+$env:QUERY_REWRITER_MAX_SUBQUERIES="6"
+$env:QUERY_REWRITER_FORCE="false"
 # Optional fallback if your current cloud cluster does not have
 # legal_documents__truro7_vn_law_embedding__d768:
 # $env:CHAINLIT_COLLECTION_OVERRIDE="legal_rag_vn"
@@ -84,6 +92,8 @@ Open the local Chainlit URL in terminal output (default `http://localhost:8000`)
 
 Note:
 - Avoid `-w` during demo. Auto-reload can trigger noisy Engine.IO polling errors (`Too many packets in payload`) while app is reloading.
+- This app now uses the shared runtime loader + Qdrant contract validation before chat is available.
+- If startup fails, fix the contract error first instead of bypassing it in UI code.
 
 ## 5) Run Smoke Test (10 Queries)
 
@@ -105,3 +115,4 @@ Expected artifacts:
 - Retrieval p95 stable with no cloud timeout spikes.
 
 If BM25 artifact mismatch is detected (when manifest check enabled), stop run and fix mapping before rerun.
+If the serving collection is `red` or returns `503`, stop demo and fix Qdrant storage/optimizer state before retrying smoke.

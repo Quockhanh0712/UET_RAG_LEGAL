@@ -15,6 +15,7 @@ os.environ.setdefault("TRANSFORMERS_NO_TF", "1")
 os.environ.setdefault("USE_TORCH", "1")
 
 from sentence_transformers import SentenceTransformer
+from transformers import AutoTokenizer
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +137,41 @@ def get_model(model_name: str = DEFAULT_MODEL):
 def get_embedding_dimension(model_name: str | None = None) -> int:
     model = get_model(_normalize_model_name(model_name))
     return int(model.get_sentence_embedding_dimension())
+
+
+@lru_cache(maxsize=8)
+def get_tokenizer(model_name: str = DEFAULT_MODEL):
+    model_name = _normalize_model_name(model_name)
+    logger.info("[EMBEDDINGS] Loading tokenizer: %s", model_name)
+    return AutoTokenizer.from_pretrained(model_name, use_fast=True)
+
+
+def count_text_tokens(
+    text: str,
+    model_name: str | None = None,
+    text_type: str = "passage",
+    add_prefix: bool = True,
+) -> int:
+    model_name = _normalize_model_name(model_name)
+    tokenizer = get_tokenizer(model_name)
+    texts = [str(text or "")]
+
+    if _should_use_vietnamese_tokenizer(model_name):
+        texts = preprocess_vietnamese(texts)
+
+    if add_prefix:
+        prefix = _resolve_prefix(model_name, text_type=text_type)
+        texts = _apply_prefix(texts, prefix)
+
+    encoded = tokenizer(
+        texts[0],
+        add_special_tokens=True,
+        truncation=False,
+        return_attention_mask=False,
+        return_token_type_ids=False,
+        verbose=False,
+    )
+    return len(encoded.get("input_ids", []))
 
 
 def embed_texts(

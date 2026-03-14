@@ -1,0 +1,654 @@
+{
+  "run_id": "run_20260313_metadata_dryrun_full",
+  "collection": "legal_documents__truro7_vn_law_embedding__d768",
+  "dry_run": true,
+  "patched_at": "2026-03-13T07:47:53.815102+00:00",
+  "docs_seen": 1255,
+  "points_seen": 155938,
+  "docs_confident": 1192,
+  "docs_low_confidence": 63,
+  "docs_title_changed": 1178,
+  "docs_family_changed": 720,
+  "points_citation_changed": 148603,
+  "common_operations": 1255,
+  "citation_operations": 108497,
+  "sample_diffs": [
+    {
+      "doc_id": "'20/2018/NĐ-CP",
+      "confident": false,
+      "flags": [
+        "trimmed_preamble_tail",
+        "low_confidence_title",
+        "kept_raw_title"
+      ],
+      "before_title": "NGHỊ ĐỊNH BAN HÀNH ĐIỀU LỆ TỔ CHỨC VÀ HOẠT ĐỘNG CỦA TẬP ĐOÀN HÓA CHẤT VIỆT NAM Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật doanh nghiệp ngày 26 tháng 11 năm 2014; Căn cứ Luật quản lý, sử dụng vốn ",
+      "after_title": "NGHỊ ĐỊNH BAN HÀNH ĐIỀU LỆ TỔ CHỨC VÀ HOẠT ĐỘNG CỦA TẬP ĐOÀN HÓA CHẤT VIỆT NAM Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật doanh nghiệp ngày 26 tháng 11 năm 2014; Căn cứ Luật quản lý, sử dụng vốn ",
+      "before_family": "NGHỊ ĐỊNH BAN HÀNH ĐIỀU LỆ TỔ CHỨC VÀ HOẠT ĐỘNG CỦA TẬP ĐOÀN HÓA CHẤT VIỆT NAM Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015",
+      "after_family": "NGHỊ ĐỊNH BAN HÀNH ĐIỀU LỆ TỔ CHỨC VÀ HOẠT ĐỘNG CỦA TẬP ĐOÀN HÓA CHẤT VIỆT NAM Căn cứ Luật tổ chức Chính phủ ngày 19 tháng 6 năm 2015",
+      "citation_changed_points": 0
+    },
+    {
+      "doc_id": "01-BXD/CSXD",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Hướng dẫn về quản lý xây dựng các công trình có vốn đầu tư trực tiếp của nước ngoài và nhà thầu nước ngoài nhận thầu xây dựng tại Việt Nam Căn cứ Luật Đầu tư nước ngoài tại Việt Nam; Căn cứ Nghị định số 12/CP ng",
+      "after_title": "THÔNG TƯ Hướng dẫn về quản lý xây dựng các công trình có vốn đầu tư trực tiếp của nước ngoài và nhà thầu nước ngoài nhận thầu xây dựng tại Việt Nam",
+      "before_family": "THÔNG TƯ Hướng dẫn về quản lý xây dựng các công trình có vốn đầu tư trực tiếp của nước ngoài và nhà thầu nước ngoài nhận thầu xây dựng tại Việt Nam Căn cứ Luật Đầu tư nước ngoài tại Việt Nam",
+      "after_family": "THÔNG TƯ Hướng dẫn về quản lý xây dựng các công trình có vốn đầu tư trực tiếp của nước ngoài và nhà thầu nước ngoài nhận thầu xây dựng tại Việt Nam",
+      "citation_changed_points": 111
+    },
+    {
+      "doc_id": "01/1998/TTLT/TANDTC-VKSNDTC-BNV",
+      "confident": true,
+      "flags": [
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định của Luật sửa đổi bổ sung một số điều của Bộ luật Hình sự Để áp dụng thống nhất các quy định của Luật sửa đổi, bổ sung một số điều của Bộ luật hình sự đã được Quốc hội ",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định của Luật sửa đổi bổ sung một số điều của Bộ luật Hình sự Để áp dụng thống nhất các quy định của Luật sửa đổi, bổ sung một số",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định của Luật sửa đổi bổ sung một số điều của Bộ luật Hình sự Để áp dụng thống nhất các quy định của Luật sửa đổi",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định của Luật sửa đổi bổ sung một số điều của Bộ luật Hình sự Để áp dụng thống nhất các quy định của Luật sửa đổi",
+      "citation_changed_points": 244
+    },
+    {
+      "doc_id": "01/2001/TANDTC-VKSNDTC-BVHTT",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng Bộ luật Dân sự trong việc giải quyết các tranh chấp liên quan đến quyền tác giả tại Toà án nhân dân ______________________________ Để áp dụng đúng và thống nhất các quy định của Bộ lu",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng Bộ luật Dân sự trong việc giải quyết các tranh chấp liên quan đến quyền tác giả tại Toà án nhân dân Để áp dụng đúng và thống nhất các quy định",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng Bộ luật Dân sự trong việc giải quyết các tranh chấp liên quan đến quyền tác giả tại Toà án nhân dân ______________________________ Để áp dụng đúng và thống nhất các quy định của Bộ lu",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng Bộ luật Dân sự trong việc giải quyết các tranh chấp liên quan đến quyền tác giả tại Toà án nhân dân Để áp dụng đúng và thống nhất các quy định",
+      "citation_changed_points": 71
+    },
+    {
+      "doc_id": "01/2001/TTLT-BTP-BCA-TANDTC-VKSNDTC",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Về việc hướng dẫn áp dụng các quy định tại Chương XV “Các tội xâm phạm chế độ hôn nhân và gia đình” của Bộ luật Hình sự năm 1999 _________________ Để áp dụng đúng và thống nhất các quy định tại Chương ",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Về việc hướng dẫn áp dụng các quy định tại Chương XV “Các tội xâm phạm chế độ hôn nhân và gia đình” của Bộ luật Hình sự năm 1999 Để áp dụng đúng và thống nhất",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Về việc hướng dẫn áp dụng các quy định tại Chương XV “Các tội xâm phạm chế độ hôn nhân và gia đình” của Bộ luật Hình sự năm 1999 _________________ Để áp dụng đúng và thống nhất các quy định tại Chương ",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Về việc hướng dẫn áp dụng các quy định tại Chương XV “Các tội xâm phạm chế độ hôn nhân và gia đình” của Bộ luật Hình sự năm 1999 Để áp dụng đúng và thống nhất",
+      "citation_changed_points": 64
+    },
+    {
+      "doc_id": "01/2002/TT-BTS",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Hướng dẫn thực hiện điểm c khoản 2 Ðiều 6 Nghị định số 03/2000/NÐ - CP ngày 03/02/2000 của Chính phủ hướng dẫn thi hành một số điều của Luật Doanh nghiệp. Căn cứ điểm c khoản 2 Ðiều 6 Nghị định số 03/2000/NÐ - C",
+      "after_title": "THÔNG TƯ Hướng dẫn thực hiện điểm c khoản 2 Ðiều 6 Nghị định số 03/2000/NÐ - CP ngày 03/02/2000 của Chính phủ hướng dẫn thi hành một số điều của Luật Doanh nghiệp",
+      "before_family": "THÔNG TƯ Hướng dẫn thực hiện điểm c khoản 2 Ðiều 6 Nghị định số 03/2000/NÐ - CP ngày 03/02/2000 của Chính phủ hướng dẫn thi hành một số điều của Luật Doanh nghiệp",
+      "after_family": "THÔNG TƯ Hướng dẫn thực hiện điểm c khoản 2 Ðiều 6 Nghị định số 03/2000/NÐ - CP ngày 03/02/2000 của Chính phủ hướng dẫn thi hành một số điều của Luật Doanh nghiệp",
+      "citation_changed_points": 2
+    },
+    {
+      "doc_id": "01/2003/TTLT-TANDTC-VKSNDTC-BCA-BTP-BQP",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định tại Chương XXIII \"Các tội xâm phạm nghĩa vụ, trách nhiệm của quân nhân\" của Bộ luật Hình sự năm 1999 _____________________________________ Để áp dụng đúng và thống nhấ",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định tại Chương XXIII \"Các tội xâm phạm nghĩa vụ, trách nhiệm của quân nhân\" của Bộ luật Hình sự năm 1999 Để áp dụng đúng và thống",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định tại Chương XXIII \"Các tội xâm phạm nghĩa vụ",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định tại Chương XXIII \"Các tội xâm phạm nghĩa vụ",
+      "citation_changed_points": 63
+    },
+    {
+      "doc_id": "01/2005/TT-BTNMT",
+      "confident": true,
+      "flags": [
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ Hướng dẫn thực hiện một số điều của Nghị định số 181/2004/NĐ - CP ngày 29/10/2004 của Chính phủ về thi hành Luật Đất đai Thông tư này hướng dẫn thực hiện một số điều của Nghị định số 181/2004/NĐ - CP ngày 29 thá",
+      "after_title": "THÔNG TƯ Hướng dẫn thực hiện một số điều của Nghị định số 181/2004/NĐ - CP ngày 29/10/2004 của Chính phủ về thi hành Luật Đất đai Thông tư này hướng dẫn thực hiện một số điều của",
+      "before_family": "THÔNG TƯ Hướng dẫn thực hiện một số điều của Nghị định số 181/2004/NĐ - CP ngày 29/10/2004 của Chính phủ về thi hành Luật Đất đai Thông tư này hướng dẫn thực hiện một số điều của Nghị định số 181/2004/NĐ - CP ngày 29 thá",
+      "after_family": "THÔNG TƯ Hướng dẫn thực hiện một số điều của Nghị định số 181/2004/NĐ - CP ngày 29/10/2004 của Chính phủ về thi hành Luật Đất đai Thông tư này hướng dẫn thực hiện một số điều của",
+      "citation_changed_points": 125
+    },
+    {
+      "doc_id": "01/2005/TT-NHNN",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Hướng dẫn thi hành Nghị định số 202/2004/NĐ - CP của Chính phủ ngày 10/12/2004 về xử phạt vi phạm hành chính trong lĩnh vực tiền tệ và hoạt động ngân hàng. __________________________________ Căn cứ Pháp lệnh Xử ",
+      "after_title": "THÔNG TƯ Hướng dẫn thi hành Nghị định số 202/2004/NĐ - CP của Chính phủ ngày 10/12/2004 về xử phạt vi phạm hành chính trong lĩnh vực tiền tệ và hoạt động ngân hàng",
+      "before_family": "THÔNG TƯ Hướng dẫn thi hành Nghị định số 202/2004/NĐ - CP của Chính phủ ngày 10/12/2004 về xử phạt vi phạm hành chính trong lĩnh vực tiền tệ và hoạt động ngân hàng",
+      "after_family": "THÔNG TƯ Hướng dẫn thi hành Nghị định số 202/2004/NĐ - CP của Chính phủ ngày 10/12/2004 về xử phạt vi phạm hành chính trong lĩnh vực tiền tệ và hoạt động ngân hàng",
+      "citation_changed_points": 50
+    },
+    {
+      "doc_id": "01/2005/TTLT/TANDTC-VKSNDTC-BQP-BCA",
+      "confident": true,
+      "flags": [
+        "trimmed_semicolon_tail",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn về thẩm quyền xét xử của Toà án quân sự Để thực hiện đúng và thống nhất các quy định của Bộ luật tố tụng hình sự và Pháp lệnh tổ chức Toà án quân sự (sau đây gọi tắt là Pháp lệnh) về thẩm quy",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn về thẩm quyền xét xử của Toà án quân sự Để thực hiện đúng và thống nhất các quy định của Bộ luật tố tụng hình sự và Pháp lệnh tổ chức Toà án quân sự",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn về thẩm quyền xét xử của Toà án quân sự Để thực hiện đúng và thống nhất các quy định của Bộ luật tố tụng hình sự và Pháp lệnh tổ chức Toà án quân sự (sau đây gọi tắt là Pháp lệnh) về thẩm quy",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn về thẩm quyền xét xử của Toà án quân sự Để thực hiện đúng và thống nhất các quy định của Bộ luật tố tụng hình sự và Pháp lệnh tổ chức Toà án quân sự",
+      "citation_changed_points": 22
+    },
+    {
+      "doc_id": "01/2007/TTLT/BLĐTBXH-BCA-VKSNDTC",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn phối hợp trong việc giải quyết các vụ tai nạn lao động chết người, tai nạn lao động khác có dấu hiệu tội phạm ___________________________ Căn cứ Bộ Luật Tố tụng hình sự, Nghị định số 06/CP ng",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn phối hợp trong việc giải quyết các vụ tai nạn lao động chết người, tai nạn lao động khác có dấu hiệu tội phạm",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn phối hợp trong việc giải quyết các vụ tai nạn lao động chết người",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn phối hợp trong việc giải quyết các vụ tai nạn lao động chết người",
+      "citation_changed_points": 3
+    },
+    {
+      "doc_id": "01/2007/UBTVQH12",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "PHÁP LỆNH Sửa đổi, bổ sung một số điều của Pháp lệnh Thi hành án phạt tù _________________________ Căn cứ Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số",
+      "after_title": "PHÁP LỆNH Sửa đổi, bổ sung một số điều của Pháp lệnh Thi hành án phạt tù",
+      "before_family": "PHÁP LỆNH Sửa đổi",
+      "after_family": "PHÁP LỆNH Sửa đổi",
+      "citation_changed_points": 38
+    },
+    {
+      "doc_id": "01/2010/NĐ-CP",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "NGHỊ ĐỊNH Về chào bán cổ phần riêng lẻ CHÍNH PHỦ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001; Căn cứ Luật Doanh nghiệp ngày 29 tháng 11 năm 2005; Căn cứ Luật Đầu tư ngày 29 tháng 11 năm 2005; Căn cứ Luật Chứn",
+      "after_title": "NGHỊ ĐỊNH Về chào bán cổ phần riêng lẻ CHÍNH PHỦ",
+      "before_family": "NGHỊ ĐỊNH Về chào bán cổ phần riêng lẻ CHÍNH PHỦ Căn cứ Luật Tổ chức Chính phủ ngày 25 tháng 12 năm 2001",
+      "after_family": "NGHỊ ĐỊNH Về chào bán cổ phần riêng lẻ CHÍNH PHỦ",
+      "citation_changed_points": 83
+    },
+    {
+      "doc_id": "01/2010/TTLT-VKSNDTC-BCA-TANDTC",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành các quy định của Bộ luật Tố tụng hình sự về trả hồ sơ để điều tra bổ sung __________________________________ Để thi hành đúng các quy định của Bộ luật Tố tụng hình sự (sau đây viết t",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành các quy định của Bộ luật Tố tụng hình sự về trả hồ sơ để điều tra bổ sung Để thi hành đúng các quy định của Bộ luật Tố tụng hình sự (sau đây",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành các quy định của Bộ luật Tố tụng hình sự về trả hồ sơ để điều tra bổ sung __________________________________ Để thi hành đúng các quy định của Bộ luật Tố tụng hình sự (sau đây viết t",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành các quy định của Bộ luật Tố tụng hình sự về trả hồ sơ để điều tra bổ sung Để thi hành đúng các quy định của Bộ luật Tố tụng hình sự (sau đây",
+      "citation_changed_points": 54
+    },
+    {
+      "doc_id": "01/2011/QH13",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "LUẬT Lưu trữ ____ Căn cứ Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 51/2001/QH10; Quốc hội ban hành Luật Lưu trữ, Chương I NHỮNG QUY ĐỊNH CHUNG",
+      "after_title": "LUẬT Lưu trữ",
+      "before_family": "LUẬT Lưu trữ ____ Căn cứ Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 51/2001/QH10; Quốc hội ban hành Luật Lưu trữ, Chương I NHỮNG QUY ĐỊNH CHUNG",
+      "after_family": "LUẬT Lưu trữ",
+      "citation_changed_points": 104
+    },
+    {
+      "doc_id": "01/2011/TTLT-VKSTC-TANDTC-BCA-BTP-BLĐTBXH",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành một số quy định của Bộ luật Tố tụng Hình sự đối với người tham gia tố tụng là người chưa thành niên ______________________ Để thi hành đúng và thống nhất các quy định của Bộ luật Tố ",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành một số quy định của Bộ luật Tố tụng Hình sự đối với người tham gia tố tụng là người chưa thành niên Để thi hành đúng và thống nhất các quy",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành một số quy định của Bộ luật Tố tụng Hình sự đối với người tham gia tố tụng là người chưa thành niên ______________________ Để thi hành đúng và thống nhất các quy định của Bộ luật Tố ",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành một số quy định của Bộ luật Tố tụng Hình sự đối với người tham gia tố tụng là người chưa thành niên Để thi hành đúng và thống nhất các quy",
+      "citation_changed_points": 68
+    },
+    {
+      "doc_id": "01/2012/UBTVQH13",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "PHÁP LỆNH Hợp nhất văn bản quy phạm pháp luật ____________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 51/2001/QH10; Căn cứ",
+      "after_title": "PHÁP LỆNH Hợp nhất văn bản quy phạm pháp luật",
+      "before_family": "PHÁP LỆNH Hợp nhất văn bản quy phạm pháp luật ____________________ Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi",
+      "after_family": "PHÁP LỆNH Hợp nhất văn bản quy phạm pháp luật",
+      "citation_changed_points": 40
+    },
+    {
+      "doc_id": "01/2014/TT-BLĐTBXH",
+      "confident": true,
+      "flags": [
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ Quy định chi tiết và hướng dẫn thực hiện một số điều của N ghị định số 55/2013/NĐ - CP ngày 22/5/2013 của C hính phủ quy định chi tiết thi hành khoản 3 điều 54 của B ộ luật L ao động về việc cấp phép hoạt động c",
+      "after_title": "THÔNG TƯ Quy định chi tiết và hướng dẫn thực hiện một số điều của N ghị định số 55/2013/NĐ - CP ngày 22/5/2013 của C hính phủ quy định chi tiết thi hành khoản 3 điều 54 của B ộ",
+      "before_family": "THÔNG TƯ Quy định chi tiết và hướng dẫn thực hiện một số điều của N ghị định số 55/2013/NĐ - CP ngày 22/5/2013 của C hính phủ quy định chi tiết thi hành khoản 3 điều 54 của B ộ luật L ao động về việc cấp phép hoạt động c",
+      "after_family": "THÔNG TƯ Quy định chi tiết và hướng dẫn thực hiện một số điều của N ghị định số 55/2013/NĐ - CP ngày 22/5/2013 của C hính phủ quy định chi tiết thi hành khoản 3 điều 54 của B ộ",
+      "citation_changed_points": 72
+    },
+    {
+      "doc_id": "01/2014/TT-BXD",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Hướng dẫn việc quản lý sử dụng nhà ở công v ụ ___________________ Căn cứ Luật Nhà ở ngày 29 tháng 11 năm 2005; Căn cứ Nghị định số 62/2013/NĐ - CP ngày 25 tháng 6 năm 2013 của Chính phủ quy định chức năng, nhiệm",
+      "after_title": "THÔNG TƯ Hướng dẫn việc quản lý sử dụng nhà ở công v ụ",
+      "before_family": "THÔNG TƯ Hướng dẫn việc quản lý sử dụng nhà ở công v ụ ___________________ Căn cứ Luật Nhà ở ngày 29 tháng 11 năm 2005",
+      "after_family": "THÔNG TƯ Hướng dẫn việc quản lý sử dụng nhà ở công v ụ",
+      "citation_changed_points": 73
+    },
+    {
+      "doc_id": "01/2016/NĐ-CP",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "NGHỊ ĐỊNH Quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Bảo hiểm xã hội Việt Nam __________________________________________ Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015; Căn cứ Luật Việc làm ngà",
+      "after_title": "NGHỊ ĐỊNH Quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Bảo hiểm xã hội Việt Nam",
+      "before_family": "NGHỊ ĐỊNH Quy định chức năng",
+      "after_family": "NGHỊ ĐỊNH Quy định chức năng",
+      "citation_changed_points": 83
+    },
+    {
+      "doc_id": "01/2016/QH14",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "LUẬT ĐẤU GIÁ TÀI SẢN Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật đấu giá tài sản. Chương I NHỮNG QUY ĐỊNH CHUNG",
+      "after_title": "LUẬT ĐẤU GIÁ TÀI SẢN",
+      "before_family": "LUẬT ĐẤU GIÁ TÀI SẢN Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Quốc hội ban hành Luật đấu giá tài sản. Chương I NHỮNG QUY ĐỊNH CHUNG",
+      "after_family": "LUẬT ĐẤU GIÁ TÀI SẢN",
+      "citation_changed_points": 245
+    },
+    {
+      "doc_id": "01/2016/TTLT-BKHĐT-BTC",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn việc trao đổi thông tin về doanh nghiệp giữa H ệ thống thông tin quốc gia về đăng ký doanh nghiệp và H ệ thống thông tin thuế ________________________ Căn cứ Luật Doanh nghiệp số 68/2014/QH13",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn việc trao đổi thông tin về doanh nghiệp giữa H ệ thống thông tin quốc gia về đăng ký doanh nghiệp và H ệ thống thông tin thuế",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn việc trao đổi thông tin về doanh nghiệp giữa H ệ thống thông tin quốc gia về đăng ký doanh nghiệp và H ệ thống thông tin thuế ________________________ Căn cứ Luật Doanh nghiệp số 68/2014/QH13",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn việc trao đổi thông tin về doanh nghiệp giữa H ệ thống thông tin quốc gia về đăng ký doanh nghiệp và H ệ thống thông tin thuế",
+      "citation_changed_points": 64
+    },
+    {
+      "doc_id": "01/2017/TT-BTNMT",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Quy định Định mức sử dụng đất xây dựng cơ sở văn hóa, cơ sở y tế, cơ sở giáo dục và đào tạo, cơ sở thể dục thể thao Căn cứ Luật Đất đai ngày 29 tháng 11 năm 2013; Căn cứ Nghị định số 21/2013/NĐ - CP ngày 04 thán",
+      "after_title": "THÔNG TƯ Quy định Định mức sử dụng đất xây dựng cơ sở văn hóa, cơ sở y tế, cơ sở giáo dục và đào tạo, cơ sở thể dục thể thao",
+      "before_family": "THÔNG TƯ Quy định Định mức sử dụng đất xây dựng cơ sở văn hóa",
+      "after_family": "THÔNG TƯ Quy định Định mức sử dụng đất xây dựng cơ sở văn hóa",
+      "citation_changed_points": 3
+    },
+    {
+      "doc_id": "01/2017/TTLT-BCA-BQP-BTC-BNN&PTNT-VKSNDTC",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Quy định việc phối hợp giữa các cơ quan có thẩm quyền trong việc thực hiện một số quy định của Bộ luật Tố tụng hình sự năm 2015 về tiếp nhận, giải quyết tố giác, tin báo về tội phạm, kiến nghị khởi tố ",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Quy định việc phối hợp giữa các cơ quan có thẩm quyền trong việc thực hiện một số quy định của Bộ luật Tố tụng hình sự năm 2015 về tiếp nhận, giải quyết tố giác",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Quy định việc phối hợp giữa các cơ quan có thẩm quyền trong việc thực hiện một số quy định của Bộ luật Tố tụng hình sự năm 2015 về tiếp nhận",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Quy định việc phối hợp giữa các cơ quan có thẩm quyền trong việc thực hiện một số quy định của Bộ luật Tố tụng hình sự năm 2015 về tiếp nhận",
+      "citation_changed_points": 44
+    },
+    {
+      "doc_id": "01/2017/TTLT-VKSNDTC-TANDTC-BCA-BTP",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Quy định những trường hợp cần thiết phải trưng cầu giám định tư pháp trong giải quyết vụ án, vụ việc về tham nhũng, kinh tế Că n cứ Bộ luật Tố tụng hình sự số 101/2015/QH13 ngày 27 tháng 11 năm 2015; C",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Quy định những trường hợp cần thiết phải trưng cầu giám định tư pháp trong giải quyết vụ án, vụ việc về tham nhũng, kinh tế Că n cứ Bộ luật Tố tụng hình sự số",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Quy định những trường hợp cần thiết phải trưng cầu giám định tư pháp trong giải quyết vụ án",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Quy định những trường hợp cần thiết phải trưng cầu giám định tư pháp trong giải quyết vụ án",
+      "citation_changed_points": 37
+    },
+    {
+      "doc_id": "01/2018/UBNVQH14",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "PHÁP LỆNH SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA 04 PHÁP LỆNH CÓ LIÊN QUAN ĐẾN QUY HOẠCH Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Căn cứ Nghị quyết số 74/2018/QH14 ngày 20 tháng 11 năm 2018 của Quốc hội về kỳ ",
+      "after_title": "PHÁP LỆNH SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA 04 PHÁP LỆNH CÓ LIÊN QUAN ĐẾN QUY HOẠCH",
+      "before_family": "PHÁP LỆNH SỬA ĐỔI",
+      "after_family": "PHÁP LỆNH SỬA ĐỔI",
+      "citation_changed_points": 22
+    },
+    {
+      "doc_id": "01/2018/UBTVQH14",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "PHÁP LỆNH SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA 04 PHÁP LỆNH CÓ LIÊN QUAN ĐẾN QUY HOẠCH Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Căn cứ Nghị quyết số 74/2018/QH14 ngày 20 tháng 11 năm 2018 của Quốc hội về kỳ ",
+      "after_title": "PHÁP LỆNH SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU CỦA 04 PHÁP LỆNH CÓ LIÊN QUAN ĐẾN QUY HOẠCH",
+      "before_family": "PHÁP LỆNH SỬA ĐỔI",
+      "after_family": "PHÁP LỆNH SỬA ĐỔI",
+      "citation_changed_points": 21
+    },
+    {
+      "doc_id": "01/2019/TT-BTP",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Hướng dẫn một số nội dung về đăng ký biện pháp bảo đảm bằng tàu bay, tàu biển ________________________ Căn cứ Bộ luật dân sự ngày 24 tháng 11 năm 2015; Căn cứ Luật hàng không dân dụng Việt Nam ngày 29 tháng 6 nă",
+      "after_title": "THÔNG TƯ Hướng dẫn một số nội dung về đăng ký biện pháp bảo đảm bằng tàu bay, tàu biển",
+      "before_family": "THÔNG TƯ Hướng dẫn một số nội dung về đăng ký biện pháp bảo đảm bằng tàu bay",
+      "after_family": "THÔNG TƯ Hướng dẫn một số nội dung về đăng ký biện pháp bảo đảm bằng tàu bay",
+      "citation_changed_points": 29
+    },
+    {
+      "doc_id": "01/2020/NĐ-CP",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "NGHỊ ĐỊNH Sửa đổi, bổ sung một số điều của Nghị định số 84/2015/NĐ - CP ngày 30 tháng 9 năm 2015 của Chính phủ về giám sát và đánh giá đầu tư __________ CHÍNH PHỦ Căn cứ Luật Tổ chức Chính phủ ngày 19 tháng 6 năm 2015; C",
+      "after_title": "NGHỊ ĐỊNH Sửa đổi, bổ sung một số điều của Nghị định số 84/2015/NĐ - CP ngày 30 tháng 9 năm 2015 của Chính phủ về giám sát và đánh giá đầu tư CHÍNH PHỦ",
+      "before_family": "NGHỊ ĐỊNH Sửa đổi",
+      "after_family": "NGHỊ ĐỊNH Sửa đổi",
+      "citation_changed_points": 45
+    },
+    {
+      "doc_id": "01/2020/TTLT-VKSNDTC-TANDTC-BCA-BQP-BNN&PTNT-BTC-BTP",
+      "confident": false,
+      "flags": [
+        "title_truncated",
+        "low_confidence_title",
+        "kept_raw_title"
+      ],
+      "before_title": "VIỆN KIỂM SÁT NHÂN DÂN TỐI CAO - TÒA ÁN NHÂN DÂN TỐI CAO - BỘ CÔNG AN - BỘ QUỐC PHÒNG - BỘ NÔNG NGHIỆP VÀ PHÁT TRIỂN NÔNG THÔN - BỘ TÀI CHÍNH - BỘ TƯ PHÁP Số: 01/2020/TTLT - VKSNDTC - TANDTC - BCA - BQP - BNN&PTNT - BTC ",
+      "after_title": "VIỆN KIỂM SÁT NHÂN DÂN TỐI CAO - TÒA ÁN NHÂN DÂN TỐI CAO - BỘ CÔNG AN - BỘ QUỐC PHÒNG - BỘ NÔNG NGHIỆP VÀ PHÁT TRIỂN NÔNG THÔN - BỘ TÀI CHÍNH - BỘ TƯ PHÁP Số: 01/2020/TTLT - VKSNDTC - TANDTC - BCA - BQP - BNN&PTNT - BTC ",
+      "before_family": "VIỆN KIỂM SÁT NHÂN DÂN TỐI CAO - TÒA ÁN NHÂN DÂN TỐI CAO - BỘ CÔNG AN - BỘ QUỐC PHÒNG - BỘ NÔNG NGHIỆP VÀ PHÁT TRIỂN NÔNG THÔN - BỘ TÀI CHÍNH - BỘ TƯ PHÁP Số: 01/2020/TTLT - VKSNDTC - TANDTC - BCA - BQP - BNN&PTNT - BTC ",
+      "after_family": "VIỆN KIỂM SÁT NHÂN DÂN TỐI CAO - TÒA ÁN NHÂN DÂN TỐI CAO - BỘ CÔNG AN - BỘ QUỐC PHÒNG - BỘ NÔNG NGHIỆP VÀ PHÁT TRIỂN NÔNG THÔN - BỘ TÀI CHÍNH - BỘ TƯ PHÁP Số: 01/2020/TTLT - VKSNDTC - TANDTC - BCA - BQP - BNN&PTNT - BTC ",
+      "citation_changed_points": 0
+    },
+    {
+      "doc_id": "01/2021/QH15",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "dropped_header_prefix",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "1/01/clip_image001. png\" width=\"89\" /> QUỐC HỘI Luật số: 01/2021/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM 1/01/clip_image002. png\" width=\"276\" /> Độc lập - Tự do - Hạnh phúc LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU VÀ PHỤ LỤC DA",
+      "after_title": "LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU VÀ PHỤ LỤC DANH MỤC CHỈ TIÊU THỐNG KÊ QUỐC GIA CỦA LUẬT THỐNG KÊ",
+      "before_family": "1/01/clip_image001. png\" width=\"89\" /> QUỐC HỘI Luật số: 01/2021/QH15 CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM 1/01/clip_image002. png\" width=\"276\" /> Độc lập - Tự do - Hạnh phúc LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU VÀ PHỤ LỤC DA",
+      "after_family": "LUẬT SỬA ĐỔI, BỔ SUNG MỘT SỐ ĐIỀU VÀ PHỤ LỤC DANH MỤC CHỈ TIÊU THỐNG KÊ QUỐC GIA CỦA LUẬT THỐNG KÊ",
+      "citation_changed_points": 3
+    },
+    {
+      "doc_id": "01/2021/TT-BQP",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Quy định về quản lý người giữ chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý 1/01/clip_image001. png\" width=\"114\" /> Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm",
+      "after_title": "THÔNG TƯ Quy định về quản lý người giữ chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý",
+      "before_family": "THÔNG TƯ Quy định về quản lý người giữ chức vụ",
+      "after_family": "THÔNG TƯ Quy định về quản lý người giữ chức vụ",
+      "citation_changed_points": 74
+    },
+    {
+      "doc_id": "01/2021/TTLT-BCA-BQP-BTC-BNN&PTNT-VKSNDTC",
+      "confident": true,
+      "flags": [
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Sửa đổi, bổ sung một số điều của Thông tư liên tịch số 01/2017/TTLT - BCA - BQP - BTC - BNNPTNT - VKSNDTC ngày 29/12/2017 của Bộ trưởng Bộ Công an, Bộ trưởng Bộ Quốc phòng, Bộ trưởng Bộ Tài chính, Bộ t",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Sửa đổi, bổ sung một số điều của Thông tư liên tịch số 01/2017/TTLT - BCA - BQP - BTC - BNNPTNT - VKSNDTC ngày 29/12/2017 của Bộ trưởng Bộ Công an, Bộ trưởng Bộ",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Sửa đổi",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Sửa đổi",
+      "citation_changed_points": 3
+    },
+    {
+      "doc_id": "01/2021/TTLT-TANDTC-VKSNDTC-BCA-BQP",
+      "confident": true,
+      "flags": [
+        "dropped_header_prefix",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "Căn cứ Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019; Căn cứ Bộ luật Tố tụng hình sự ngày 27 tháng 11 năm 2015; Căn cứ Luật Ban hành văn bản quy phạm pháp luật ngày 22 tháng 6 năm 2015; Luật sửa đổi, bổ sung một số đ",
+      "after_title": "Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019",
+      "before_family": "Bộ luật Tố tụng hình sự ngày 27 tháng 11 năm 2015",
+      "after_family": "Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019",
+      "citation_changed_points": 46
+    },
+    {
+      "doc_id": "01/2021/TTLT-VKSNDTC-BCA-BQP-BNN&PTNT-BTC",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Quy định chi tiết việc áp dụng căn cứ tạm đình chỉ vì lý do bất khả kháng do thiên tai, dịch bệnh theo điểm c khoản 1",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Quy định chi tiết việc áp dụng",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Quy định chi tiết việc áp dụng căn cứ tạm đình chỉ vì lý do bất khả kháng do thiên tai",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Quy định chi tiết việc áp dụng",
+      "citation_changed_points": 30
+    },
+    {
+      "doc_id": "01/2022/TT-BQP",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Quy định về quản lý người giữ chức chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý Căn cứ Luật Doanh nghiệp ngày 17 tháng 6 năm 2020; Căn cứ Luật Quản lý, sử dụng",
+      "after_title": "THÔNG TƯ Quy định về quản lý người giữ chức chức vụ, chức danh và người đại diện phần vốn nhà nước tại doanh nghiệp do Bộ Quốc phòng quản lý",
+      "before_family": "THÔNG TƯ Quy định về quản lý người giữ chức chức vụ",
+      "after_family": "THÔNG TƯ Quy định về quản lý người giữ chức chức vụ",
+      "citation_changed_points": 74
+    },
+    {
+      "doc_id": "01/2022/TT-BXD",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Hướng dẫn thực hiện hỗ trợ nhà ở cho hộ nghèo, hộ cận nghèo trên địa bàn các huyện nghèo thuộc Chương trình mục tiêu quốc gia giảm nghèo bền vững giai đoạn 2021 - 2025 Căn cứ Luật Nhà ở ngày 25 tháng 11 năm 2014",
+      "after_title": "THÔNG TƯ Hướng dẫn thực hiện hỗ trợ nhà ở cho hộ nghèo, hộ cận nghèo trên địa bàn các huyện nghèo thuộc Chương trình mục tiêu quốc gia giảm nghèo bền vững giai đoạn 2021 - 2025",
+      "before_family": "THÔNG TƯ Hướng dẫn thực hiện hỗ trợ nhà ở cho hộ nghèo",
+      "after_family": "THÔNG TƯ Hướng dẫn thực hiện hỗ trợ nhà ở cho hộ nghèo",
+      "citation_changed_points": 22
+    },
+    {
+      "doc_id": "01/2022/TT-UBDT",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail",
+        "trimmed_semicolon_tail",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ QUY ĐỊNH QUY TRÌNH GIÁM SÁT, ĐÁNH GIÁ THỰC HIỆN CHƯƠNG TRÌNH MỤC TIÊU QUỐC GIA PHÁT TRIỂN KINH TẾ - XÃ HỘI VÙNG ĐỒNG BÀO ĐỒNG BÀO DÂN TỘC THIỂU SỐ VÀ MIỀN NÚI GIAI ĐOẠN 2021 - 2030; GIAI ĐOẠN I: TỪ NĂM 2021 ĐẾN ",
+      "after_title": "THÔNG TƯ QUY ĐỊNH QUY TRÌNH GIÁM SÁT, ĐÁNH GIÁ THỰC HIỆN CHƯƠNG TRÌNH MỤC TIÊU QUỐC GIA PHÁT TRIỂN KINH TẾ - XÃ HỘI VÙNG ĐỒNG BÀO ĐỒNG BÀO DÂN TỘC THIỂU SỐ VÀ MIỀN NÚI GIAI ĐOẠN",
+      "before_family": "THÔNG TƯ QUY ĐỊNH QUY TRÌNH GIÁM SÁT",
+      "after_family": "THÔNG TƯ QUY ĐỊNH QUY TRÌNH GIÁM SÁT",
+      "citation_changed_points": 47
+    },
+    {
+      "doc_id": "01/2022/UBTVQH15",
+      "confident": true,
+      "flags": [
+        "dropped_header_prefix",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "Căn cứ Hiến pháp nước Cộng hòa xã hội chủ nghĩa Việt Nam; Căn cứ Luật Phòng, chống ma túy số 73/2021/QH14; Ủy ban Thường vụ Quốc hội ban hành Pháp lệnh Trình tự, thủ tục Tòa án nhân dân xem xét, quyết định việc đưa người",
+      "after_title": "Luật Phòng, chống ma túy số 73/2021/QH14",
+      "before_family": "Pháp lệnh Trình tự",
+      "after_family": "Luật Phòng, chống ma túy số 73/2021/QH14",
+      "citation_changed_points": 148
+    },
+    {
+      "doc_id": "01/2023/TTLT-BCA-BQP-TANDTC-VKSNDTC",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Quy định việc phối hợp trong thực hiện một số quy định của Luật Thi hành án hình sự về thi hành án hình sự tại cộng đồng Căn cứ Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019; Căn cứ Bộ luật Hình sự",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Quy định việc phối hợp trong thực hiện một số quy định của Luật Thi hành án hình sự về thi hành án hình sự tại cộng đồng",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Quy định việc phối hợp trong thực hiện một số quy định của Luật Thi hành án hình sự về thi hành án hình sự tại cộng đồng Căn cứ Luật Thi hành án hình sự ngày 14 tháng 6 năm 2019",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Quy định việc phối hợp trong thực hiện một số quy định của Luật Thi hành án hình sự về thi hành án hình sự tại cộng đồng",
+      "citation_changed_points": 65
+    },
+    {
+      "doc_id": "01/2025/TT-BLĐTBXH",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ QUY ĐỊNH MỨC ĐIỀU CHỈNH TIỀN LƯƠNG VÀ THU NHẬP THÁNG ĐÃ ĐÓNG BẢO HIỂM XÃ HỘI Căn cứ Nghị định số 62/2022/NĐ - CP ngày 12 tháng 9 năm 2022 của Chính phủ quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức c",
+      "after_title": "THÔNG TƯ QUY ĐỊNH MỨC ĐIỀU CHỈNH TIỀN LƯƠNG VÀ THU NHẬP THÁNG ĐÃ ĐÓNG BẢO HIỂM XÃ HỘI",
+      "before_family": "THÔNG TƯ QUY ĐỊNH MỨC ĐIỀU CHỈNH TIỀN LƯƠNG VÀ THU NHẬP THÁNG ĐÃ ĐÓNG BẢO HIỂM XÃ HỘI Căn cứ Nghị định số 62/2022/NĐ - CP ngày 12 tháng 9 năm 2022 của Chính phủ quy định chức năng",
+      "after_family": "THÔNG TƯ QUY ĐỊNH MỨC ĐIỀU CHỈNH TIỀN LƯƠNG VÀ THU NHẬP THÁNG ĐÃ ĐÓNG BẢO HIỂM XÃ HỘI",
+      "citation_changed_points": 13
+    },
+    {
+      "doc_id": "01/TTLN-90",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ Liên ngành Toà án nhân dân tối cao, Viện Kiểm sát nhân dân tối cao, Bộ Nội vụ, Bộ Tư pháp hướng dẫn thi hành một số quy định của Luật sửa đổi, bổ sung một số điều của Bộ luật Hình sự __________________ Để áp dụn",
+      "after_title": "THÔNG TƯ Liên ngành Toà án nhân dân tối cao, Viện Kiểm sát nhân dân tối cao, Bộ Nội vụ, Bộ Tư pháp hướng dẫn thi hành một số quy định của Luật sửa đổi, bổ sung một số điều của Bộ",
+      "before_family": "THÔNG TƯ Liên ngành Toà án nhân dân tối cao",
+      "after_family": "THÔNG TƯ Liên ngành Toà án nhân dân tối cao",
+      "citation_changed_points": 18
+    },
+    {
+      "doc_id": "02-TT/LN",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN NGÀNH Về việc hướng dẫn thực hiện thẩm quyền xét xử của Toà án nhân dân về một số việc tranh chấp trong lao động ________________ Trong khi chờ đợi Bộ luật Lao động quy định đầy đủ thẩm quyền của Toà án nhâ",
+      "after_title": "THÔNG TƯ LIÊN NGÀNH Về việc hướng dẫn thực hiện thẩm quyền xét xử của Toà án nhân dân về một số việc tranh chấp trong lao động Trong khi chờ đợi Bộ luật Lao động quy định đầy đủ",
+      "before_family": "THÔNG TƯ LIÊN NGÀNH Về việc hướng dẫn thực hiện thẩm quyền xét xử của Toà án nhân dân về một số việc tranh chấp trong lao động ________________ Trong khi chờ đợi Bộ luật Lao động quy định đầy đủ thẩm quyền của Toà án nhâ",
+      "after_family": "THÔNG TƯ LIÊN NGÀNH Về việc hướng dẫn thực hiện thẩm quyền xét xử của Toà án nhân dân về một số việc tranh chấp trong lao động Trong khi chờ đợi Bộ luật Lao động quy định đầy đủ",
+      "citation_changed_points": 16
+    },
+    {
+      "doc_id": "02/1998/TTLT-TANDTC-VKSNDTC-BCA",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định tại Chương VIIA \" Các tội phạm về ma túy\" của Bộ luật Hình sự __________________________________ Để áp dụng thống nhất các quy định của Luật sửa đổi, bổ sung một số đi",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định tại Chương VIIA \" Các tội phạm về ma túy\" của Bộ luật Hình sự Để áp dụng thống nhất các quy định của Luật sửa đổi, bổ sung một",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định tại Chương VIIA \" Các tội phạm về ma túy\" của Bộ luật Hình sự __________________________________ Để áp dụng thống nhất các quy định của Luật sửa đổi",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn áp dụng một số quy định tại Chương VIIA \" Các tội phạm về ma túy\" của Bộ luật Hình sự Để áp dụng thống nhất các quy định của Luật sửa đổi",
+      "citation_changed_points": 25
+    },
+    {
+      "doc_id": "02/2001/NĐ-CP",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "NGHỊ ĐỊNH CỦA CHÍNH PHỦ Quy định chi tiết thi hành Bộ luật Lao động và Luật Giáo dục về dạy nghề _______________________ CHÍNH PHỦ Căn cứ Luật Tổ chức Chính phủ ngày 30 tháng 9 năm 1992; Căn cứ Bộ luật Lao động ngày 23 t",
+      "after_title": "NGHỊ ĐỊNH CỦA CHÍNH PHỦ Quy định chi tiết thi hành Bộ luật Lao động và Luật Giáo dục về dạy nghề CHÍNH PHỦ",
+      "before_family": "NGHỊ ĐỊNH CỦA CHÍNH PHỦ Quy định chi tiết thi hành Bộ luật Lao động và Luật Giáo dục về dạy nghề _______________________ CHÍNH PHỦ Căn cứ Luật Tổ chức Chính phủ ngày 30 tháng 9 năm 1992",
+      "after_family": "NGHỊ ĐỊNH CỦA CHÍNH PHỦ Quy định chi tiết thi hành Bộ luật Lao động và Luật Giáo dục về dạy nghề CHÍNH PHỦ",
+      "citation_changed_points": 154
+    },
+    {
+      "doc_id": "02/2005/TTLT-TANDTC-VKSNDTC-BTP-BCA-BTC",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn việc miễn, giảm thi hành án đối với khoản tiền phạt, án phí ____________________________ Để thi hành đúng và thống nhất các quy định về miễn, giảm thi hành án đối với khoản tiền phạt, án phí ",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn việc miễn, giảm thi hành án đối với khoản tiền phạt, án phí Để thi hành đúng và thống nhất các quy định về miễn, giảm thi hành án đối với khoản tiền",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn việc miễn",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn việc miễn",
+      "citation_changed_points": 60
+    },
+    {
+      "doc_id": "02/2005/TTLT-VKSTC-TATC-BCA-BQP-BTP",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "title_truncated"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành một số quy định của Bộ luật Tố tụng hình sự về khiếu nại, tố cáo ____________________ Để thi hành đúng và thống nhất các quy định của Bộ luật Tố tụng hình sự về khiếu nại, tố cáo và ",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành một số quy định của Bộ luật Tố tụng hình sự về khiếu nại, tố cáo Để thi hành đúng và thống nhất các quy định của Bộ luật Tố tụng hình sự về",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành một số quy định của Bộ luật Tố tụng hình sự về khiếu nại",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Hướng dẫn thi hành một số quy định của Bộ luật Tố tụng hình sự về khiếu nại",
+      "citation_changed_points": 68
+    },
+    {
+      "doc_id": "02/2008/TTLT/BCA-BQP-BYT-BGTVT-BKH&CN",
+      "confident": true,
+      "flags": [
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ LIÊN TỊCH Quy định về tiêu chuẩn và lắp đặt, sử dụng tín hiệu còi, đèn của xe ưu tiên Căn cứ Luật Giao thông đường bộ ngày 29 - 6 - 2001; Căn cứ Nghị định số 14/2003/NĐ - CP ngày 19 - 02 - 2003 của Chính phủ quy",
+      "after_title": "THÔNG TƯ LIÊN TỊCH Quy định về tiêu chuẩn và lắp đặt, sử dụng tín hiệu còi, đèn của xe ưu tiên",
+      "before_family": "THÔNG TƯ LIÊN TỊCH Quy định về tiêu chuẩn và lắp đặt",
+      "after_family": "THÔNG TƯ LIÊN TỊCH Quy định về tiêu chuẩn và lắp đặt",
+      "citation_changed_points": 7
+    },
+    {
+      "doc_id": "02/2011/QH13",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "LUẬT Khiếu nại ____ Căn cứ Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 51/2001/QH10; Quốc hội ban hành Luật Khiếu nại, Chương I NHỮNG QUY ĐỊNH CHUNG",
+      "after_title": "LUẬT Khiếu nại",
+      "before_family": "LUẬT Khiếu nại ____ Căn cứ Hiến pháp nước Cộng hoà xã hội chủ nghĩa Việt Nam năm 1992 đã được sửa đổi, bổ sung một số điều theo Nghị quyết số 51/2001/QH10; Quốc hội ban hành Luật Khiếu nại, Chương I NHỮNG QUY ĐỊNH CHUNG",
+      "after_family": "LUẬT Khiếu nại",
+      "citation_changed_points": 162
+    },
+    {
+      "doc_id": "02/2012/TT-BXD",
+      "confident": true,
+      "flags": [
+        "removed_ocr_noise",
+        "trimmed_preamble_tail"
+      ],
+      "before_title": "THÔNG TƯ Hướng dẫn một số nội dung về bảo trì công trình dân dụng, công trình công nghiệp vật liệu xây dựng và công trình hạ tầng kỹ thuật đô thị ____________________ Căn cứ Luật Xây dựng số 16/2003/QH11 ngày 26 tháng 11",
+      "after_title": "THÔNG TƯ Hướng dẫn một số nội dung về bảo trì công trình dân dụng, công trình công nghiệp vật liệu xây dựng và công trình hạ tầng kỹ thuật đô thị",
+      "before_family": "THÔNG TƯ Hướng dẫn một số nội dung về bảo trì công trình dân dụng",
+      "after_family": "THÔNG TƯ Hướng dẫn một số nội dung về bảo trì công trình dân dụng",
+      "citation_changed_points": 32
+    }
+  ]
+}

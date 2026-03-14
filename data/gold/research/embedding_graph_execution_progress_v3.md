@@ -1,6 +1,6 @@
 ﻿# Embedding + Graph Execution Progress (v3.1)
 
-Updated: `2026-03-12`
+Updated: `2026-03-13`
 
 ## Objective
 - Execute research plan v3.1 for legal retrieval with priority on citation precision.
@@ -210,3 +210,227 @@ Updated: `2026-03-12`
     - gates: `gate_min3_results=true`, `gate_top1_citation=true`, `gate_llm_or_fallback=true`, `gate_reranker_used=true`
 - Demo runbook stabilization:
   - default command changed to run Chainlit without hot reload (`-w`) to avoid Engine.IO polling noise during live demo.
+
+## Update 2026-03-13 (A25)
+- Qdrant metadata remediation implemented for serving collection:
+  - code:
+    - `scripts/patch_qdrant_metadata.py`
+    - `src/legal_data_processing.py`
+    - `src/legal_query_rewriter.py`
+    - `src/legal_rag_pipeline.py`
+    - `apps/chainlit_demo.py`
+    - `scripts/smoke_chainlit_hybrid.py`
+  - new test coverage:
+    - `tests/unit/test_legal_data_processing.py`
+    - `tests/unit/test_legal_query_rewriter.py`
+  - validation:
+    - `python -m py_compile ...` pass
+    - `pytest tests/unit/test_legal_data_processing.py tests/unit/test_legal_query_rewriter.py -q` => `9 passed`
+- Dry-run report v2:
+  - artifact:
+    - `data/gold/research/qdrant_metadata_patch/run_20260313_metadata_dryrun_full_v2/metadata_patch_report.json`
+    - `data/gold/research/qdrant_metadata_patch/run_20260313_metadata_dryrun_full_v2/metadata_patch_report.md`
+  - summary:
+    - `docs_seen=1255`
+    - `docs_confident=1235`
+    - `docs_low_confidence=20`
+    - `docs_title_changed=1221`
+    - `docs_family_changed=746`
+    - `points_citation_changed=150073`
+- Pilot apply:
+  - artifact:
+    - `data/gold/research/qdrant_metadata_patch/run_20260313_metadata_apply_pilot2/metadata_patch_report.json`
+  - result:
+    - `points_after=155938` (no point loss)
+    - sample payload on `01-BXD/CSXD` now contains:
+      - `ten_van_ban_raw`
+      - `law_family_raw`
+      - `metadata_patch_version=metadata_patch_v1_20260313`
+      - cleaned `ten_van_ban/law_family/citation_base/citation_full`
+
+## Update 2026-03-13 (A26)
+- Full metadata apply executed on serving collection:
+  - run id: `run_20260313_metadata_apply_full_v1`
+  - artifact:
+    - `data/gold/research/qdrant_metadata_patch/run_20260313_metadata_apply_full_v1/metadata_patch_report.json`
+    - `data/gold/research/qdrant_metadata_patch/run_20260313_metadata_apply_full_v1/metadata_patch_report.md`
+  - result:
+    - `docs_seen=1255`
+    - `points_seen=155938`
+    - `points_after=155938`
+    - `docs_confident=1235`
+    - `docs_low_confidence=20`
+    - `docs_title_changed=1221`
+    - `docs_family_changed=746`
+    - `points_citation_changed=149959`
+- Query rewriter path implemented and smoke-validated against external legal-SLM:
+  - complex query decomposition returns structured sub-queries when format is valid.
+  - numeric-loss guard now forces `fallback_original`.
+  - live sanity:
+    - case 1 (multi-actor liability): `status=ok`
+    - case 2 (`17 tuổi`, `80 km/h`): `status=fallback_original`, `fallback_reason=missing_numbers`
+
+## Update 2026-03-13 (A27)
+- New blocker after full in-place patch:
+  - collection `legal_documents__truro7_vn_law_embedding__d768` flipped `green -> red`
+  - `optimizer_status`: `Not enough space available for optimization, needed: 1.62 GiB, available: 625.34 MiB`
+  - smoke gate stopped correctly because collection is not healthy
+  - direct query path now returns `503 Service Unavailable`
+- Current interpretation:
+  - metadata patch itself completed logically (`points_after` unchanged, payloads updated),
+  - but Qdrant Cloud cluster does not have enough free disk for post-write optimization/compaction, so serving is blocked at infrastructure layer.
+- Immediate next action:
+  1. increase storage / plan on this Qdrant cluster or move serving collection to a larger cluster
+  2. wait for collection status to return `green`
+  3. rerun smoke:
+     - `scripts/smoke_chainlit_hybrid.py --run-id run_20260313_post_metadata_patch_smoke`
+  4. only after cluster recovery, test demo toggle with `QUERY_REWRITER_ENABLED=true`
+
+## Update 2026-03-13 (A28)
+- Chunking V2 switched to `Dieu-first` retrieval in code, without changing graph scope:
+  - `src/legal_chunker_v2.py`
+  - `scripts/upload_qdrant_cloud_embeddings.py`
+  - `scripts/run_hybrid_index_production.py`
+  - `src/qdrant_store.py`
+  - `src/embeddings.py`
+  - `tests/unit/test_legal_chunker_v2.py`
+- Retrieval chunking behavior now locked as:
+  - primary boundary = `Dieu`
+  - overflow split = `article_window` only, same `provision_id`
+  - `Khoan/Diem` kept only as `clause_spans` metadata
+  - production C3 selection keeps `ProvisionChunk` only
+- Fixed parser failure on numeric forms:
+  - protected patterns such as `100.000`, `1.500.000.000`, and similar OCR-spaced variants no longer create fake clause IDs like `Khoan 000`
+  - article heading detection now requires real article markers (`Dieu X.` / `Dieu X:`), reducing false article splits from in-body references
+- Validation completed:
+  - `pytest tests/unit/test_legal_chunker_v2.py tests/unit/test_legal_data_processing.py tests/unit/test_qdrant_payload_profile.py tests/unit/test_legal_query_rewriter.py -q` => `17 passed`
+  - regression on real document `100/2015/QH13`:
+    - `bad_khoan=0`
+    - `Dieu 77/219/303` each resolved to one article-level provision path
+    - sample `clause_spans`: `Dieu 77 -> Khoan 1-2`, `Dieu 219 -> Khoan 1-4`, `Dieu 303 -> Khoan 1-4`
+  - local sample smoke on first `20` docs:
+    - `chunks=3512`
+    - `clause_chunks=0`
+    - `article_windows=1731`
+    - `document_chunks=1`
+    - `bad_khoan=0`
+    - `citation_full_non_empty=3512`
+- Current status:
+  - title remediation remains valid
+  - chunking code is ready for shadow reindex
+  - no Qdrant write was executed in this update block
+- Next action:
+  1. build `article_first_v2` shadow collection on the new healthy Qdrant cluster
+  2. run 20-doc pilot reindex with `truro7/vn-law-embedding`
+  3. smoke retrieval + manual citation check before full `1255`-doc rollout
+
+## Update 2026-03-13 (A29)
+- Full Qdrant upload executed on new AWS cluster with `truro7/vn-law-embedding` and article-first chunking.
+- Runtime/profile used:
+  - `EMBEDDING_MODEL=truro7/vn-law-embedding`
+  - `EMBEDDING_DEVICE=cuda`
+  - `USE_FP16=true`
+  - `EMBEDDING_NORMALIZE=true`
+  - `payload_profile=lean`
+  - `chunk_policy=c3`
+  - `doc_batch_size=20`
+  - `embedding_batch_size=32`
+  - `upsert_batch_size=250`
+  - `force_recreate=true`
+- Target cluster:
+  - `https://718fe745-9ec6-416e-ab74-88304640f37d.us-east-1-1.aws.cloud.qdrant.io:6333`
+  - collection: `legal_documents__truro7_vn_law_embedding__d768`
+- Upload result:
+  - `loaded_docs=1255`
+  - `indexed_chunks=57551`
+  - `points_count=57551`
+  - collection status after run: `yellow`
+  - optimizer status: `ok`
+  - smoke during upload: `3/3`, `hits=15`
+- Quality metrics from upload run:
+  - `provision_id_valid_rate=100.00%`
+  - `structured_chunk_rate=96.16%`
+  - `citation_full_rate=100.00%`
+  - `non_cross_dieu_rate=100.00%`
+- Cloud payload spot-check passed:
+  - sample point `doc_id=100/2015/QH13`, `dieu_so=77`
+  - `ten_van_ban=BỘ LUẬT HÌNH SỰ`
+  - `chunk_type=ProvisionChunk`
+  - `segment_level=article`
+  - `legal_path=Dieu 77`
+  - `provision_id=100/2015/QH13_D77`
+  - `clause_spans=['Khoan 1-2']`
+  - `encoder_profile=truro7_vn_law_embedding|norm=true`
+- Notes:
+  - collection status is currently `yellow`, not `green`, but `optimizer_status=ok` and reads are available
+  - old pilot data was removed via `force_recreate`, so current collection is a clean full rebuild
+- Next action:
+  1. run manual retrieval smoke on the new collection
+  2. test Chainlit demo against this collection
+  3. if collection stays healthy, proceed with citation sanity on the 10 user queries
+
+## Update 2026-03-13 (A30)
+- Chainlit integration refactor completed for the `requery + new Qdrant cloud` path.
+- New shared runtime modules added and wired into the demo/smoke path:
+  - `src/config/runtime_settings.py`
+  - `src/runtime/qdrant_contract.py`
+  - `src/services/query_rewrite_service.py`
+  - `src/factories/legal_pipeline_factory.py`
+  - `src/adapters/chainlit_adapter.py`
+  - `apps/chainlit_demo.py`
+  - `scripts/smoke_chainlit_hybrid.py`
+- Root issue found during integration:
+  - preflight contract validation used the new AWS cluster correctly,
+  - but `src/qdrant_store.py` had import-time defaults, so hybrid search could still instantiate a local/server client and fail with `WinError 10061`.
+- Fix applied:
+  - Qdrant runtime config now resolves dynamically from current env,
+  - singleton store now recreates itself when the runtime signature changes,
+  - added unit coverage in `tests/unit/test_qdrant_store_runtime.py`.
+- Validation:
+  - unit tests:
+    - `pytest tests/unit/test_qdrant_store_runtime.py tests/unit/test_runtime_settings.py tests/unit/test_qdrant_contract.py tests/unit/test_query_rewrite_service.py tests/unit/test_chainlit_adapter.py tests/unit/test_legal_query_rewriter.py tests/unit/test_qdrant_payload_profile.py -q`
+    - result: `15 passed`
+  - live integration against AWS cluster:
+    - collection: `legal_documents__truro7_vn_law_embedding__d768`
+    - status: `green`
+    - query 1 (`rewrite=off`): `chat_status=ok`, `used_reranker=true`, `result_count=5`, `retrieval_ms=6622.48`, `generation_ms=175993.50`
+    - query 2 (`rewrite=on`, complex multi-actor liability): `chat_status=ok`, `rewrite_status=ok`, `rewrite_queries=4`, `used_reranker=true`, `result_count=5`, `retrieval_ms=8866.25`, `generation_ms=160970.92`
+- Retrieval quality note:
+  - runtime path is healthy,
+  - but top-1 relevance on the tested legal queries is still weak (`28/2004/TT-BTNMT` surfaced for both cases), so retrieval quality tuning remains open even though integration is complete.
+- Demo availability:
+  - local Chainlit server launched successfully
+  - URL responded `200` on `http://127.0.0.1:8000`
+- Next 48h:
+  1. run focused retrieval relevance smoke on the 10 legal user queries with `rewrite off/on`
+  2. inspect BM25 artifact alignment and reranker effect on off-topic top-1 results
+  3. only after legal relevance improves, promote the same shared runtime path into `web_app/backend/main.py`
+
+## Update 2026-03-13 (A31)
+- Added a lightweight demo app to replace Chainlit for faster manual testing:
+  - app: `apps/quick_chat_demo.py`
+  - runbook: `docs/QUICK_CHAT_DEMO_RUNBOOK.md`
+- Key design choice:
+  - `Search only` mode is now first-class for demo/testing.
+  - This path uses shared runtime + retrieval + optional rewrite + optional reranker, but skips LLM generation completely.
+  - `Full QA` remains available as a secondary mode.
+- Retrieval orchestration was extracted into `LegalRAGPipeline.search(...)`:
+  - shared by the quick demo
+  - keeps the same hybrid retrieval / rewrite / rerank path as `query(...)`
+  - avoids duplicating retrieval logic outside the pipeline
+- Validation:
+  - tests:
+    - `pytest tests/unit/test_legal_rag_pipeline_search.py tests/unit/test_qdrant_store_runtime.py tests/unit/test_runtime_settings.py tests/unit/test_qdrant_contract.py tests/unit/test_query_rewrite_service.py tests/unit/test_chainlit_adapter.py tests/unit/test_legal_query_rewriter.py tests/unit/test_qdrant_payload_profile.py -q`
+    - result: `16 passed`
+  - live health:
+    - `GET http://127.0.0.1:8010/health`
+    - `ok=true`
+    - collection=`legal_documents__truro7_vn_law_embedding__d768`
+    - collection_status=`green`
+    - points_count=`57551`
+  - live search-only smoke:
+    - basic query (`rewrite=off`) returned `status=ok` in ~`3.53s` retrieval + `1.86s` rerank
+    - complex query (`rewrite=on`) returned `status=ok`, `rewrite_status=ok`, `rewrite_queries=4`, ~`9.92s` retrieval + `6.80s` rerank + `2.91s` rewrite
+- Current note:
+  - demo path is now much easier to use than Chainlit for relevance debugging
+  - retrieval relevance is still weak on tested queries, so the quick demo should be used to tune retrieval before trusting `Full QA`

@@ -17,4 +17,6 @@ web_app/frontend/dist/
 
 data/**/*.parquet
 data/qdrant_db/
+data/database/
 *.log
+tmp_*.txt

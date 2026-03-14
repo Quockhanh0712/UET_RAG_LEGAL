@@ -7,7 +7,8 @@ from __future__ import annotations
 import logging
 import os
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from os import PathLike
 from typing import Dict, List, Optional, Tuple
 
 from src.embeddings import DEFAULT_MODEL, embed_query, embed_texts, get_embedding_dimension
@@ -30,6 +31,13 @@ def _lazy_imports():
     return QdrantLegalStore, SearchResult, QueryIntentClassifier, IntentResult
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return bool(default)
+    return str(value).strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass
 class LegalAnswer:
     answer: str
@@ -41,6 +49,33 @@ class LegalAnswer:
     used_reranker: bool = False
     graph_expansion_used: bool = False
     graph_mode: str = "none"
+    rewrite_time: float = 0.0
+    rewrite_used: bool = False
+    rewrite_status: str = "disabled"
+    rewrite_fallback_reason: str = ""
+    rewritten_queries: List[str] = field(default_factory=list)
+    missing_numbers: List[str] = field(default_factory=list)
+    per_subquery_hits: List[Dict[str, object]] = field(default_factory=list)
+    retrieval_union_count: int = 0
+
+
+@dataclass
+class LegalSearchResult:
+    citations: List[Dict]
+    intent: str
+    retrieval_time: float
+    rerank_time: float = 0.0
+    used_reranker: bool = False
+    graph_expansion_used: bool = False
+    graph_mode: str = "none"
+    rewrite_time: float = 0.0
+    rewrite_used: bool = False
+    rewrite_status: str = "disabled"
+    rewrite_fallback_reason: str = ""
+    rewritten_queries: List[str] = field(default_factory=list)
+    missing_numbers: List[str] = field(default_factory=list)
+    per_subquery_hits: List[Dict[str, object]] = field(default_factory=list)
+    retrieval_union_count: int = 0
 
     def format_with_citations(self) -> str:
         if not self.citations:
@@ -187,6 +222,7 @@ class LegalRAGPipeline:
         self,
         embedding_model_name: Optional[str] = None,
         normalize_embeddings: Optional[bool] = None,
+        query_rewrite_service=None,
     ):
         _lazy_imports()
         self.qdrant_store = None
@@ -195,10 +231,14 @@ class LegalRAGPipeline:
         self.embedding_model = None
         self.llm = None
         self._reranker = None
+        self._query_rewriter = None
+        self.query_rewrite_service = query_rewrite_service
         self._initialized = False
         self.embedding_model_name = embedding_model_name or DEFAULT_MODEL
         self.normalize_embeddings = normalize_embeddings
         self.rerank_alpha = max(0.0, min(1.0, float(os.getenv("RERANKER_ALPHA", "1.0"))))
+        self.query_rewriter_enabled = _env_bool("QUERY_REWRITER_ENABLED", False)
+        self.query_rewriter_force = _env_bool("QUERY_REWRITER_FORCE", False)
 
     def initialize(self):
         if self._initialized:
@@ -240,6 +280,144 @@ class LegalRAGPipeline:
             if chunk_id not in merged or getattr(result, "score", 0.0) > getattr(merged[chunk_id], "score", 0.0):
                 merged[chunk_id] = result
         return sorted(merged.values(), key=lambda item: item.score, reverse=True)
+
+    def _get_query_rewriter(self):
+        if self._query_rewriter is not None:
+            return self._query_rewriter
+        from src.legal_query_rewriter import LegalQueryRewriter
+
+        self._query_rewriter = LegalQueryRewriter()
+        return self._query_rewriter
+
+    def _rewrite_query(self, question: str, query_rewrite_service=None):
+        from src.legal_query_rewriter import QueryRewriteResult
+
+        if query_rewrite_service is not None:
+            return query_rewrite_service.rewrite(question)
+        if self.query_rewrite_service is not None:
+            return self.query_rewrite_service.rewrite(question)
+        if not self.query_rewriter_enabled:
+            return QueryRewriteResult(
+                original_query=question,
+                queries=[question],
+                status="disabled",
+            )
+        try:
+            rewriter = self._get_query_rewriter()
+            return rewriter.rewrite_query(question, force=self.query_rewriter_force)
+        except Exception as exc:
+            logger.warning("[PIPELINE] Query rewrite failed, fallback to original query: %s", exc)
+            return QueryRewriteResult(
+                original_query=question,
+                queries=[question],
+                status="api_error",
+                fallback_reason=str(exc),
+            )
+
+    def configure_runtime(
+        self,
+        collection_name: Optional[str] = None,
+        bm25_path: Optional[PathLike[str] | str] = None,
+    ):
+        self.initialize()
+        self.qdrant_store.dense_dim = int(self.embedding_model.embedding_dim)
+        if collection_name:
+            self.qdrant_store.collection_name = str(collection_name)
+        if bm25_path:
+            self.qdrant_store.set_bm25_path(str(bm25_path), load_if_exists=True)
+        return self
+
+    def _hybrid_search_safe(
+        self,
+        query_text: str,
+        query_embedding: List[float],
+        top_k: int,
+        dense_weight: float,
+        sparse_weight: float,
+        filter_conditions: Dict[str, object],
+    ) -> List:
+        try:
+            results = self.qdrant_store.hybrid_search(
+                query=query_text,
+                query_embedding=query_embedding,
+                top_k=top_k,
+                dense_weight=dense_weight,
+                sparse_weight=sparse_weight,
+                filter_conditions=filter_conditions,
+            )
+        except Exception as exc:
+            if filter_conditions.get("is_active") is True:
+                logger.warning(
+                    "[PIPELINE] is_active filter failed (likely strict index requirement), retry without it: %s",
+                    exc,
+                )
+                fallback_filters = dict(filter_conditions)
+                fallback_filters.pop("is_active", None)
+                results = self.qdrant_store.hybrid_search(
+                    query=query_text,
+                    query_embedding=query_embedding,
+                    top_k=top_k,
+                    dense_weight=dense_weight,
+                    sparse_weight=sparse_weight,
+                    filter_conditions=fallback_filters,
+                )
+            else:
+                raise
+        if not results and filter_conditions.get("is_active") is True:
+            fallback_filters = dict(filter_conditions)
+            fallback_filters.pop("is_active", None)
+            results = self.qdrant_store.hybrid_search(
+                query=query_text,
+                query_embedding=query_embedding,
+                top_k=top_k,
+                dense_weight=dense_weight,
+                sparse_weight=sparse_weight,
+                filter_conditions=fallback_filters,
+            )
+        return results
+
+    def _merge_query_rankings_rrf(self, rankings: List[List], limit: int) -> List:
+        if not rankings:
+            return []
+        if len(rankings) == 1:
+            return rankings[0][:limit]
+
+        from src.qdrant_store import SearchResult
+
+        fused: Dict[str, Dict[str, object]] = {}
+        k_const = 60.0
+        for ranking in rankings:
+            for rank, result in enumerate(ranking, start=1):
+                chunk_id = getattr(result, "chunk_id", "")
+                if not chunk_id:
+                    continue
+                entry = fused.setdefault(
+                    chunk_id,
+                    {
+                        "score": 0.0,
+                        "content": result.content,
+                        "metadata": result.metadata,
+                        "best_score": float(getattr(result, "score", 0.0) or 0.0),
+                    },
+                )
+                entry["score"] = float(entry["score"]) + (1.0 / (k_const + rank))
+                current_best = float(entry.get("best_score", 0.0) or 0.0)
+                result_score = float(getattr(result, "score", 0.0) or 0.0)
+                if result_score >= current_best:
+                    entry["best_score"] = result_score
+                    entry["content"] = result.content
+                    entry["metadata"] = result.metadata
+
+        ranked = sorted(fused.items(), key=lambda item: float(item[1]["score"]), reverse=True)[:limit]
+        return [
+            SearchResult(
+                chunk_id=chunk_id,
+                content=str(data["content"]),
+                score=float(data["score"]),
+                metadata=dict(data["metadata"]),
+            )
+            for chunk_id, data in ranked
+        ]
 
     def _rerank_results(self, question: str, results: List, top_k: int) -> Tuple[List, float]:
         if not results:
@@ -329,7 +507,7 @@ class LegalRAGPipeline:
             item.score = item.score * 0.85
         return expanded
 
-    def query(
+    def _retrieve(
         self,
         question: str,
         top_k: Optional[int] = None,
@@ -339,8 +517,10 @@ class LegalRAGPipeline:
         use_graph_context: bool = True,
         graph_hops: int = 1,
         graph_expand_docs: int = 20,
-    ) -> LegalAnswer:
+        query_rewrite_service=None,
+    ) -> Tuple[List, Dict[str, object]]:
         self.initialize()
+        rewrite_result = self._rewrite_query(question, query_rewrite_service=query_rewrite_service)
         intent_result = self.intent_classifier.classify(question)
         if top_k is None:
             top_k = intent_result.top_k
@@ -350,48 +530,31 @@ class LegalRAGPipeline:
             effective_filters["is_active"] = True
 
         start_retrieval = time.time()
-        query_embedding = self.embedding_model.encode_query(question)
         retrieval_pool_k = 100 if use_reranker else max(top_k * 2, top_k)
+        search_queries = rewrite_result.queries or [question]
+        per_subquery_hits: List[Dict[str, object]] = []
+        subquery_rankings: List[List] = []
 
-        try:
-            base_results = self.qdrant_store.hybrid_search(
-                query=question,
+        for query_text in search_queries:
+            query_embedding = self.embedding_model.encode_query(query_text)
+            ranking = self._hybrid_search_safe(
+                query_text=query_text,
                 query_embedding=query_embedding,
                 top_k=retrieval_pool_k,
                 dense_weight=intent_result.dense_weight,
                 sparse_weight=intent_result.sparse_weight,
                 filter_conditions=effective_filters,
             )
-        except Exception as exc:
-            if effective_filters.get("is_active") is True:
-                logger.warning(
-                    "[PIPELINE] is_active filter failed (likely strict index requirement), retry without it: %s",
-                    exc,
-                )
-                fallback_filters = dict(effective_filters)
-                fallback_filters.pop("is_active", None)
-                base_results = self.qdrant_store.hybrid_search(
-                    query=question,
-                    query_embedding=query_embedding,
-                    top_k=retrieval_pool_k,
-                    dense_weight=intent_result.dense_weight,
-                    sparse_weight=intent_result.sparse_weight,
-                    filter_conditions=fallback_filters,
-                )
-            else:
-                raise
-        if not base_results and effective_filters.get("is_active") is True:
-            # Backward compatibility for legacy indexes without is_active payload.
-            fallback_filters = dict(effective_filters)
-            fallback_filters.pop("is_active", None)
-            base_results = self.qdrant_store.hybrid_search(
-                query=question,
-                query_embedding=query_embedding,
-                top_k=retrieval_pool_k,
-                dense_weight=intent_result.dense_weight,
-                sparse_weight=intent_result.sparse_weight,
-                filter_conditions=fallback_filters,
+            per_subquery_hits.append(
+                {
+                    "query": query_text,
+                    "hits": len(ranking),
+                }
             )
+            subquery_rankings.append(ranking)
+
+        base_results = self._merge_query_rankings_rrf(subquery_rankings, limit=retrieval_pool_k)
+        retrieval_union_count = len(base_results)
 
         graph_results: List = []
         graph_expansion_used = False
@@ -431,24 +594,117 @@ class LegalRAGPipeline:
             graph_expansion_used,
         )
 
+        meta = {
+            "intent": intent_result.intent.value,
+            "retrieval_time": retrieval_time,
+            "rerank_time": rerank_time,
+            "used_reranker": used_reranker,
+            "graph_expansion_used": graph_expansion_used,
+            "graph_mode": graph_mode if graph_expansion_used else "none",
+            "rewrite_time": float(getattr(rewrite_result, "latency_ms", 0.0)) / 1000.0,
+            "rewrite_used": bool(getattr(rewrite_result, "rewrite_used", False)),
+            "rewrite_status": str(getattr(rewrite_result, "status", "disabled")),
+            "rewrite_fallback_reason": str(getattr(rewrite_result, "fallback_reason", "")),
+            "rewritten_queries": list(getattr(rewrite_result, "queries", []) or [question]),
+            "missing_numbers": list(getattr(rewrite_result, "missing_numbers", [])),
+            "per_subquery_hits": per_subquery_hits,
+            "retrieval_union_count": retrieval_union_count,
+        }
+        return search_results, meta
+
+    def search(
+        self,
+        question: str,
+        top_k: Optional[int] = None,
+        filter_conditions: Optional[Dict] = None,
+        use_reranker: bool = True,
+        include_inactive: bool = False,
+        use_graph_context: bool = True,
+        graph_hops: int = 1,
+        graph_expand_docs: int = 20,
+        query_rewrite_service=None,
+    ) -> LegalSearchResult:
+        search_results, meta = self._retrieve(
+            question=question,
+            top_k=top_k,
+            filter_conditions=filter_conditions,
+            use_reranker=use_reranker,
+            include_inactive=include_inactive,
+            use_graph_context=use_graph_context,
+            graph_hops=graph_hops,
+            graph_expand_docs=graph_expand_docs,
+            query_rewrite_service=query_rewrite_service,
+        )
+        _, citations = self._format_context(search_results)
+        return LegalSearchResult(
+            citations=citations,
+            intent=str(meta["intent"]),
+            retrieval_time=float(meta["retrieval_time"]),
+            rerank_time=float(meta["rerank_time"]),
+            used_reranker=bool(meta["used_reranker"]),
+            graph_expansion_used=bool(meta["graph_expansion_used"]),
+            graph_mode=str(meta["graph_mode"]),
+            rewrite_time=float(meta["rewrite_time"]),
+            rewrite_used=bool(meta["rewrite_used"]),
+            rewrite_status=str(meta["rewrite_status"]),
+            rewrite_fallback_reason=str(meta["rewrite_fallback_reason"]),
+            rewritten_queries=list(meta["rewritten_queries"]),
+            missing_numbers=list(meta["missing_numbers"]),
+            per_subquery_hits=list(meta["per_subquery_hits"]),
+            retrieval_union_count=int(meta["retrieval_union_count"]),
+        )
+
+    def query(
+        self,
+        question: str,
+        top_k: Optional[int] = None,
+        filter_conditions: Optional[Dict] = None,
+        use_reranker: bool = True,
+        include_inactive: bool = False,
+        use_graph_context: bool = True,
+        graph_hops: int = 1,
+        graph_expand_docs: int = 20,
+        query_rewrite_service=None,
+        llm_client=None,
+    ) -> LegalAnswer:
+        search_results, meta = self._retrieve(
+            question=question,
+            top_k=top_k,
+            filter_conditions=filter_conditions,
+            use_reranker=use_reranker,
+            include_inactive=include_inactive,
+            use_graph_context=use_graph_context,
+            graph_hops=graph_hops,
+            graph_expand_docs=graph_expand_docs,
+            query_rewrite_service=query_rewrite_service,
+        )
         context, citations = self._format_context(search_results)
         start_generation = time.time()
         if not context:
             answer = "Khong tim thay thong tin phap ly lien quan den cau hoi cua ban."
         else:
-            answer = self.llm.generate(question, context)
+            answer_provider = llm_client or self.llm
+            answer = answer_provider.generate(question, context)
         generation_time = time.time() - start_generation
 
         return LegalAnswer(
             answer=answer,
             citations=citations,
-            intent=intent_result.intent.value,
-            retrieval_time=retrieval_time,
+            intent=str(meta["intent"]),
+            retrieval_time=float(meta["retrieval_time"]),
             generation_time=generation_time,
-            rerank_time=rerank_time,
-            used_reranker=used_reranker,
-            graph_expansion_used=graph_expansion_used,
-            graph_mode=graph_mode if graph_expansion_used else "none",
+            rerank_time=float(meta["rerank_time"]),
+            used_reranker=bool(meta["used_reranker"]),
+            graph_expansion_used=bool(meta["graph_expansion_used"]),
+            graph_mode=str(meta["graph_mode"]),
+            rewrite_time=float(meta["rewrite_time"]),
+            rewrite_used=bool(meta["rewrite_used"]),
+            rewrite_status=str(meta["rewrite_status"]),
+            rewrite_fallback_reason=str(meta["rewrite_fallback_reason"]),
+            rewritten_queries=list(meta["rewritten_queries"]),
+            missing_numbers=list(meta["missing_numbers"]),
+            per_subquery_hits=list(meta["per_subquery_hits"]),
+            retrieval_union_count=int(meta["retrieval_union_count"]),
         )
 
     def _format_context(self, results: List) -> Tuple[str, List[Dict]]:

@@ -5,21 +5,32 @@ Supports two input shapes:
 1. Full document text (preferred): `toan_van_clean` / `toan_van`
 2. Legacy article-level rows: `clean_text` / `noi_dung`
 
-Chunking strategy is deterministic and legal-aware:
-Chuong -> Dieu -> Khoan -> Diem
+Retrieval chunking strategy is deterministic and legal-aware:
+- primary boundary: Dieu
+- overflow split only inside the same Dieu
+- Khoan/Diem are preserved as metadata only
 """
 
 from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
-from src.legal_data_processing import build_citation_base, normalize_doc_id, normalize_whitespace
+from src.embeddings import DEFAULT_MODEL, count_text_tokens
+from src.legal_data_processing import (
+    build_citation_base,
+    build_citation_full,
+    normalize_document_row,
+    normalize_doc_id,
+    normalize_whitespace,
+)
 
 logger = logging.getLogger(__name__)
+NUMERIC_DOT_PLACEHOLDER = "\uFFF0"
 
 
 @dataclass
@@ -64,6 +75,12 @@ class LegalChunk:
     char_start: int = 0
     char_end: int = 0
     token_len_est: int = 0
+    token_len_model: int = 0
+    overflow_index: int = 1
+    overflow_total: int = 1
+    window_char_start: int = 0
+    window_char_end: int = 0
+    clause_spans: List[str] = field(default_factory=list)
     encoder_profile: str = "default"
     hierarchy: Dict[str, Any] = field(default_factory=dict)
 
@@ -118,9 +135,35 @@ class LegalChunk:
             "char_start": self.char_start,
             "char_end": self.char_end,
             "token_len_est": self.token_len_est,
+            "token_len_model": self.token_len_model,
+            "overflow_index": self.overflow_index,
+            "overflow_total": self.overflow_total,
+            "window_char_start": self.window_char_start,
+            "window_char_end": self.window_char_end,
+            "clause_spans": list(self.clause_spans),
             "encoder_profile": self.encoder_profile,
             "hierarchy": self.hierarchy,
         }
+
+
+@dataclass
+class _TextUnit:
+    text: str
+    start: int
+    end: int
+    token_len: int
+
+
+@dataclass
+class _ArticleWindow:
+    text: str
+    start: int
+    end: int
+    token_len: int
+    overflow_index: int
+    overflow_total: int
+    clause_spans: List[str]
+    fallback_reason: str = ""
 
 
 class LegalChunkerV2:
@@ -129,22 +172,60 @@ class LegalChunkerV2:
         re.IGNORECASE | re.MULTILINE,
     )
     DIEU_PATTERN = re.compile(
-        r"^\s*(?:\u0110i\u1ec1u|Dieu)\s+(?P<dieu_so>\d+[A-Za-z0-9\-]*)\s*[.:]?\s*(?P<title>.*)$",
+        r"^\s*(?:\u0110i\u1ec1u|Dieu)\s+(?P<dieu_so>\d+[A-Za-z0-9\-]*)\s*[.:]\s*(?P<tail>.*)$",
         re.IGNORECASE | re.MULTILINE,
     )
     KHOAN_PATTERN = re.compile(
-        r"^\s*(?:(?:Kho\u1ea3n|Khoan)\s+)?(?P<khoan_so>\d+)\.\s+",
+        r"^\s*(?:(?:Kho\u1ea3n|Khoan)\s+)?(?P<khoan_so>[1-9]\d{0,2})\.\s+",
         re.IGNORECASE | re.MULTILINE,
+    )
+    KHOAN_INLINE_PATTERN = re.compile(
+        r"(?:^|[\n;:]\s+|[.!?]\s+|\s+)(?:(?:Kho\u1ea3n|Khoan)\s+)?(?P<khoan_so>[1-9]\d{0,2})\.\s+",
+        re.IGNORECASE,
     )
     DIEM_PATTERN = re.compile(
         r"^\s*(?:(?:\u0110i\u1ec3m|Diem)\s+)?(?P<diem_so>[a-z\u0111])\)\s+",
         re.IGNORECASE | re.MULTILINE,
     )
+    ARTICLE_MARKER_PATTERN = re.compile(
+        r"(?<!\n)\s+(?=(?:\u0110i\u1ec1u|Dieu)\s+\d+[A-Za-z0-9\-]*\s*[.:])",
+        re.IGNORECASE,
+    )
+    CHAPTER_MARKER_PATTERN = re.compile(
+        r"(?<!\n)\s+(?=(?:Ch\u01b0\u01a1ng|Chuong)\s+(?:[IVXLCDM]+|\d+)\b)",
+        re.IGNORECASE,
+    )
+    CLAUSE_MARKER_PATTERN = re.compile(
+        r"(?<=[.;:])\s+(?=(?:(?:Kho\u1ea3n|Khoan)\s+)?[1-9]\d{0,2}\.\s+)",
+        re.IGNORECASE,
+    )
+    SENTENCE_CHUNK_PATTERN = re.compile(r".+?(?:\n+|(?<=[.;:!?])\s+|$)", re.DOTALL)
 
-    def __init__(self, min_chars: int = 1200, max_chars: int = 2800, overlap_chars: int = 120):
+    def __init__(
+        self,
+        min_chars: int = 1200,
+        max_chars: int = 2800,
+        overlap_chars: int = 120,
+        encoder_model_name: Optional[str] = None,
+        encoder_max_len: int = 512,
+        target_chunk_tokens: int = 420,
+        hard_cap_tokens: int = 448,
+        overlap_tokens: int = 64,
+    ):
         self.min_chars = min_chars
         self.max_chars = max_chars
         self.overlap_chars = overlap_chars
+        self.encoder_model_name = str(encoder_model_name or DEFAULT_MODEL)
+        self.encoder_max_len = int(encoder_max_len)
+        self.target_chunk_tokens = int(target_chunk_tokens)
+        self.hard_cap_tokens = int(hard_cap_tokens)
+        self.overlap_tokens = int(overlap_tokens)
+        self._encoder_profile = self._build_encoder_profile()
+
+    def _build_encoder_profile(self) -> str:
+        normalize_flag = os.getenv("EMBEDDING_NORMALIZE", "true").strip().lower()
+        slug = re.sub(r"[^a-z0-9]+", "_", self.encoder_model_name.lower()).strip("_")
+        return f"{slug}|norm={normalize_flag}"
 
     @staticmethod
     def _normalize_legal_text(text: str) -> str:
@@ -154,55 +235,32 @@ class LegalChunkerV2:
         return "\n".join(lines)
 
     @staticmethod
-    def _stabilize_inline_markers(text: str) -> str:
-        """
-        Stabilize legal structure markers that appear inline so downstream
-        line-anchored regex can parse Chuong/Dieu/Khoan/Diem deterministically.
-        """
-        stabilized = str(text or "").replace("\r\n", "\n").replace("\r", "\n")
-        stabilized = re.sub(r"[ \t]+", " ", stabilized)
+    def _protect_numeric_dots(text: str) -> str:
+        return re.sub(r"(?<=\d)\.(\s*)(?=\d)", lambda m: NUMERIC_DOT_PLACEHOLDER + (m.group(1) or ""), str(text or ""))
+
+    @staticmethod
+    def _restore_numeric_dots(text: str) -> str:
+        return str(text or "").replace(NUMERIC_DOT_PLACEHOLDER, ".")
+
+    def _stabilize_inline_markers(self, text: str) -> str:
+        stabilized = self._normalize_legal_text(text)
+        stabilized = self._protect_numeric_dots(stabilized)
+        stabilized = self.CHAPTER_MARKER_PATTERN.sub("\n", stabilized)
+        stabilized = self.ARTICLE_MARKER_PATTERN.sub("\n", stabilized)
         stabilized = re.sub(r"\n{2,}", "\n", stabilized).strip()
+        return self._restore_numeric_dots(stabilized)
 
-        replacements = [
-            (
-                r"(?<!\n)\s+(?=(?:Ch\u01b0\u01a1ng|Chuong)\s+(?:[IVXLCDM]+|\d+)\b)",
-                "\n",
-            ),
-            (
-                r"(?<!\n)\s+(?=(?:\u0110i\u1ec1u|Dieu)\s+\d+[A-Za-z0-9\-]*\b)",
-                "\n",
-            ),
-            (
-                r"(?<=[\.;:])\s+(?=(?:(?:Kho\u1ea3n|Khoan)\s+)?\d+\.\s+)",
-                "\n",
-            ),
-            (
-                r"(?<=[\.;:])\s+(?=(?:(?:\u0110i\u1ec3m|Diem)\s+)?[a-z\u0111]\)\s+)",
-                "\n",
-            ),
-        ]
-        for pattern, replacement in replacements:
-            stabilized = re.sub(pattern, replacement, stabilized, flags=re.IGNORECASE)
+    def _stabilize_clause_markers(self, text: str) -> str:
+        stabilized = self._normalize_legal_text(text)
+        stabilized = self._protect_numeric_dots(stabilized)
+        stabilized = self.CLAUSE_MARKER_PATTERN.sub("\n", stabilized)
+        stabilized = re.sub(r"\n{2,}", "\n", stabilized).strip()
+        return self._restore_numeric_dots(stabilized)
 
-        lines = [line.strip() for line in stabilized.split("\n")]
-        lines = [line for line in lines if line]
-        return "\n".join(lines)
-
-    def _build_provision_id(
-        self,
-        doc_id: str,
-        dieu_so: str = "",
-        khoan_so: str = "",
-        diem_so: str = "",
-        suffix: str = "",
-    ) -> str:
+    def _build_provision_id(self, doc_id: str, dieu_so: str = "", suffix: str = "") -> str:
         parts = [doc_id or "UNKNOWN"]
         if dieu_so:
             parts.append(f"D{dieu_so}")
-        if khoan_so:
-            parts.append(f"K{khoan_so}")
-        if diem_so:
-            parts.append(f"P{diem_so}")
         if suffix:
             parts.append(suffix)
         return "_".join(parts)
@@ -211,86 +269,15 @@ class LegalChunkerV2:
         self,
         doc_id: str,
         dieu_so: str,
-        khoan_so: str,
-        diem_so: str,
         chunk_index: int,
         text: str,
+        overflow_index: int = 1,
     ) -> str:
         digest = hashlib.md5(text.encode("utf-8")).hexdigest()[:8]
-        base = self._build_provision_id(doc_id, dieu_so, khoan_so, diem_so)
+        base = self._build_provision_id(doc_id, dieu_so)
+        if overflow_index > 1:
+            base = f"{base}_W{overflow_index}"
         return f"{base}_C{chunk_index}_{digest}"
-
-    def _extract_segments(
-        self,
-        text: str,
-        pattern: re.Pattern,
-        key: str,
-        base_offset: int = 0,
-    ) -> List[Tuple[str, str, int, int]]:
-        matches = list(pattern.finditer(text))
-        if not matches:
-            return []
-
-        segments: List[Tuple[str, str, int, int]] = []
-        if matches[0].start() > 0:
-            pre = text[: matches[0].start()].strip()
-            if pre:
-                segments.append(("", pre, base_offset, base_offset + matches[0].start()))
-
-        for idx, match in enumerate(matches):
-            start = match.start()
-            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(text)
-            seg_text = text[start:end].strip()
-            seg_id = (match.group(key) or "").strip()
-            segments.append((seg_id, seg_text, base_offset + start, base_offset + end))
-
-        return segments
-
-    def _find_split_point(self, text: str, start: int, end: int) -> int:
-        search = text[start:end]
-        if not search:
-            return end
-
-        for idx in range(len(search) - 1, -1, -1):
-            if search[idx] in ".;:\n":
-                return start + idx + 1
-
-        for idx in range(len(search) - 1, -1, -1):
-            if search[idx] == " ":
-                return start + idx + 1
-
-        return end
-
-    def _hard_split(self, text: str, base_offset: int) -> List[Tuple[str, int, int]]:
-        text = normalize_whitespace(text)
-        if len(text) <= self.max_chars:
-            return [(text, base_offset, base_offset + len(text))]
-
-        chunks: List[Tuple[str, int, int]] = []
-        cursor = 0
-        text_len = len(text)
-
-        while cursor < text_len:
-            chunk_start = cursor
-            ideal_end = min(chunk_start + self.max_chars, text_len)
-            if ideal_end >= text_len:
-                chunk_end = text_len
-            else:
-                min_end = min(chunk_start + self.min_chars, text_len)
-                chunk_end = self._find_split_point(text, min_end, ideal_end)
-                if chunk_end <= chunk_start:
-                    chunk_end = ideal_end
-
-            piece = text[chunk_start:chunk_end].strip()
-            if piece:
-                chunks.append((piece, base_offset + chunk_start, base_offset + chunk_end))
-
-            if chunk_end >= text_len:
-                break
-
-            cursor = max(chunk_end - self.overlap_chars, chunk_start + 1)
-
-        return chunks
 
     @staticmethod
     def _chapter_at(
@@ -306,45 +293,308 @@ class LegalChunkerV2:
         if selected is None:
             return "", ""
         chuong = (selected.group(1) or "").strip()
-        ten_chuong = (selected.group(2) or "").strip()
+        ten_chuong = normalize_whitespace(selected.group(2) or "")
         return chuong, ten_chuong
-
-    def _compose_path(self, dieu_so: str, khoan_so: str, diem_so: str) -> str:
-        parts: List[str] = []
-        if dieu_so:
-            parts.append(f"Dieu {dieu_so}")
-        if khoan_so:
-            parts.append(f"Khoan {khoan_so}")
-        if diem_so:
-            parts.append(f"Diem {diem_so}")
-        return " > ".join(parts)
-
-    @staticmethod
-    def _classify_chunk_type(
-        dieu_so: str,
-        khoan_so: str,
-        diem_so: str,
-        fallback_reason: str,
-    ) -> Tuple[str, str]:
-        if fallback_reason or not dieu_so:
-            return "FallbackChunk", "document"
-        if diem_so:
-            return "ClauseChunk", "point"
-        if khoan_so:
-            return "ClauseChunk", "clause"
-        return "ProvisionChunk", "article"
-
-    def _compose_citation(self, base: str, path: str) -> Tuple[str, str]:
-        short = path or "Nguon phap ly"
-        full = f"{base} | {path}" if path else base
-        return short, full
 
     @staticmethod
     def _estimate_token_len(text: str) -> int:
-        # Deterministic, model-agnostic estimate for payload diagnostics.
         if not text:
             return 0
         return len(re.findall(r"\S+", str(text)))
+
+    def _count_tokens(self, text: str, text_type: str = "passage") -> int:
+        if not text:
+            return 0
+        return int(count_text_tokens(text, model_name=self.encoder_model_name, text_type=text_type, add_prefix=True))
+
+    @staticmethod
+    def _first_nonempty_line(text: str) -> str:
+        for line in str(text or "").splitlines():
+            line = normalize_whitespace(line)
+            if line:
+                return line
+        return ""
+
+    @staticmethod
+    def _clean_article_title(text: str) -> str:
+        candidate = normalize_whitespace(text)
+        if not candidate:
+            return ""
+        candidate = re.sub(r"^[\-\.:;,\)\]]+\s*", "", candidate)
+        candidate = re.sub(r"\s*[\-_:;,/]+$", "", candidate).strip()
+        if len(candidate) > 160:
+            candidate = candidate[:160].rsplit(" ", 1)[0].strip()
+        if re.search(r"\b(?:Can cu|Căn cứ|Chuong|Dieu)\b", candidate, flags=re.IGNORECASE):
+            return ""
+        return candidate
+
+    def _extract_article_structure(self, article_text: str) -> Tuple[str, str, str]:
+        normalized = self._normalize_legal_text(article_text)
+        match = self.DIEU_PATTERN.match(normalized)
+        if not match:
+            return "", "", normalized
+
+        dieu_so = normalize_whitespace(match.group("dieu_so") or "")
+        tail = normalize_whitespace(match.group("tail") or "")
+        if not tail:
+            return dieu_so, "", ""
+
+        protected_tail = self._protect_numeric_dots(tail)
+        clause_match = self.KHOAN_INLINE_PATTERN.search(protected_tail)
+        if clause_match:
+            prefix = normalize_whitespace(self._restore_numeric_dots(protected_tail[: clause_match.start()]))
+            title_candidate = self._clean_article_title(prefix)
+            body = normalize_whitespace(self._restore_numeric_dots(protected_tail[clause_match.start() :]))
+            if 3 <= len(title_candidate) <= 140:
+                return dieu_so, title_candidate, body
+
+        first_line = self._first_nonempty_line(tail)
+        if first_line and "\n" in tail:
+            title_candidate = self._clean_article_title(first_line)
+            remainder = normalize_whitespace(tail[len(first_line) :])
+            if 3 <= len(title_candidate) <= 140 and remainder:
+                return dieu_so, title_candidate, remainder
+
+        return dieu_so, "", tail
+
+    def _segment_body_units(self, body_text: str) -> List[_TextUnit]:
+        normalized = self._normalize_legal_text(body_text)
+        if not normalized:
+            return []
+
+        protected = self._protect_numeric_dots(normalized)
+        units: List[_TextUnit] = []
+        for match in self.SENTENCE_CHUNK_PATTERN.finditer(protected):
+            raw_piece = match.group(0)
+            if not raw_piece:
+                continue
+            leading_ws = len(raw_piece) - len(raw_piece.lstrip())
+            trimmed_piece = raw_piece.strip()
+            if not trimmed_piece:
+                continue
+            start = match.start() + leading_ws
+            end = start + len(trimmed_piece)
+            piece_text = normalize_whitespace(self._restore_numeric_dots(normalized[start:end]))
+            if not piece_text:
+                continue
+            units.append(_TextUnit(text=piece_text, start=start, end=end, token_len=self._count_tokens(piece_text)))
+
+        if units:
+            return units
+
+        cleaned = normalize_whitespace(normalized)
+        return [_TextUnit(text=cleaned, start=0, end=len(cleaned), token_len=self._count_tokens(cleaned))]
+
+    def _fallback_split_large_piece(self, piece_text: str, piece_start: int, header_tokens: int) -> List[_TextUnit]:
+        words = list(re.finditer(r"\S+\s*", piece_text))
+        if not words:
+            return []
+
+        target_budget = max(32, self.target_chunk_tokens - header_tokens)
+        hard_budget = max(40, self.hard_cap_tokens - header_tokens)
+        units: List[_TextUnit] = []
+        cursor = 0
+        while cursor < len(words):
+            start = words[cursor].start()
+            best_end = words[cursor].end()
+            best_text = normalize_whitespace(piece_text[start:best_end])
+            best_tokens = self._count_tokens(best_text)
+            idx = cursor
+            while idx + 1 < len(words):
+                candidate_end = words[idx + 1].end()
+                candidate_text = normalize_whitespace(piece_text[start:candidate_end])
+                candidate_tokens = self._count_tokens(candidate_text)
+                if candidate_tokens <= target_budget:
+                    best_end = candidate_end
+                    best_text = candidate_text
+                    best_tokens = candidate_tokens
+                    idx += 1
+                    continue
+                if candidate_tokens <= hard_budget and best_tokens < target_budget:
+                    best_end = candidate_end
+                    best_text = candidate_text
+                    best_tokens = candidate_tokens
+                    idx += 1
+                break
+            units.append(
+                _TextUnit(
+                    text=best_text,
+                    start=piece_start + start,
+                    end=piece_start + best_end,
+                    token_len=best_tokens,
+                )
+            )
+            cursor = idx + 1 if idx > cursor else cursor + 1
+        return units
+
+    def _compute_clause_ranges(self, body_text: str) -> List[Tuple[str, int, int]]:
+        stabilized = self._normalize_legal_text(body_text)
+        protected = self._protect_numeric_dots(stabilized)
+        matches = list(self.KHOAN_INLINE_PATTERN.finditer(protected))
+        if not matches:
+            return []
+
+        ranges: List[Tuple[str, int, int]] = []
+        for idx, match in enumerate(matches):
+            khoan_so = normalize_whitespace(match.group("khoan_so") or "")
+            if not khoan_so:
+                continue
+            start = match.start()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(protected)
+            label = f"Khoan {khoan_so}"
+            khoan_text = self._restore_numeric_dots(protected[start:end])
+            point_matches = list(self.DIEM_PATTERN.finditer(self._stabilize_clause_markers(khoan_text)))
+            if point_matches:
+                first_point = normalize_whitespace(point_matches[0].group("diem_so") or "")
+                last_point = normalize_whitespace(point_matches[-1].group("diem_so") or "")
+                if first_point and last_point:
+                    label = f"{label} > Diem {first_point}" if first_point == last_point else f"{label} > Diem {first_point}-{last_point}"
+            ranges.append((label, start, end))
+        return ranges
+
+    @staticmethod
+    def _compress_clause_labels(labels: Iterable[str]) -> List[str]:
+        ordered = list(dict.fromkeys(str(label).strip() for label in labels if str(label).strip()))
+        compressed: List[str] = []
+        numeric_run: List[int] = []
+
+        def flush_run() -> None:
+            nonlocal numeric_run
+            if not numeric_run:
+                return
+            compressed.append(f"Khoan {numeric_run[0]}" if len(numeric_run) == 1 else f"Khoan {numeric_run[0]}-{numeric_run[-1]}")
+            numeric_run = []
+
+        for label in ordered:
+            match = re.fullmatch(r"Khoan (\d+)", label)
+            if not match:
+                flush_run()
+                compressed.append(label)
+                continue
+            value = int(match.group(1))
+            if numeric_run and value == numeric_run[-1] + 1:
+                numeric_run.append(value)
+            else:
+                flush_run()
+                numeric_run = [value]
+
+        flush_run()
+        return compressed
+
+    def _clause_spans_for_text(self, text: str) -> List[str]:
+        if not text:
+            return []
+        return self._compress_clause_labels(label for label, _, _ in self._compute_clause_ranges(text))
+
+    def _split_article_windows(self, dieu_so: str, title: str, body_text: str) -> List[_ArticleWindow]:
+        header = f"Dieu {dieu_so}"
+        if title:
+            header = f"{header}. {title}"
+        normalized_body = self._normalize_legal_text(body_text)
+        full_text = header if not normalized_body else f"{header}\n{normalized_body}"
+        full_tokens = self._count_tokens(full_text)
+        clause_spans = self._clause_spans_for_text(normalized_body)
+        if full_tokens <= self.encoder_max_len:
+            return [
+                _ArticleWindow(
+                    text=full_text,
+                    start=0,
+                    end=len(normalized_body),
+                    token_len=full_tokens,
+                    overflow_index=1,
+                    overflow_total=1,
+                    clause_spans=clause_spans,
+                )
+            ]
+
+        header_tokens = self._count_tokens(header)
+        units = self._segment_body_units(normalized_body)
+        expanded_units: List[_TextUnit] = []
+        for unit in units:
+            if header_tokens + unit.token_len <= self.hard_cap_tokens:
+                expanded_units.append(unit)
+            else:
+                expanded_units.extend(self._fallback_split_large_piece(unit.text, unit.start, header_tokens))
+
+        if not expanded_units:
+            return [
+                _ArticleWindow(
+                    text=full_text,
+                    start=0,
+                    end=len(normalized_body),
+                    token_len=full_tokens,
+                    overflow_index=1,
+                    overflow_total=1,
+                    clause_spans=clause_spans,
+                    fallback_reason="empty_body_units",
+                )
+            ]
+
+        windows: List[_ArticleWindow] = []
+        cursor = 0
+        while cursor < len(expanded_units):
+            current_units: List[_TextUnit] = []
+            token_total = header_tokens
+            idx = cursor
+            while idx < len(expanded_units):
+                unit = expanded_units[idx]
+                if current_units and token_total + unit.token_len > self.target_chunk_tokens:
+                    break
+                if current_units and token_total + unit.token_len > self.hard_cap_tokens:
+                    break
+                current_units.append(unit)
+                token_total += unit.token_len
+                idx += 1
+                if token_total >= self.target_chunk_tokens:
+                    break
+
+            if not current_units:
+                unit = expanded_units[cursor]
+                current_units = [unit]
+                token_total = header_tokens + unit.token_len
+                idx = cursor + 1
+
+            body_start = current_units[0].start
+            body_end = current_units[-1].end
+            window_body = normalize_whitespace(normalized_body[body_start:body_end])
+            window_text = header if not window_body else f"{header}\n{window_body}"
+            windows.append(
+                _ArticleWindow(
+                    text=window_text,
+                    start=body_start,
+                    end=body_end,
+                    token_len=self._count_tokens(window_text),
+                    overflow_index=len(windows) + 1,
+                    overflow_total=0,
+                    clause_spans=self._clause_spans_for_text(window_body),
+                    fallback_reason="article_window",
+                )
+            )
+
+            if idx >= len(expanded_units):
+                break
+
+            next_cursor = idx
+            overlap_sum = 0
+            back = idx - 1
+            while back > cursor and overlap_sum < self.overlap_tokens:
+                overlap_sum += expanded_units[back].token_len
+                next_cursor = back
+                back -= 1
+            cursor = next_cursor if next_cursor > cursor else min(idx, cursor + 1)
+
+        total = len(windows)
+        for item in windows:
+            item.overflow_total = total
+        return windows
+
+    @staticmethod
+    def _prepare_record(record: Dict[str, Any]) -> Dict[str, Any]:
+        raw_record = dict(record or {})
+        normalized = normalize_document_row(raw_record)
+        merged = dict(raw_record)
+        merged.update(normalized)
+        return merged
 
     def _build_chunk(
         self,
@@ -353,29 +603,16 @@ class LegalChunkerV2:
         chunk_index: int,
         dieu_so: str = "",
         tieu_de_dieu: str = "",
-        khoan_so: str = "",
-        diem_so: str = "",
         chuong: str = "",
         ten_chuong: str = "",
         char_start: int = 0,
         char_end: int = 0,
-        parent_provision_id: str = "",
-        suffix: str = "",
+        overflow_index: int = 1,
+        overflow_total: int = 1,
+        clause_spans: Optional[List[str]] = None,
         fallback_reason: str = "",
     ) -> LegalChunk:
-        content = (content or "").strip()
-        if dieu_so:
-            article_header = f"Dieu {dieu_so}"
-            if tieu_de_dieu:
-                article_header = f"{article_header}. {tieu_de_dieu}"
-            heading_pattern = re.compile(
-                rf"^\s*(?:\u0110i\u1ec1u|Dieu)\s+{re.escape(dieu_so)}\b",
-                re.IGNORECASE,
-            )
-            if not heading_pattern.search(content):
-                content = f"{article_header}\n{content}" if content else article_header
-        elif tieu_de_dieu and not content.lower().startswith(tieu_de_dieu.lower()):
-            content = f"{tieu_de_dieu}\n{content}" if content else tieu_de_dieu
+        content = self._normalize_legal_text(content or "")
 
         doc_id = normalize_doc_id(record.get("doc_id") or record.get("so_ky_hieu") or record.get("van_ban_id"))
         so_ky_hieu = record.get("so_ky_hieu") or record.get("van_ban_id") or doc_id
@@ -384,44 +621,35 @@ class LegalChunkerV2:
             str(so_ky_hieu),
             str(record.get("ten_van_ban", "")),
         )
-        path = self._compose_path(dieu_so, khoan_so, diem_so)
-        legal_path = path or "Document"
-        citation_short, citation_full = self._compose_citation(citation_base, path)
-        chunk_type, segment_level = self._classify_chunk_type(
-            dieu_so=dieu_so,
-            khoan_so=khoan_so,
-            diem_so=diem_so,
-            fallback_reason=fallback_reason,
-        )
-
-        provision_id = self._build_provision_id(
-            doc_id,
-            dieu_so=dieu_so,
-            khoan_so=khoan_so,
-            diem_so=diem_so,
-            suffix=suffix,
-        )
+        legal_path = f"Dieu {dieu_so}" if dieu_so else "Document"
+        citation_short = legal_path if dieu_so else "Nguon phap ly"
+        citation_full = build_citation_full(citation_base, legal_path if dieu_so else "")
+        chunk_type = "ProvisionChunk" if dieu_so else "FallbackChunk"
+        segment_level = "article_window" if dieu_so and overflow_total > 1 else ("article" if dieu_so else "document")
+        provision_id = self._build_provision_id(doc_id, dieu_so=dieu_so)
+        effective_clause_spans = list(clause_spans or [])
 
         chunk_id = self._generate_chunk_id(
             doc_id=doc_id,
             dieu_so=dieu_so,
-            khoan_so=khoan_so,
-            diem_so=diem_so,
             chunk_index=chunk_index,
             text=content,
+            overflow_index=overflow_index,
         )
 
         hierarchy = {
             "chuong": chuong,
             "ten_chuong": ten_chuong,
             "dieu": dieu_so,
-            "khoan": khoan_so,
-            "diem": diem_so,
+            "khoan": "",
+            "diem": "",
+            "clause_spans": effective_clause_spans,
         }
 
         co_quan = str(record.get("co_quan_ban_hanh") or record.get("co_quan") or "")
         token_len_est = self._estimate_token_len(content)
-        encoder_profile = str(record.get("encoder_profile") or "default")
+        token_len_model = self._count_tokens(content)
+        encoder_profile = str(record.get("encoder_profile") or self._encoder_profile)
         chunk = LegalChunk(
             chunk_id=chunk_id,
             content=content,
@@ -446,15 +674,15 @@ class LegalChunkerV2:
             ten_chuong=ten_chuong,
             dieu_so=dieu_so,
             tieu_de_dieu=tieu_de_dieu,
-            khoan_so=khoan_so,
-            diem_so=diem_so,
-            path=path,
+            khoan_so="",
+            diem_so="",
+            path=legal_path,
             legal_path=legal_path,
             chunk_type=chunk_type,
             segment_level=segment_level,
             fallback_reason=fallback_reason,
             provision_id=provision_id,
-            parent_provision_id=parent_provision_id,
+            parent_provision_id="" if dieu_so else doc_id,
             citation_base=citation_base,
             citation_short=citation_short,
             citation_full=citation_full,
@@ -463,65 +691,119 @@ class LegalChunkerV2:
             char_start=char_start,
             char_end=char_end,
             token_len_est=token_len_est,
+            token_len_model=token_len_model,
+            overflow_index=overflow_index,
+            overflow_total=overflow_total,
+            window_char_start=char_start,
+            window_char_end=char_end,
+            clause_spans=effective_clause_spans,
             encoder_profile=encoder_profile,
             hierarchy=hierarchy,
         )
         return chunk
 
-    def _split_article_units(
-        self,
-        article_text: str,
-        article_start_offset: int,
-    ) -> List[Tuple[str, str, str, int, int]]:
-        """
-        Returns tuples: (khoan_so, diem_so, text, char_start, char_end).
-        """
-        khoan_segments = self._extract_segments(
-            article_text,
-            self.KHOAN_PATTERN,
-            key="khoan_so",
-            base_offset=article_start_offset,
-        )
-
-        if not khoan_segments:
-            return [("", "", article_text, article_start_offset, article_start_offset + len(article_text))]
-
-        units: List[Tuple[str, str, str, int, int]] = []
-        for khoan_so, khoan_text, khoan_start, khoan_end in khoan_segments:
-            diem_segments = self._extract_segments(
-                khoan_text,
-                self.DIEM_PATTERN,
-                key="diem_so",
-                base_offset=khoan_start,
+    def _fallback_document_chunks(self, record: Dict[str, Any], full_text: str) -> List[LegalChunk]:
+        normalized = self._normalize_legal_text(full_text)
+        piece = normalized.strip()
+        if not piece:
+            return []
+        if self._estimate_token_len(piece) <= self.encoder_max_len and self._count_tokens(piece) <= self.encoder_max_len:
+            chunk = self._build_chunk(
+                record=record,
+                content=piece,
+                chunk_index=0,
+                char_start=0,
+                char_end=len(piece),
+                overflow_index=1,
+                overflow_total=1,
+                clause_spans=self._clause_spans_for_text(piece),
+                fallback_reason="no_article_detected",
             )
-            if len(diem_segments) <= 1:
-                units.append((khoan_so, "", khoan_text, khoan_start, khoan_end))
-                continue
+            chunk.total_chunks = 1
+            return [chunk]
 
-            for diem_so, diem_text, diem_start, diem_end in diem_segments:
-                units.append((khoan_so, diem_so, diem_text, diem_start, diem_end))
+        units = self._segment_body_units(piece)
+        expanded_units: List[_TextUnit] = []
+        for unit in units:
+            if unit.token_len <= self.hard_cap_tokens:
+                expanded_units.append(unit)
+            else:
+                expanded_units.extend(self._fallback_split_large_piece(unit.text, unit.start, header_tokens=0))
 
-        return units
+        if not expanded_units:
+            chunk = self._build_chunk(
+                record=record,
+                content=piece,
+                chunk_index=0,
+                char_start=0,
+                char_end=len(piece),
+                overflow_index=1,
+                overflow_total=1,
+                clause_spans=self._clause_spans_for_text(piece),
+                fallback_reason="no_article_detected",
+            )
+            chunk.total_chunks = 1
+            return [chunk]
 
-    def _chunk_unit_text(
-        self,
-        text: str,
-        char_start: int,
-    ) -> List[Tuple[str, int, int, str]]:
-        """
-        Split long unit text and return list of (content, start, end, suffix).
-        """
-        pieces = self._hard_split(text, char_start)
-        if len(pieces) == 1:
-            content, start, end = pieces[0]
-            return [(content, start, end, "")]
+        chunks: List[LegalChunk] = []
+        cursor = 0
+        while cursor < len(expanded_units):
+            current_units: List[_TextUnit] = []
+            token_total = 0
+            idx = cursor
+            while idx < len(expanded_units):
+                unit = expanded_units[idx]
+                if current_units and token_total + unit.token_len > self.target_chunk_tokens:
+                    break
+                if current_units and token_total + unit.token_len > self.hard_cap_tokens:
+                    break
+                current_units.append(unit)
+                token_total += unit.token_len
+                idx += 1
+                if token_total >= self.target_chunk_tokens:
+                    break
 
-        result: List[Tuple[str, int, int, str]] = []
-        for idx, (content, start, end) in enumerate(pieces):
-            result.append((content, start, end, f"S{idx + 1}"))
-        return result
+            if not current_units:
+                current_units = [expanded_units[cursor]]
+                idx = cursor + 1
+
+            body_start = current_units[0].start
+            body_end = current_units[-1].end
+            window_body = piece[body_start:body_end].strip()
+            chunks.append(
+                self._build_chunk(
+                    record=record,
+                    content=window_body,
+                    chunk_index=len(chunks),
+                    char_start=body_start,
+                    char_end=body_end,
+                    overflow_index=len(chunks) + 1,
+                    overflow_total=0,
+                    clause_spans=self._clause_spans_for_text(window_body),
+                    fallback_reason="no_article_detected_window",
+                )
+            )
+
+            if idx >= len(expanded_units):
+                break
+
+            next_cursor = idx
+            overlap_sum = 0
+            back = idx - 1
+            while back > cursor and overlap_sum < self.overlap_tokens:
+                overlap_sum += expanded_units[back].token_len
+                next_cursor = back
+                back -= 1
+            cursor = next_cursor if next_cursor > cursor else min(idx, cursor + 1)
+
+        total = len(chunks)
+        for chunk in chunks:
+            chunk.total_chunks = total
+            chunk.overflow_total = total
+        return chunks
 
     def chunk_document(self, record: Dict[str, Any], doc_index: int = 0) -> List[LegalChunk]:
+        record = self._prepare_record(record)
         full_text = (
             record.get("toan_van_clean")
             or record.get("toan_van")
@@ -538,24 +820,7 @@ class LegalChunkerV2:
         chuong_matches = list(self.CHUONG_PATTERN.finditer(full_text))
 
         if not dieu_matches:
-            # Fallback for unstructured document
-            chunks: List[LegalChunk] = []
-            for idx, (piece, start, end) in enumerate(self._hard_split(full_text, 0)):
-                chunks.append(
-                    self._build_chunk(
-                        record=record,
-                        content=piece,
-                        chunk_index=idx,
-                        char_start=start,
-                        char_end=end,
-                        suffix=f"F{idx + 1}" if idx > 0 else "",
-                        fallback_reason="no_article_detected" if idx == 0 else "no_article_detected_hard_split",
-                    )
-                )
-            total = len(chunks)
-            for chunk in chunks:
-                chunk.total_chunks = total
-            return chunks
+            return self._fallback_document_chunks(record, full_text)
 
         all_chunks: List[LegalChunk] = []
         chunk_index = 0
@@ -567,53 +832,30 @@ class LegalChunkerV2:
             if not article_text:
                 continue
 
-            dieu_so = (dieu_match.group("dieu_so") or "").strip()
-            tieu_de_dieu = (dieu_match.group("title") or "").strip()
+            dieu_so, tieu_de_dieu, article_body = self._extract_article_structure(article_text)
+            if not dieu_so:
+                continue
             chuong, ten_chuong = self._chapter_at(chuong_matches, article_start)
-
-            first_newline = article_text.find("\n")
-            if first_newline >= 0:
-                article_body = article_text[first_newline + 1 :].strip()
-                body_offset = article_start + first_newline + 1
-            else:
-                article_body = article_text
-                body_offset = article_start
-
-            units = self._split_article_units(article_body, body_offset)
-            for khoan_so, diem_so, unit_text, unit_start, unit_end in units:
-                parent_provision_id = ""
-                if diem_so and khoan_so:
-                    parent_provision_id = self._build_provision_id(
-                        normalize_doc_id(record.get("doc_id") or record.get("so_ky_hieu") or record.get("van_ban_id")),
+            windows = self._split_article_windows(dieu_so, tieu_de_dieu, article_body)
+            for window in windows:
+                all_chunks.append(
+                    self._build_chunk(
+                        record=record,
+                        content=window.text,
+                        chunk_index=chunk_index,
                         dieu_so=dieu_so,
-                        khoan_so=khoan_so,
+                        tieu_de_dieu=tieu_de_dieu,
+                        chuong=chuong,
+                        ten_chuong=ten_chuong,
+                        char_start=article_start + window.start,
+                        char_end=article_start + window.end,
+                        overflow_index=window.overflow_index,
+                        overflow_total=window.overflow_total,
+                        clause_spans=window.clause_spans,
+                        fallback_reason=window.fallback_reason,
                     )
-                elif khoan_so:
-                    parent_provision_id = self._build_provision_id(
-                        normalize_doc_id(record.get("doc_id") or record.get("so_ky_hieu") or record.get("van_ban_id")),
-                        dieu_so=dieu_so,
-                    )
-
-                for piece, start, end, suffix in self._chunk_unit_text(unit_text, unit_start):
-                    all_chunks.append(
-                        self._build_chunk(
-                            record=record,
-                            content=piece,
-                            chunk_index=chunk_index,
-                            dieu_so=dieu_so,
-                            tieu_de_dieu=tieu_de_dieu,
-                            khoan_so=khoan_so,
-                            diem_so=diem_so,
-                            chuong=chuong,
-                            ten_chuong=ten_chuong,
-                            char_start=start,
-                            char_end=end,
-                            parent_provision_id=parent_provision_id,
-                            suffix=suffix,
-                            fallback_reason="hard_split_within_provision" if suffix else "",
-                        )
-                    )
-                    chunk_index += 1
+                )
+                chunk_index += 1
 
         total = len(all_chunks)
         for chunk in all_chunks:
@@ -624,8 +866,9 @@ class LegalChunkerV2:
         """
         Backward-compatible method for legacy article-level rows.
         """
+        row = self._prepare_record(row)
         text = row.get("clean_text") or row.get("noi_dung") or row.get("toan_van_clean") or row.get("toan_van") or ""
-        text = self._stabilize_inline_markers(str(text or ""))
+        text = self._normalize_legal_text(str(text or ""))
         if not text:
             return []
 
@@ -644,38 +887,28 @@ class LegalChunkerV2:
             )
 
         # If article header already present, let chunk_document parse structure
-        if self.DIEU_PATTERN.search(text):
+        if self.DIEU_PATTERN.search(self._stabilize_inline_markers(text)):
             record["toan_van_clean"] = text
             return self.chunk_document(record, doc_index=article_idx)
 
-        # Otherwise treat as single article with provided metadata
         dieu_so = str(row.get("dieu_so") or "").strip()
-        tieu_de_dieu = str(row.get("tieu_de_dieu") or "").strip()
+        tieu_de_dieu = self._clean_article_title(str(row.get("tieu_de_dieu") or ""))
         chuong = str(row.get("chuong") or "").strip()
         ten_chuong = str(row.get("ten_chuong") or "").strip()
+        if dieu_so:
+            synthesized_header = f"Dieu {dieu_so}"
+            if tieu_de_dieu:
+                synthesized_header = f"{synthesized_header}. {tieu_de_dieu}"
+            record["toan_van_clean"] = f"{synthesized_header}\n{text}"
+            chunks = self.chunk_document(record, doc_index=article_idx)
+            for chunk in chunks:
+                if not chunk.chuong:
+                    chunk.chuong = chuong
+                if not chunk.ten_chuong:
+                    chunk.ten_chuong = ten_chuong
+            return chunks
 
-        chunks: List[LegalChunk] = []
-        for idx, (piece, start, end) in enumerate(self._hard_split(normalize_whitespace(text), 0)):
-            chunks.append(
-                self._build_chunk(
-                    record=record,
-                    content=piece,
-                    chunk_index=idx,
-                    dieu_so=dieu_so,
-                    tieu_de_dieu=tieu_de_dieu,
-                    chuong=chuong,
-                    ten_chuong=ten_chuong,
-                    char_start=start,
-                    char_end=end,
-                    suffix=f"L{idx + 1}" if idx > 0 else "",
-                    fallback_reason="legacy_article_hard_split" if idx > 0 else "",
-                )
-            )
-
-        total = len(chunks)
-        for chunk in chunks:
-            chunk.total_chunks = total
-        return chunks
+        return self._fallback_document_chunks(record, text)
 
     def chunk_text(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> List[LegalChunk]:
         metadata = metadata or {}
@@ -704,5 +937,15 @@ class LegalChunkerV2:
         return chunks
 
 
-def get_legal_chunker(min_chars: int = 1200, max_chars: int = 2800, overlap_chars: int = 120) -> LegalChunkerV2:
-    return LegalChunkerV2(min_chars=min_chars, max_chars=max_chars, overlap_chars=overlap_chars)
+def get_legal_chunker(
+    min_chars: int = 1200,
+    max_chars: int = 2800,
+    overlap_chars: int = 120,
+    encoder_model_name: Optional[str] = None,
+) -> LegalChunkerV2:
+    return LegalChunkerV2(
+        min_chars=min_chars,
+        max_chars=max_chars,
+        overlap_chars=overlap_chars,
+        encoder_model_name=encoder_model_name,
+    )

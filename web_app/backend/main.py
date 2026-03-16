@@ -179,7 +179,13 @@ class ChatResponse(BaseModel):
     rewrite_used: bool = False
     rewrite_status: str = "disabled"
     rewrite_fallback_reason: str = ""
+    rewrite_strategy: str = "structured_synthesis"
+    rewrite_quality_passed: bool = False
     rewritten_queries: List[str] = Field(default_factory=list)
+    retrieval_query_set: List[str] = Field(default_factory=list)
+    retrieval_query_plan: List[Dict[str, Any]] = Field(default_factory=list)
+    rewrite_context: Dict[str, Any] = Field(default_factory=dict)
+    rewrite_debug: Dict[str, Any] = Field(default_factory=dict)
     per_subquery_hits: List[Dict] = Field(default_factory=list)
     retrieval_union_count: int = 0
     fallback_used: bool = False
@@ -208,7 +214,13 @@ class SearchResponse(BaseModel):
     rewrite_used: bool = False
     rewrite_status: str = "disabled"
     rewrite_fallback_reason: str = ""
+    rewrite_strategy: str = "structured_synthesis"
+    rewrite_quality_passed: bool = False
     rewritten_queries: List[str] = Field(default_factory=list)
+    retrieval_query_set: List[str] = Field(default_factory=list)
+    retrieval_query_plan: List[Dict[str, Any]] = Field(default_factory=list)
+    rewrite_context: Dict[str, Any] = Field(default_factory=dict)
+    rewrite_debug: Dict[str, Any] = Field(default_factory=dict)
     per_subquery_hits: List[Dict] = Field(default_factory=list)
     retrieval_union_count: int = 0
     fallback_used: bool = False
@@ -302,8 +314,9 @@ def _build_remote_llm(profile_id: str | None) -> RemoteLLMClient:
         timeout_s=profile.timeout_s,
         system_prompt=(
             "Ban la tro ly phap ly Viet Nam. "
-            "Chi duoc tra loi dua tren context da cung cap. "
-            "Neu khong du thong tin, phai noi ro khong tim thay quy dinh lien quan."
+            "Chi duoc tra loi dua tren EVIDENCE_CONTEXT. "
+            "Khong duoc them ghi chu, luu y, hoac lap lai doan van. "
+            "Neu khong du thong tin, phai noi ro trong muc CHUA_DU_CAN_CU."
         ),
     )
 
@@ -391,7 +404,13 @@ def _save_shared_chat_history(
             "rewrite_used": payload.get("rewrite_used"),
             "rewrite_status": payload.get("rewrite_status"),
             "rewrite_fallback_reason": payload.get("rewrite_fallback_reason"),
+            "rewrite_strategy": payload.get("rewrite_strategy"),
+            "rewrite_quality_passed": payload.get("rewrite_quality_passed"),
             "rewritten_queries": payload.get("rewritten_queries", []),
+            "retrieval_query_set": payload.get("retrieval_query_set", []),
+            "retrieval_query_plan": payload.get("retrieval_query_plan", []),
+            "rewrite_context": payload.get("rewrite_context", {}),
+            "rewrite_debug": payload.get("rewrite_debug", {}),
             "per_subquery_hits": payload.get("per_subquery_hits", []),
             "retrieval_union_count": payload.get("retrieval_union_count", 0),
             "fallback_used": payload.get("fallback_used", False),
@@ -488,7 +507,16 @@ def _run_shared_legal_chat(request: ChatRequest) -> ChatResponse:
             rewrite_used=bool(search_result.rewrite_used),
             rewrite_status=str(search_result.rewrite_status),
             rewrite_fallback_reason=str(search_result.rewrite_fallback_reason),
+            rewrite_strategy=str(search_result.rewrite_strategy),
+            rewrite_quality_passed=bool(search_result.rewrite_quality_passed),
             rewritten_queries=list(search_result.rewritten_queries),
+            rewrite_mode=str(search_result.rewrite_mode),
+            rewrite_original_query=str(search_result.rewrite_original_query),
+            rewrite_queries_compact=list(search_result.rewrite_queries_compact),
+            retrieval_query_set=list(search_result.retrieval_query_set),
+            retrieval_query_plan=list(search_result.retrieval_query_plan),
+            query_facets=dict(search_result.query_facets),
+            rewrite_debug=dict(search_result.rewrite_debug),
             missing_numbers=list(search_result.missing_numbers),
             per_subquery_hits=list(search_result.per_subquery_hits),
             retrieval_union_count=int(search_result.retrieval_union_count),

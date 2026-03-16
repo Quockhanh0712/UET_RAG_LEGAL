@@ -23,18 +23,143 @@ function SearchResultCard({ item, index }) {
 
 function RewriteTrace({ trace }) {
   if (!trace) return null;
+  const rewriteContext = trace.rewrite_context || null;
+  const compactQueries = rewriteContext?.rewrite_queries_compact || [];
+  const queryFacets = rewriteContext?.query_facets || {};
+  const rewriteDebug = trace.rewrite_debug || null;
+  const conditions = rewriteContext?.conditions || rewriteDebug?.conditions || [];
+  const clauseUnits = rewriteContext?.clause_units || rewriteDebug?.clause_units || [];
+  const namedLawHints = rewriteContext?.named_law_hints || rewriteDebug?.named_law_hints || [];
+  const questionUnits = rewriteContext?.question_units || rewriteDebug?.question_units || [];
+  const retrievalQueryPlan = trace.retrieval_query_plan || rewriteDebug?.retrieval_query_plan || [];
   return (
     <div className="rounded-2xl border border-primary-200 bg-primary-50 px-4 py-4 dark:border-primary-700 dark:bg-primary-900/60">
       <div className="text-xs uppercase tracking-wide text-primary-500 dark:text-primary-400">Rewrite Trace</div>
       <div className="mt-2 flex flex-wrap gap-2 text-xs text-primary-700 dark:text-primary-200">
         <span className="rounded-full bg-white px-3 py-1 dark:bg-primary-800">status: {trace.rewrite_status || 'disabled'}</span>
         <span className="rounded-full bg-white px-3 py-1 dark:bg-primary-800">used: {String(!!trace.rewrite_used)}</span>
+        <span className="rounded-full bg-white px-3 py-1 dark:bg-primary-800">quality: {String(!!trace.rewrite_quality_passed)}</span>
         <span className="rounded-full bg-white px-3 py-1 dark:bg-primary-800">union: {trace.retrieval_union_count || 0}</span>
         <span className="rounded-full bg-white px-3 py-1 dark:bg-primary-800">search_ms: {Number(trace.search_time_ms || 0).toFixed(0)}</span>
         <span className="rounded-full bg-white px-3 py-1 dark:bg-primary-800">rerank_ms: {Number(trace.rerank_time_ms || 0).toFixed(0)}</span>
       </div>
+      {trace.rewrite_strategy ? (
+        <div className="mt-2 text-sm text-primary-600 dark:text-primary-300">strategy: {trace.rewrite_strategy}</div>
+      ) : null}
       {trace.rewrite_fallback_reason && (
         <div className="mt-3 text-sm text-amber-700 dark:text-amber-300">fallback: {trace.rewrite_fallback_reason}</div>
+      )}
+      {rewriteContext?.original_query && (
+        <div className="mt-3 rounded-xl border border-primary-200 bg-white px-3 py-3 dark:border-primary-700 dark:bg-primary-800">
+          <div className="text-[11px] font-semibold uppercase tracking-wide text-primary-500 dark:text-primary-400">Original vs Rewrite</div>
+          <div className="mt-2 text-xs text-primary-700 dark:text-primary-200">
+            <div className="font-semibold">Original Query</div>
+            <div className="mt-1 rounded-lg bg-primary-50 px-2.5 py-2 dark:bg-primary-900/70">{rewriteContext.original_query}</div>
+          </div>
+          <div className="mt-3 text-xs text-primary-700 dark:text-primary-200">
+            <div className="font-semibold">Rewrite Queries (compact)</div>
+            {!compactQueries.length ? (
+              <div className="mt-1 rounded-lg bg-primary-50 px-2.5 py-2 dark:bg-primary-900/70">&lt;none&gt;</div>
+            ) : (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {compactQueries.map((query, idx) => (
+                  <span key={`${idx}-${query}`} className="rounded-xl bg-primary-100 px-2.5 py-1 dark:bg-primary-900/70">
+                    {query}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+          {(queryFacets?.actors?.length || queryFacets?.issues?.length || queryFacets?.focus) && (
+            <div className="mt-3 text-xs text-primary-700 dark:text-primary-200">
+              <div className="font-semibold">Query Facets</div>
+              <div className="mt-1 rounded-lg bg-primary-50 px-2.5 py-2 dark:bg-primary-900/70">
+                <div>main act: {queryFacets.main_act || rewriteContext?.main_act || '&lt;none&gt;'}</div>
+                <div>actors: {(queryFacets.actors || []).join(', ') || '&lt;none&gt;'}</div>
+                <div className="mt-1">issues: {(queryFacets.issues || []).join(', ') || '&lt;none&gt;'}</div>
+                <div className="mt-1">focus: {queryFacets.focus || '&lt;none&gt;'}</div>
+              </div>
+            </div>
+          )}
+          {!!conditions.length && (
+            <div className="mt-3 text-xs text-primary-700 dark:text-primary-200">
+              <div className="font-semibold">Conditions</div>
+              <div className="mt-1 rounded-lg bg-primary-50 px-2.5 py-2 dark:bg-primary-900/70">
+                {conditions.map((item, idx) => (
+                  <div key={`${idx}-${item.value || item.source_span || idx}`}>
+                    {(item.kind || 'khac')}: {item.value || item.source_span || '&lt;none&gt;'}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {!!namedLawHints.length && (
+            <div className="mt-3 text-xs text-primary-700 dark:text-primary-200">
+              <div className="font-semibold">Named Law Hints</div>
+              <div className="mt-1 rounded-lg bg-primary-50 px-2.5 py-2 dark:bg-primary-900/70">
+                {namedLawHints.join(', ')}
+              </div>
+            </div>
+          )}
+          {!!questionUnits.length && (
+            <div className="mt-3 text-xs text-primary-700 dark:text-primary-200">
+              <div className="font-semibold">Question Units</div>
+              <div className="mt-1 rounded-lg bg-primary-50 px-2.5 py-2 dark:bg-primary-900/70 space-y-1">
+                {questionUnits.map((unit, idx) => (
+                  <div key={`${idx}-${unit.question_label || idx}`}>
+                    <span className="font-medium">{unit.intent || 'xac_dinh_chu_the'}</span>
+                    {' | '}
+                    <span>{unit.question_label || '&lt;none&gt;'}</span>
+                    {' | '}
+                    <span>{unit.user_asked_text || '&lt;none&gt;'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {!!clauseUnits.length && (
+            <div className="mt-3 text-xs text-primary-700 dark:text-primary-200">
+              <div className="font-semibold">Clause Units</div>
+              <div className="mt-1 rounded-lg bg-primary-50 px-2.5 py-2 dark:bg-primary-900/70 space-y-1">
+                {clauseUnits.map((unit, idx) => (
+                  <div key={`${idx}-${unit.clause_label || idx}`}>
+                    <span className="font-medium">{unit.intent || 'xac_dinh_chu_the'}</span>
+                    {' | '}
+                    <span>{(unit.actor_refs || []).join(', ') || '&lt;none&gt;'}</span>
+                    {' | '}
+                    <span>{(unit.condition_refs || []).join(', ') || unit.act_span || '&lt;none&gt;'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {!!retrievalQueryPlan.length && (
+        <div className="mt-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary-500 dark:text-primary-400">Retrieval Query Plan</div>
+          <div className="mt-2 space-y-2">
+            {retrievalQueryPlan.map((item, idx) => (
+              <div key={`${idx}-${item.query || idx}`} className="rounded-xl bg-white px-3 py-2 text-xs text-primary-700 dark:bg-primary-800 dark:text-primary-200">
+                <div className="font-semibold">{item.label || item.source_question_unit || `query_${idx + 1}`}</div>
+                <div className="mt-1">{item.query || '&lt;none&gt;'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {!!trace.retrieval_query_set?.length && (
+        <div className="mt-3">
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary-500 dark:text-primary-400">Retrieval Query Set</div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {trace.retrieval_query_set.map((query, idx) => (
+              <span key={`${idx}-${query}`} className="rounded-xl bg-white px-3 py-1 text-xs text-primary-700 dark:bg-primary-800 dark:text-primary-200">{query}</span>
+            ))}
+          </div>
+        </div>
+      )}
+      {!!rewriteDebug?.rejection_reasons?.length && (
+        <div className="mt-3 text-sm text-amber-700 dark:text-amber-300">rejection: {rewriteDebug.rejection_reasons.join(', ')}</div>
       )}
       {!!trace.rewritten_queries?.length && (
         <div className="mt-3">

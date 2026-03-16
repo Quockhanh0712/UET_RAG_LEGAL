@@ -27,6 +27,15 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
   const [showQualityModal, setShowQualityModal] = useState(false);
   const isUser = message.role === 'user';
   const isError = message.isError;
+  const rewriteContext = message.rewriteContext || null;
+  const compactQueries = rewriteContext?.rewrite_queries_compact || [];
+  const queryFacets = rewriteContext?.query_facets || {};
+  const rewriteDebug = message.rewriteDebug || null;
+  const conditions = rewriteContext?.conditions || rewriteDebug?.conditions || [];
+  const clauseUnits = rewriteContext?.clause_units || rewriteDebug?.clause_units || [];
+  const namedLawHints = rewriteContext?.named_law_hints || rewriteDebug?.named_law_hints || [];
+  const questionUnits = rewriteContext?.question_units || rewriteDebug?.question_units || [];
+  const retrievalQueryPlan = message.retrievalQueryPlan || rewriteDebug?.retrieval_query_plan || [];
 
   const handleScore = async () => {
     if (isScoring) return;
@@ -133,13 +142,17 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
           </div>
         )}
 
-        {!isUser && (message.rewriteStatus || message.rewrittenQueries?.length) && (
+        {!isUser && (message.rewriteStatus || message.rewrittenQueries?.length || message.rewriteContext) && (
           <div className="mb-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 text-xs text-primary-600 dark:border-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
             <div className="flex flex-wrap gap-3">
               <span>rewrite: <strong>{message.rewriteStatus || 'disabled'}</strong></span>
               <span>used: <strong>{String(!!message.rewriteUsed)}</strong></span>
+              <span>quality: <strong>{String(!!message.rewriteQualityPassed)}</strong></span>
               {typeof message.retrievalUnionCount === 'number' ? <span>union: <strong>{message.retrievalUnionCount}</strong></span> : null}
             </div>
+            {message.rewriteStrategy ? (
+              <div className="mt-1">strategy: <strong>{message.rewriteStrategy}</strong></div>
+            ) : null}
             {message.rewriteFallbackReason ? (
               <div className="mt-1 text-amber-700 dark:text-amber-300">fallback: {message.rewriteFallbackReason}</div>
             ) : null}
@@ -150,6 +163,123 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
                     {query}
                   </span>
                 ))}
+              </div>
+            )}
+            {rewriteContext?.original_query && (
+              <div className="mt-2 rounded-lg border border-primary-200 bg-white px-2.5 py-2 dark:border-primary-700 dark:bg-primary-800">
+                <div className="text-[11px] font-semibold uppercase tracking-wide text-primary-500 dark:text-primary-400">Original vs Rewrite</div>
+                <div className="mt-1 text-xs">
+                  <div className="font-semibold">Original</div>
+                  <div className="mt-1 rounded-md bg-primary-50 px-2 py-1.5 dark:bg-primary-900/70">{rewriteContext.original_query}</div>
+                </div>
+                <div className="mt-2 text-xs">
+                  <div className="font-semibold">Rewrite (compact)</div>
+                  {!compactQueries.length ? (
+                    <div className="mt-1 rounded-md bg-primary-50 px-2 py-1.5 dark:bg-primary-900/70">&lt;none&gt;</div>
+                  ) : (
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {compactQueries.map((query, idx) => (
+                        <span key={`${idx}-${query}`} className="rounded-full bg-primary-100 px-2 py-1 dark:bg-primary-900/70">
+                          {query}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {(queryFacets?.actors?.length || queryFacets?.issues?.length || queryFacets?.focus) && (
+                  <div className="mt-2 text-xs">
+                    <div className="font-semibold">Query Facets</div>
+                    <div className="mt-1 space-y-1 rounded-md bg-primary-50 px-2 py-1.5 dark:bg-primary-900/70">
+                      <div>main act: {queryFacets.main_act || rewriteContext?.main_act || '&lt;none&gt;'}</div>
+                      <div>actors: {(queryFacets.actors || []).join(', ') || '&lt;none&gt;'}</div>
+                      <div>issues: {(queryFacets.issues || []).join(', ') || '&lt;none&gt;'}</div>
+                      <div>focus: {queryFacets.focus || '&lt;none&gt;'}</div>
+                    </div>
+                  </div>
+                )}
+                {!!conditions.length && (
+                  <div className="mt-2 text-xs">
+                    <div className="font-semibold">Conditions</div>
+                    <div className="mt-1 space-y-1 rounded-md bg-primary-50 px-2 py-1.5 dark:bg-primary-900/70">
+                      {conditions.map((item, idx) => (
+                        <div key={`${idx}-${item.value || item.source_span || idx}`}>
+                          {(item.kind || 'khac')}: {item.value || item.source_span || '&lt;none&gt;'}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!!namedLawHints.length && (
+                  <div className="mt-2 text-xs">
+                    <div className="font-semibold">Named Law Hints</div>
+                    <div className="mt-1 rounded-md bg-primary-50 px-2 py-1.5 dark:bg-primary-900/70">
+                      {namedLawHints.join(', ')}
+                    </div>
+                  </div>
+                )}
+                {!!questionUnits.length && (
+                  <div className="mt-2 text-xs">
+                    <div className="font-semibold">Question Units</div>
+                    <div className="mt-1 space-y-1 rounded-md bg-primary-50 px-2 py-1.5 dark:bg-primary-900/70">
+                      {questionUnits.map((unit, idx) => (
+                        <div key={`${idx}-${unit.question_label || idx}`}>
+                          <span className="font-medium">{unit.intent || 'xac_dinh_chu_the'}</span>
+                          {' | '}
+                          <span>{unit.question_label || '&lt;none&gt;'}</span>
+                          {' | '}
+                          <span>{unit.user_asked_text || '&lt;none&gt;'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!!clauseUnits.length && (
+                  <div className="mt-2 text-xs">
+                    <div className="font-semibold">Clause Units</div>
+                    <div className="mt-1 space-y-1 rounded-md bg-primary-50 px-2 py-1.5 dark:bg-primary-900/70">
+                      {clauseUnits.map((unit, idx) => (
+                        <div key={`${idx}-${unit.clause_label || idx}`}>
+                          <span className="font-medium">{unit.intent || 'xac_dinh_chu_the'}</span>
+                          {' | '}
+                          <span>{(unit.actor_refs || []).join(', ') || '&lt;none&gt;'}</span>
+                          {' | '}
+                          <span>{(unit.condition_refs || []).join(', ') || unit.act_span || '&lt;none&gt;'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!!retrievalQueryPlan.length && (
+                  <div className="mt-2 text-xs">
+                    <div className="font-semibold">Retrieval Query Plan</div>
+                    <div className="mt-1 space-y-1 rounded-md bg-primary-50 px-2 py-1.5 dark:bg-primary-900/70">
+                      {retrievalQueryPlan.map((item, idx) => (
+                        <div key={`${idx}-${item.query || idx}`}>
+                          <span className="font-medium">{item.label || item.source_question_unit || `query_${idx + 1}`}</span>
+                          {' | '}
+                          <span>{item.query || '&lt;none&gt;'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!!message.retrievalQuerySet?.length && (
+                  <div className="mt-2 text-xs">
+                    <div className="font-semibold">Retrieval Query Set</div>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {message.retrievalQuerySet.map((query, idx) => (
+                        <span key={`${idx}-${query}`} className="rounded-full bg-primary-100 px-2 py-1 dark:bg-primary-900/70">
+                          {query}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {!!rewriteDebug?.rejection_reasons?.length && (
+                  <div className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                    rejection: {rewriteDebug.rejection_reasons.join(', ')}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -36,10 +36,19 @@ def _result_metrics(result: LegalSearchResult | LegalAnswer) -> Dict[str, Any]:
         'rewrite_used': bool(getattr(result, 'rewrite_used', False)),
         'rewrite_status': str(getattr(result, 'rewrite_status', 'disabled')),
         'rewrite_fallback_reason': str(getattr(result, 'rewrite_fallback_reason', '')),
+        'rewrite_strategy': str(getattr(result, 'rewrite_strategy', 'structured_synthesis')),
+        'rewrite_quality_passed': bool(getattr(result, 'rewrite_quality_passed', False)),
         'rewritten_queries': list(getattr(result, 'rewritten_queries', []) or []),
+        'retrieval_query_set': list(getattr(result, 'retrieval_query_set', []) or []),
+        'retrieval_query_plan': list(getattr(result, 'retrieval_query_plan', []) or []),
         'missing_numbers': list(getattr(result, 'missing_numbers', []) or []),
         'per_subquery_hits': list(getattr(result, 'per_subquery_hits', []) or []),
         'retrieval_union_count': int(getattr(result, 'retrieval_union_count', 0) or 0),
+        'rewrite_mode': str(getattr(result, 'rewrite_mode', 'original') or 'original'),
+        'rewrite_original_query': str(getattr(result, 'rewrite_original_query', '') or ''),
+        'rewrite_queries_compact': list(getattr(result, 'rewrite_queries_compact', []) or []),
+        'query_facets': dict(getattr(result, 'query_facets', {}) or {}),
+        'rewrite_debug': dict(getattr(result, 'rewrite_debug', {}) or {}),
         'reranker_used': bool(getattr(result, 'used_reranker', False)),
         'rerank_time': float(getattr(result, 'rerank_time', 0.0) or 0.0),
         'retrieval_time': float(getattr(result, 'retrieval_time', 0.0) or 0.0),
@@ -47,6 +56,28 @@ def _result_metrics(result: LegalSearchResult | LegalAnswer) -> Dict[str, Any]:
     if isinstance(result, LegalAnswer):
         metrics['generation_time'] = float(getattr(result, 'generation_time', 0.0) or 0.0)
     return metrics
+
+
+def _build_rewrite_context(metrics: Dict[str, Any], query_mode: str) -> Dict[str, Any]:
+    query_facets = dict(metrics.get('query_facets', {}) or {})
+    rewrite_debug = dict(metrics.get('rewrite_debug', {}) or {})
+    return {
+        'original_query': str(metrics.get('rewrite_original_query', '') or ''),
+        'rewrite_mode': str(query_mode or metrics.get('rewrite_mode') or 'original'),
+        'rewrite_status': str(metrics.get('rewrite_status', 'disabled') or 'disabled'),
+        'rewrite_queries_compact': list(metrics.get('rewrite_queries_compact', []) or []),
+        'rewrite_fallback_reason': str(metrics.get('rewrite_fallback_reason', '') or ''),
+        'query_facets': query_facets,
+        'rewrite_quality_passed': bool(metrics.get('rewrite_quality_passed', False)),
+        'main_act': str(query_facets.get('main_act') or rewrite_debug.get('main_act') or ''),
+        'conditions': list(rewrite_debug.get('conditions', []) or []),
+        'clause_units': list(rewrite_debug.get('clause_units', []) or []),
+        'named_law_hints': list(rewrite_debug.get('named_law_hints', []) or []),
+        'question_units': list(rewrite_debug.get('question_units', []) or []),
+        'main_act_candidate_reasons': list(rewrite_debug.get('main_act_candidate_reasons', []) or []),
+        'decomposition_policy': str(rewrite_debug.get('decomposition_policy') or 'objective_question_unit'),
+        'quality_fail_reasons': list(rewrite_debug.get('quality_fail_reasons', []) or []),
+    }
 
 
 def build_search_payload(
@@ -69,7 +100,13 @@ def build_search_payload(
         'rewrite_used': bool(metrics['rewrite_used']),
         'rewrite_status': str(metrics['rewrite_status']),
         'rewrite_fallback_reason': str(metrics['rewrite_fallback_reason']),
+        'rewrite_strategy': str(metrics['rewrite_strategy']),
+        'rewrite_quality_passed': bool(metrics['rewrite_quality_passed']),
         'rewritten_queries': list(metrics['rewritten_queries']),
+        'retrieval_query_set': list(metrics['retrieval_query_set']),
+        'retrieval_query_plan': list(metrics['retrieval_query_plan']),
+        'rewrite_context': _build_rewrite_context(metrics, query_mode),
+        'rewrite_debug': dict(metrics['rewrite_debug']),
         'per_subquery_hits': list(metrics['per_subquery_hits']),
         'retrieval_union_count': int(metrics['retrieval_union_count']),
         'fallback_used': False,
@@ -104,7 +141,13 @@ def build_chat_payload(
         'rewrite_used': bool(metrics['rewrite_used']),
         'rewrite_status': str(metrics['rewrite_status']),
         'rewrite_fallback_reason': str(metrics['rewrite_fallback_reason']),
+        'rewrite_strategy': str(metrics['rewrite_strategy']),
+        'rewrite_quality_passed': bool(metrics['rewrite_quality_passed']),
         'rewritten_queries': list(metrics['rewritten_queries']),
+        'retrieval_query_set': list(metrics['retrieval_query_set']),
+        'retrieval_query_plan': list(metrics['retrieval_query_plan']),
+        'rewrite_context': _build_rewrite_context(metrics, query_mode),
+        'rewrite_debug': dict(metrics['rewrite_debug']),
         'per_subquery_hits': list(metrics['per_subquery_hits']),
         'retrieval_union_count': int(metrics['retrieval_union_count']),
         'fallback_used': bool(fallback_used),

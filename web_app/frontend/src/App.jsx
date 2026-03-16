@@ -27,7 +27,7 @@ function App() {
   const [searchMode, setSearchMode] = useState('hybrid'); // legal, user, hybrid
   const [rerankerEnabled, setRerankerEnabled] = useState(true); // Vietnamese Reranker toggle
   const [modelProfiles, setModelProfiles] = useState([]);
-  const [selectedModelProfileId, setSelectedModelProfileId] = useState(() => localStorage.getItem('selectedModelProfileId') || 'qwen3_8b_ollama_remote');
+  const [selectedModelProfileId, setSelectedModelProfileId] = useState(() => localStorage.getItem('selectedModelProfileId') || 'qwen3_5_9b_ollama_remote');
   const [queryMode, setQueryMode] = useState(() => localStorage.getItem('queryMode') || 'original');
   const [labTab, setLabTab] = useState(() => localStorage.getItem('labTab') || 'search');
   const [requireActiveOnly, setRequireActiveOnly] = useState(() => {
@@ -192,7 +192,13 @@ function App() {
         rewriteUsed: msg.rewrite_used,
         rewriteStatus: msg.rewrite_status,
         rewriteFallbackReason: msg.rewrite_fallback_reason,
+        rewriteStrategy: msg.rewrite_strategy,
+        rewriteQualityPassed: msg.rewrite_quality_passed,
         rewrittenQueries: msg.rewritten_queries || [],
+        retrievalQuerySet: msg.retrieval_query_set || [],
+        retrievalQueryPlan: msg.retrieval_query_plan || [],
+        rewriteContext: msg.rewrite_context || null,
+        rewriteDebug: msg.rewrite_debug || null,
         perSubqueryHits: msg.per_subquery_hits || [],
         retrievalUnionCount: msg.retrieval_union_count,
         fallbackUsed: msg.fallback_used,
@@ -271,7 +277,13 @@ function App() {
           rewriteUsed: data.rewrite_used,
           rewriteStatus: data.rewrite_status,
           rewriteFallbackReason: data.rewrite_fallback_reason,
+          rewriteStrategy: data.rewrite_strategy,
+          rewriteQualityPassed: data.rewrite_quality_passed,
           rewrittenQueries: data.rewritten_queries || [],
+          retrievalQuerySet: data.retrieval_query_set || [],
+          retrievalQueryPlan: data.retrieval_query_plan || [],
+          rewriteContext: data.rewrite_context || null,
+          rewriteDebug: data.rewrite_debug || null,
           perSubqueryHits: data.per_subquery_hits || [],
           retrievalUnionCount: data.retrieval_union_count,
           fallbackUsed: data.fallback_used,
@@ -403,7 +415,12 @@ function App() {
             rewrite_used: data.rewrite_used,
             rewrite_status: data.rewrite_status,
             rewrite_fallback_reason: data.rewrite_fallback_reason,
+            rewrite_strategy: data.rewrite_strategy,
+            rewrite_quality_passed: data.rewrite_quality_passed,
             rewritten_queries: data.rewritten_queries || [],
+            retrieval_query_set: data.retrieval_query_set || [],
+            rewrite_context: data.rewrite_context || null,
+            rewrite_debug: data.rewrite_debug || null,
             per_subquery_hits: data.per_subquery_hits || [],
             retrieval_union_count: data.retrieval_union_count,
             search_time_ms: Number(data.search_time || 0) * 1000,

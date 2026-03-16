@@ -57,6 +57,15 @@ class LegalAnswer:
     missing_numbers: List[str] = field(default_factory=list)
     per_subquery_hits: List[Dict[str, object]] = field(default_factory=list)
     retrieval_union_count: int = 0
+    rewrite_mode: str = "original"
+    rewrite_original_query: str = ""
+    rewrite_queries_compact: List[str] = field(default_factory=list)
+    rewrite_strategy: str = "structured_synthesis"
+    rewrite_quality_passed: bool = False
+    retrieval_query_set: List[str] = field(default_factory=list)
+    retrieval_query_plan: List[Dict[str, object]] = field(default_factory=list)
+    query_facets: Dict[str, object] = field(default_factory=dict)
+    rewrite_debug: Dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
@@ -76,6 +85,15 @@ class LegalSearchResult:
     missing_numbers: List[str] = field(default_factory=list)
     per_subquery_hits: List[Dict[str, object]] = field(default_factory=list)
     retrieval_union_count: int = 0
+    rewrite_mode: str = "original"
+    rewrite_original_query: str = ""
+    rewrite_queries_compact: List[str] = field(default_factory=list)
+    rewrite_strategy: str = "structured_synthesis"
+    rewrite_quality_passed: bool = False
+    retrieval_query_set: List[str] = field(default_factory=list)
+    retrieval_query_plan: List[Dict[str, object]] = field(default_factory=list)
+    query_facets: Dict[str, object] = field(default_factory=dict)
+    rewrite_debug: Dict[str, object] = field(default_factory=dict)
 
     def format_with_citations(self) -> str:
         if not self.citations:
@@ -167,16 +185,39 @@ class LegalEmbedding:
 class LegalLLM:
     def __init__(self):
         self.provider = os.getenv("LLM_PROVIDER", "ollama")
-        self.model = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+        self.model = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
         self.ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
         self.system_prompt = (
             "Ban la tro ly phap ly Viet Nam. "
-            "Chi duoc tra loi dua tren context da cung cap. "
-            "Neu khong du thong tin, phai noi ro khong tim thay quy dinh lien quan."
+            "Chi duoc tra loi dua tren EVIDENCE_CONTEXT. "
+            "QUERY_CONTEXT chi de hieu y dinh, khong phai can cu phap ly. "
+            "Khong duoc them ghi chu, luu y, hoac lap lai doan van. "
+            "Neu khong du thong tin, phai noi ro trong muc CHUA_DU_CAN_CU."
         )
 
-    def generate(self, query: str, context: str) -> str:
-        prompt = f"CONTEXT:\n{context}\n\nCAU HOI: {query}\n\nTRA LOI:"
+    def generate(self, query: str, context) -> str:
+        if isinstance(context, dict):
+            query_context = str(context.get("query_context") or "").strip()
+            evidence_context = str(context.get("evidence_context") or "").strip()
+            prompt = (
+                "TRA LOI DUNG DINH DANG SAU:\n"
+                "KET_LUAN:\n"
+                "CAN_CU:\n"
+                "PHAN_TICH_NGAN:\n"
+                "CHUA_DU_CAN_CU:\n\n"
+                f"QUERY_CONTEXT:\n{query_context}\n\n"
+                f"EVIDENCE_CONTEXT:\n{evidence_context}\n\n"
+                f"CAU HOI_GOC: {query}\n\nTRA LOI:"
+            )
+        else:
+            prompt = (
+                "TRA LOI DUNG DINH DANG SAU:\n"
+                "KET_LUAN:\n"
+                "CAN_CU:\n"
+                "PHAN_TICH_NGAN:\n"
+                "CHUA_DU_CAN_CU:\n\n"
+                f"CONTEXT:\n{context}\n\nCAU HOI: {query}\n\nTRA LOI:"
+            )
         if self.provider == "ollama":
             return self._generate_ollama(prompt)
         return self._generate_fallback(prompt)
@@ -192,11 +233,13 @@ class LegalLLM:
                     "prompt": prompt,
                     "system": self.system_prompt,
                     "stream": False,
+                    "think": False,
                     "options": {
-                        "temperature": 0.2,
-                        "top_p": 0.9,
-                        "num_predict": 2048,
-                        "num_ctx": 32768,
+                        "temperature": 0.1,
+                        "top_p": 0.85,
+                        "num_predict": 640,
+                        "num_ctx": 16384,
+                        "repeat_penalty": 1.35,
                     },
                 },
                 timeout=300,
@@ -207,6 +250,7 @@ class LegalLLM:
                 import re
 
                 text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL).strip()
+            text = re.sub(r"\n{3,}", "\n\n", text)
             return text
         except Exception as exc:
             logger.error("[LLM] Error: %s", exc)
@@ -239,6 +283,7 @@ class LegalRAGPipeline:
         self.rerank_alpha = max(0.0, min(1.0, float(os.getenv("RERANKER_ALPHA", "1.0"))))
         self.query_rewriter_enabled = _env_bool("QUERY_REWRITER_ENABLED", False)
         self.query_rewriter_force = _env_bool("QUERY_REWRITER_FORCE", False)
+        self.rewrite_queries_compact_max = max(1, int(os.getenv("REWRITE_QUERIES_COMPACT_MAX", "3")))
 
     def initialize(self):
         if self._initialized:
@@ -532,6 +577,7 @@ class LegalRAGPipeline:
         start_retrieval = time.time()
         retrieval_pool_k = 100 if use_reranker else max(top_k * 2, top_k)
         search_queries = rewrite_result.queries or [question]
+        rewrite_mode = "rewrite_combine" if bool(getattr(query_rewrite_service, "enabled", False)) else "original"
         per_subquery_hits: List[Dict[str, object]] = []
         subquery_rankings: List[List] = []
 
@@ -609,8 +655,97 @@ class LegalRAGPipeline:
             "missing_numbers": list(getattr(rewrite_result, "missing_numbers", [])),
             "per_subquery_hits": per_subquery_hits,
             "retrieval_union_count": retrieval_union_count,
+            "rewrite_mode": rewrite_mode,
+            "rewrite_original_query": question,
+            "rewrite_strategy": str(getattr(rewrite_result, "rewrite_strategy", "structured_synthesis")),
+            "rewrite_quality_passed": bool(getattr(rewrite_result, "quality_passed", False)),
+            "retrieval_query_set": list(getattr(rewrite_result, "retrieval_query_set", []) or search_queries),
+            "retrieval_query_plan": list(getattr(rewrite_result, "retrieval_query_plan", []) or []),
+            "query_facets": dict(getattr(rewrite_result, "query_facets", {}) or {}),
+            "rewrite_debug": dict(getattr(rewrite_result, "debug_payload", {}) or {}),
+            "rewrite_queries_compact": self._compact_rewrite_queries(
+                original_query=question,
+                rewritten_queries=list(getattr(rewrite_result, "queries", []) or [question]),
+            ),
         }
         return search_results, meta
+
+    def _compact_rewrite_queries(self, original_query: str, rewritten_queries: List[str]) -> List[str]:
+        original = str(original_query or "").strip()
+        original_lower = original.lower()
+        compact: List[str] = []
+        seen = set()
+        for query in rewritten_queries:
+            value = str(query or "").strip()
+            if not value:
+                continue
+            value_lower = value.lower()
+            if value_lower == original_lower:
+                continue
+            if value_lower in seen:
+                continue
+            seen.add(value_lower)
+            compact.append(value)
+            if len(compact) >= self.rewrite_queries_compact_max:
+                break
+        return compact
+
+    def _build_rewrite_context_block(
+        self,
+        original_query: str,
+        rewrite_mode: str,
+        rewrite_status: str,
+        rewrite_quality_passed: bool,
+        rewrite_queries_compact: List[str],
+        rewrite_fallback_reason: str,
+        query_facets: Dict[str, object],
+        rewrite_debug: Dict[str, object],
+    ) -> str:
+        lines = [
+            f"ORIGINAL_QUERY: {str(original_query or '').strip()}",
+            f"REWRITE_MODE: {str(rewrite_mode or 'original').strip()}",
+            f"REWRITE_STATUS: {str(rewrite_status or 'disabled').strip()}",
+            f"REWRITE_QUALITY_PASSED: {str(bool(rewrite_quality_passed)).lower()}",
+        ]
+        facets = dict(query_facets or {})
+        debug = dict(rewrite_debug or {})
+        actor_values = ", ".join(str(item) for item in list(facets.get("actors", []) or []) if str(item or "").strip()) or "<none>"
+        issue_values = ", ".join(str(item) for item in list(facets.get("issues", []) or []) if str(item or "").strip()) or "<none>"
+        focus_value = str(facets.get("focus") or "<none>")
+        main_act_value = str(facets.get("main_act") or debug.get("main_act") or "<none>")
+        condition_values = ", ".join(
+            str(item)
+            for item in list(facets.get("conditions", []) or [])
+            if str(item or "").strip()
+        ) or "<none>"
+        lines.append(f"QUERY_FACETS_ACTORS: {actor_values}")
+        lines.append(f"QUERY_FACETS_ISSUES: {issue_values}")
+        lines.append(f"QUERY_FOCUS: {focus_value}")
+        lines.append(f"MAIN_ACT: {main_act_value}")
+        lines.append(f"KEY_CONDITIONS: {condition_values}")
+        named_law_hints = ", ".join(
+            str(item)
+            for item in list(debug.get("named_law_hints", []) or [])
+            if str(item or "").strip()
+        ) or "<none>"
+        lines.append(f"NAMED_LAW_HINTS: {named_law_hints}")
+        question_units = list(debug.get("question_units", []) or [])
+        if question_units:
+            for idx, unit in enumerate(question_units, start=1):
+                lines.append(f"QUESTION_UNIT_{idx}_LABEL: {str(unit.get('question_label') or '<none>')}")
+                lines.append(f"QUESTION_UNIT_{idx}_ASKED: {str(unit.get('user_asked_text') or '<none>')}")
+                lines.append(f"QUESTION_UNIT_{idx}_INTENT: {str(unit.get('intent') or '<none>')}")
+        if rewrite_queries_compact:
+            for idx, query in enumerate(rewrite_queries_compact, start=1):
+                lines.append(f"RETRIEVAL_SUBQUERY_{idx}: {query}")
+        else:
+            lines.append("RETRIEVAL_SUBQUERY_1: <none>")
+        if rewrite_fallback_reason:
+            lines.append(f"REWRITE_FALLBACK_REASON: {rewrite_fallback_reason}")
+        lines.append(
+            "REWRITE_GUARDRAIL: Use rewrite only to understand intent; answer must follow ORIGINAL_QUERY and EVIDENCE_CONTEXT."
+        )
+        return "\n".join(lines)
 
     def search(
         self,
@@ -652,6 +787,15 @@ class LegalRAGPipeline:
             missing_numbers=list(meta["missing_numbers"]),
             per_subquery_hits=list(meta["per_subquery_hits"]),
             retrieval_union_count=int(meta["retrieval_union_count"]),
+            rewrite_mode=str(meta["rewrite_mode"]),
+            rewrite_original_query=str(meta["rewrite_original_query"]),
+            rewrite_queries_compact=list(meta["rewrite_queries_compact"]),
+            rewrite_strategy=str(meta["rewrite_strategy"]),
+            rewrite_quality_passed=bool(meta["rewrite_quality_passed"]),
+            retrieval_query_set=list(meta["retrieval_query_set"]),
+            retrieval_query_plan=list(meta.get("retrieval_query_plan", []) or []),
+            query_facets=dict(meta["query_facets"]),
+            rewrite_debug=dict(meta["rewrite_debug"]),
         )
 
     def query(
@@ -679,12 +823,26 @@ class LegalRAGPipeline:
             query_rewrite_service=query_rewrite_service,
         )
         context, citations = self._format_context(search_results)
+        query_context = self._build_rewrite_context_block(
+            original_query=str(meta["rewrite_original_query"]),
+            rewrite_mode=str(meta["rewrite_mode"]),
+            rewrite_status=str(meta["rewrite_status"]),
+            rewrite_quality_passed=bool(meta["rewrite_quality_passed"]),
+            rewrite_queries_compact=list(meta["rewrite_queries_compact"]),
+            rewrite_fallback_reason=str(meta["rewrite_fallback_reason"]),
+            query_facets=dict(meta["query_facets"]),
+            rewrite_debug=dict(meta["rewrite_debug"]),
+        )
+        structured_context = {
+            "query_context": query_context,
+            "evidence_context": context,
+        }
         start_generation = time.time()
         if not context:
             answer = "Khong tim thay thong tin phap ly lien quan den cau hoi cua ban."
         else:
             answer_provider = llm_client or self.llm
-            answer = answer_provider.generate(question, context)
+            answer = answer_provider.generate(question, structured_context)
         generation_time = time.time() - start_generation
 
         return LegalAnswer(
@@ -705,6 +863,15 @@ class LegalRAGPipeline:
             missing_numbers=list(meta["missing_numbers"]),
             per_subquery_hits=list(meta["per_subquery_hits"]),
             retrieval_union_count=int(meta["retrieval_union_count"]),
+            rewrite_mode=str(meta["rewrite_mode"]),
+            rewrite_original_query=str(meta["rewrite_original_query"]),
+            rewrite_queries_compact=list(meta["rewrite_queries_compact"]),
+            rewrite_strategy=str(meta["rewrite_strategy"]),
+            rewrite_quality_passed=bool(meta["rewrite_quality_passed"]),
+            retrieval_query_set=list(meta["retrieval_query_set"]),
+            retrieval_query_plan=list(meta.get("retrieval_query_plan", []) or []),
+            query_facets=dict(meta["query_facets"]),
+            rewrite_debug=dict(meta["rewrite_debug"]),
         )
 
     def _format_context(self, results: List) -> Tuple[str, List[Dict]]:

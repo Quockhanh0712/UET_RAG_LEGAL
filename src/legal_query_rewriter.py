@@ -47,15 +47,41 @@ ISSUE_LABELS = {
 }
 ACTOR_HINTS: Tuple[Tuple[str, str], ...] = (
     ("giám đốc công ty", "quan_ly"),
+    ("chủ tịch", "quan_ly"),
+    ("phó giám đốc", "quan_ly"),
     ("giám đốc", "quan_ly"),
     ("cấp trên", "quan_ly"),
+    ("kế toán trưởng", "quan_ly"),
+    ("kế toán", "nhan_vien"),
+    ("thủ quỹ", "nhan_vien"),
     ("nhân viên kỹ thuật", "nhan_vien"),
     ("nhân viên", "nhan_vien"),
     ("người lao động", "nhan_vien"),
+    ("người sử dụng lao động", "to_chuc"),
     ("tài xế", "nhan_vien"),
+    ("bác sĩ", "ca_nhan"),
+    ("y sĩ", "ca_nhan"),
+    ("chủ quán", "ca_nhan"),
+    ("chủ hộ", "ca_nhan"),
+    ("chủ đất", "ca_nhan"),
+    ("bị can", "nguoi_khac"),
+    ("bị cáo", "nguoi_khac"),
+    ("người bị hại", "nguoi_khac"),
+    ("nạn nhân", "nguoi_khac"),
+    ("nguyên đơn", "nguoi_khac"),
+    ("bị đơn", "nguoi_khac"),
+    ("bên mua", "nguoi_khac"),
+    ("bên bán", "nguoi_khac"),
+    ("bên thuê", "nguoi_khac"),
+    ("bên cho thuê", "nguoi_khac"),
     ("công ty", "to_chuc"),
     ("doanh nghiệp", "to_chuc"),
     ("hộ kinh doanh", "to_chuc"),
+    ("ủy ban nhân dân", "to_chuc"),
+    ("ubnd", "to_chuc"),
+    ("bệnh viện", "to_chuc"),
+    ("trường học", "to_chuc"),
+    ("ngân hàng", "to_chuc"),
     ("pháp nhân", "to_chuc"),
     ("cá nhân", "ca_nhan"),
 )
@@ -70,14 +96,39 @@ ACTION_ALIASES: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
     ("gây tai nạn chết người", ("gây tai nạn chết người", "gay tai nan chet nguoi")),
     ("gây tai nạn", ("gây tai nạn", "gay tai nan")),
     ("tông hỏng nhà dân", ("tông hỏng nhà dân", "tong hong nha dan")),
+    ("cố ý gây thương tích", ("cố ý gây thương tích", "co y gay thuong tich")),
+    ("gây thương tích", ("gây thương tích", "gay thuong tich", "đánh người", "danh nguoi")),
+    ("lừa đảo chiếm đoạt tài sản", ("lừa đảo chiếm đoạt tài sản", "lua dao chiem doat tai san")),
+    ("chiếm đoạt tài sản", ("chiếm đoạt tài sản", "chiem doat tai san")),
     ("trộm cắp", ("trộm cắp", "trom cap")),
     ("lừa đảo", ("lừa đảo", "lua dao")),
+    ("đánh bạc", ("đánh bạc", "danh bac")),
+    ("tổ chức đánh bạc", ("tổ chức đánh bạc", "to chuc danh bac")),
+    ("tàng trữ trái phép chất ma túy", ("tàng trữ trái phép chất ma túy", "tang tru trai phep chat ma tuy")),
+    ("mua bán trái phép chất ma túy", ("mua bán trái phép chất ma túy", "mua ban trai phep chat ma tuy")),
+    ("vận chuyển trái phép chất ma túy", ("vận chuyển trái phép chất ma túy", "van chuyen trai phep chat ma tuy")),
+    ("tham ô tài sản", ("tham ô tài sản", "tham o tai san")),
+    ("nhận hối lộ", ("nhận hối lộ", "nhan hoi lo")),
+    ("đưa hối lộ", ("đưa hối lộ", "dua hoi lo")),
+    ("xây dựng không phép", ("xây dựng không phép", "xay dung khong phep")),
+    ("lấn chiếm đất đai", ("lấn chiếm đất đai", "lan chiem dat dai")),
+    ("khai thác cát trái phép", ("khai thác cát trái phép", "khai thac cat trai phep")),
+    ("đơn phương chấm dứt hợp đồng lao động trái pháp luật", ("đơn phương chấm dứt hợp đồng lao động trái pháp luật", "don phuong cham dut hop dong lao dong trai phap luat")),
+    ("sa thải trái pháp luật", ("sa thải trái pháp luật", "sa thai trai phap luat")),
+    ("trốn đóng bảo hiểm xã hội", ("trốn đóng bảo hiểm xã hội", "tron dong bao hiem xa hoi")),
+    ("nợ lương", ("nợ lương", "no luong", "cham tra luong")),
+    ("trốn thuế", ("trốn thuế", "tron thue")),
+    ("phát tán dữ liệu cá nhân", ("phát tán dữ liệu cá nhân", "phat tan du lieu ca nhan")),
+    ("xâm phạm dữ liệu cá nhân", ("xâm phạm dữ liệu cá nhân", "xam pham du lieu ca nhan")),
+    ("điều khiển xe có nồng độ cồn", ("điều khiển xe có nồng độ cồn", "dieu khien xe co nong do con", "uống rượu bia lái xe", "uong ruou bia lai xe")),
+    ("không đội mũ bảo hiểm", ("không đội mũ bảo hiểm", "khong doi mu bao hiem")),
 )
 QUESTION_FOCUS_HINTS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
     ("xac_dinh_ai_vi_pham_ai", ("ai là người vi phạm ai", "ai vi pham ai")),
     ("chu_the_chiu_trach_nhiem", ("thuộc về ai", "hay cả hai", "ai chịu", "chịu trách nhiệm")),
     ("muc_che_tai", ("mức phạt", "tiền phạt", "trừ vào tiền phạt")),
     ("dieu_kien_ap_dung", ("điều kiện", "độ tuổi", "bao nhiêu tuổi", "miễn trách nhiệm")),
+    ("khai_niem_dinh_nghia", ("là gì", "la gi", "được hiểu là gì", "duoc hieu la gi", "khái niệm", "khai niem", "định nghĩa", "dinh nghia")),
 )
 GENERIC_MAIN_ACT_PATTERNS = (
     "hành vi được nêu", "hanh vi duoc neu", "hành vi chính", "hanh vi chinh", "tình huống được nêu", "tinh huong duoc neu",
@@ -92,6 +143,12 @@ LAW_HINT_PATTERNS: Tuple[str, ...] = (
     r"\b(Nghi dinh\s+[A-ZA-Za-z0-9/\- ]{2,80})",
     r"\b(Thông tư\s+[A-ZÀ-ỴA-Za-z0-9/\- ]{2,80})",
     r"\b(Thong tu\s+[A-ZA-Za-z0-9/\- ]{2,80})",
+    r"\b(Nghị quyết\s+[A-ZÀ-ỴA-Za-z0-9/\- ]{2,80})",
+    r"\b(Nghi quyet\s+[A-ZA-Za-z0-9/\- ]{2,80})",
+    r"\b(Pháp lệnh\s+[A-ZÀ-ỴA-Za-z0-9/\- ]{2,80})",
+    r"\b(Phap lenh\s+[A-ZA-Za-z0-9/\- ]{2,80})",
+    r"\b(Quyết định\s+[A-ZÀ-ỴA-Za-z0-9/\- ]{2,80})",
+    r"\b(Quyet dinh\s+[A-ZA-Za-z0-9/\- ]{2,80})",
 )
 
 
@@ -365,16 +422,18 @@ __USER_QUERY__"""
         conditions: List[KeyCondition] = []
         seen = set()
         patterns = [
-            ("tuoi", r"\b\d+\s*(?:tuổi|tuoi)\b"),
-            ("so_tien", r"\b\d[\d\.,]*\s*(?:đồng|dong|vnd|triệu|trieu|tỷ|ty|nghìn|nghin)\b"),
-            ("so_tien", r"\b(?:hàng tỷ đồng|hang ty dong)\b"),
-            ("thoi_diem", r"\b(?:ngày|ngay)\s+\d{1,2}/\d{1,2}/\d{4}\b"),
-            ("thoi_diem", r"\b(?:năm|nam)\s+\d{4}\b"),
-            ("so_lan", r"\b(?:nhiều lần|nhieu lan)\b"),
-            ("so_lan", r"\b\d+\s*lần\b"),
-            ("hau_qua", r"\b(?:chết người|chet nguoi|thiệt hại|thiet hai|ô nhiễm|o nhiem)\b"),
-            ("quan_he_lao_dong", r"\b(?:làm theo chỉ đạo(?: cấp trên)?|lam theo chi dao(?: cap tren)?|ép buộc|ep buoc|dọa đuổi việc|doa duoi viec|sợ mất việc|so mat viec)\b"),
-            ("khac", r"\b(?:mẹ đơn thân|me don than|nộp thuế(?: đủ)?|nop thue(?: du)?|làm từ thiện(?: hàng tỷ đồng)?|lam tu thien(?: hang ty dong)?|máy lọc hỏng|may loc hong)\b"),
+            ("tuoi", "\\b\\d+\\s*(?:tu\\u1ed5i|tuoi)\\b"),
+            ("so_tien", "\\b\\d[\\d\\.,]*\\s*(?:\\u0111\\u1ed3ng|dong|vnd|tri\\u1ec7u|trieu|t\\u1ef7|ty|ngh\\u00ecn|nghin)\\b"),
+            ("so_tien", "\\b(?:h\\u00e0ng t\\u1ef7 \\u0111\\u1ed3ng|hang ty dong)\\b"),
+            ("thoi_diem", "\\b(?:ng\\u00e0y|ngay)\\s+\\d{1,2}/\\d{1,2}/\\d{4}\\b"),
+            ("thoi_diem", "\\b(?:n\\u0103m|nam)\\s+\\d{4}\\b"),
+            ("thoi_diem", "\\b(?:th\\u00e1ng|thang)\\s+\\d{1,2}/\\d{4}\\b"),
+            ("thoi_diem", "\\b(?:trong|sau)\\s+\\d+\\s*(?:ng\\u00e0y|ngay|th\\u00e1ng|thang|n\\u0103m|nam)\\b"),
+            ("so_lan", "\\b(?:nhi\\u1ec1u l\\u1ea7n|nhieu lan)\\b"),
+            ("so_lan", "\\b\\d+\\s*l\\u1ea7n\\b"),
+            ("hau_qua", "\\b(?:ch\\u1ebft ng\\u01b0\\u1eddi|chet nguoi|thi\\u1ec7t h\\u1ea1i|thiet hai|\\u00f4 nhi\\u1ec5m|o nhiem|b\\u1ecb th\\u01b0\\u01a1ng|bi thuong|th\\u01b0\\u01a1ng t\\u00edch|thuong tich|th\\u01b0\\u01a1ng t\\u1eadt|thuong tat|m\\u1ea5t kh\\u1ea3 n\\u0103ng lao \\u0111\\u1ed9ng|mat kha nang lao dong|s\\u1eadp c\\u00f4ng tr\\u00ecnh|sap cong trinh|\\u00f4 nhi\\u1ec5m ngu\\u1ed3n n\\u01b0\\u1edbc|o nhiem nguon nuoc)\\b"),
+            ("quan_he_lao_dong", "\\b(?:l\\u00e0m theo ch\\u1ec9 \\u0111\\u1ea1o(?: c\\u1ea5p tr\\u00ean)?|lam theo chi dao(?: cap tren)?|\\u00e9p bu\\u1ed9c|ep buoc|d\\u1ecda \\u0111u\\u1ed5i vi\\u1ec7c|doa duoi viec|s\\u1ee3 m\\u1ea5t vi\\u1ec7c|so mat viec|h\\u1ee3p \\u0111\\u1ed3ng lao \\u0111\\u1ed9ng|hop dong lao dong|th\\u1eed vi\\u1ec7c|thu viec|sa th\\u1ea3i|sa thai|\\u0111\\u01a1n ph\\u01b0\\u01a1ng ch\\u1ea5m d\\u1ee9t|don phuong cham dut)\\b"),
+            ("khac", "\\b(?:m\\u1eb9 \\u0111\\u01a1n th\\u00e2n|me don than|n\\u1ed9p thu\\u1ebf(?: \\u0111\\u1ee7)?|nop thue(?: du)?|l\\u00e0m t\\u1eeb thi\\u1ec7n(?: h\\u00e0ng t\\u1ef7 \\u0111\\u1ed3ng)?|lam tu thien(?: hang ty dong)?|m\\u00e1y l\\u1ecdc h\\u1ecfng|may loc hong|kh\\u00f4ng c\\u00f3 gi\\u1ea5y ph\\u00e9p|khong co giay phep|kh\\u00f4ng \\u0111\\u0103ng k\\u00fd|khong dang ky|kh\\u00f4ng b\\u1ea3o hi\\u1ec3m|khong bao hiem|\\u0111\\u00e3 kh\\u1eafc ph\\u1ee5c|da khac phuc|\\u0111\\u00e3 b\\u1ed3i th\\u01b0\\u1eddng|da boi thuong)\\b"),
         ]
         for kind, pattern in patterns:
             for match in re.finditer(pattern, query, flags=re.IGNORECASE):
@@ -403,10 +462,10 @@ __USER_QUERY__"""
         normalized = self._normalize_key(query)
         axes: List[str] = []
         for tag, keywords in {
-            "hinh_su": ("hình sự", "hinh su", "trach nhiem hinh su"),
-            "dan_su": ("dân sự", "dan su", "trach nhiem dan su"),
-            "hanh_chinh": ("hành chính", "hanh chinh", "xử phạt", "xu phat", "tiền phạt", "tien phat", "mức phạt"),
-            "boi_thuong": ("bồi thường", "boi thuong", "đền tiền", "den tien"),
+            "hinh_su": ("hinh su", "trach nhiem hinh su", "xu ly hinh su", "mien trach nhiem hinh su"),
+            "dan_su": ("dan su", "trach nhiem dan su"),
+            "hanh_chinh": ("hanh chinh", "xu phat", "tien phat", "muc phat", "tru vao tien phat"),
+            "boi_thuong": ("boi thuong", "den tien", "boi hoan"),
         }.items():
             if any(self._normalize_key(keyword) in normalized for keyword in keywords):
                 axes.append(tag)
@@ -861,12 +920,15 @@ __USER_QUERY__"""
 
     def _parse_extraction(self, raw_output: str, user_query: str) -> StructuredRewriteExtraction:
         payload: Dict[str, object] = {}
-        text = self._normalize_text(raw_output)
+        clean_output = str(raw_output or "").strip()
+        clean_output = re.sub(r"^\s*```(?:json)?\s*", "", clean_output, flags=re.IGNORECASE)
+        clean_output = re.sub(r"\s*```\s*$", "", clean_output, flags=re.IGNORECASE)
+        text = self._normalize_text(clean_output)
         if text:
             try:
                 payload = json.loads(text)
             except json.JSONDecodeError:
-                match = re.search(r"\{.*\}", raw_output, flags=re.DOTALL)
+                match = re.search(r"\{.*\}", clean_output, flags=re.DOTALL)
                 if match:
                     try:
                         payload = json.loads(match.group(0))
@@ -884,7 +946,7 @@ __USER_QUERY__"""
         axes = self._normalize_axes(payload.get("explicit_legal_axes", []) if isinstance(payload.get("explicit_legal_axes", []), list) else [], heuristic_axes)
         main_act, reasons = self._select_main_act(str(payload.get("main_act", "")), user_query)
         question_focus = self._normalize_text(payload.get("question_focus", "")) or heuristic_focus
-        if question_focus not in {"nhieu_y_hoi", "xac_dinh_ai_vi_pham_ai", "chu_the_chiu_trach_nhiem", "muc_che_tai", "dieu_kien_ap_dung"}:
+        if question_focus not in {"nhieu_y_hoi", "xac_dinh_ai_vi_pham_ai", "chu_the_chiu_trach_nhiem", "muc_che_tai", "dieu_kien_ap_dung", "khai_niem_dinh_nghia"}:
             question_focus = heuristic_focus
 
         actors = self._merge_surface_actors(llm_actors, heuristic_actors)
@@ -916,6 +978,7 @@ __USER_QUERY__"""
             question_units=question_units,
             main_act_candidate_reasons=reasons,
         )
+
     def _anchor_snippet(self, query: str, main_act: str) -> str:
         text = self._normalize_text(query)
         if not text:
@@ -1049,8 +1112,11 @@ __USER_QUERY__"""
         original_query: str,
     ) -> List[str]:
         reasons: List[str] = []
-        if not extraction.main_act or self._is_generic_main_act(extraction.main_act):
-            reasons.append("missing_or_generic_main_act")
+        if not extraction.main_act:
+            if extraction.surface_actors:
+                reasons.append("missing_main_act_for_scenario")
+        elif self._is_generic_main_act(extraction.main_act):
+            reasons.append("generic_main_act")
         if not query_plan:
             reasons.append("empty_query_plan")
             return reasons
@@ -1075,7 +1141,7 @@ __USER_QUERY__"""
                 reasons.append("topic_drift")
             if len(query_key.split()) < 5:
                 reasons.append("query_too_short")
-            if all(token not in query_key for token in actor_keys if token):
+            if actor_keys and all(token not in query_key for token in actor_keys if token):
                 reasons.append("query_missing_actor_anchor")
             if extraction.named_law_hints:
                 hint_hits = sum(1 for hint in extraction.named_law_hints if self._normalize_key(hint) in query_key)

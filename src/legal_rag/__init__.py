@@ -1,0 +1,2 @@
+"""Legal RAG modular package."""
+

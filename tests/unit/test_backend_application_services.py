@@ -1,0 +1,177 @@
+"""Task 03 tests for backend application services and delegation."""
+
+from __future__ import annotations
+
+from types import SimpleNamespace
+
+import pytest
+
+from backend.api.schemas import ChatRequest, ChatResponse, SearchRequest, SearchResponse
+from backend.services.shared_legal_services import (
+    SharedLegalChatService,
+    SharedLegalSearchService,
+)
+
+
+def test_shared_legal_search_service_builds_contract_response():
+    calls = {"apply_env": 0, "payload": 0}
+
+    class _Settings:
+        def apply_env(self):
+            calls["apply_env"] += 1
+
+    class _Pipeline:
+        embedding_model = SimpleNamespace(embedding_dim=1024)
+
+        def search(self, **kwargs):
+            return {"search_result": True, "kwargs": kwargs}
+
+    def _build_payload(result, *, mode, collection, model_profile_id, query_mode):
+        calls["payload"] += 1
+        assert mode == "legal"
+        assert collection == "legal_rag_vn"
+        assert model_profile_id == "default"
+        assert query_mode == "original"
+        assert result["search_result"] is True
+        return {
+            "results": [{"content": "x", "score": 1.0, "source_type": "legal"}],
+            "search_time": 0.11,
+            "mode": mode,
+            "model_profile_id": model_profile_id,
+            "query_mode": query_mode,
+        }
+
+    service = SharedLegalSearchService(
+        normalize_query_mode=lambda mode: "original",
+        backend_runtime_settings=lambda **kwargs: _Settings(),
+        get_legal_pipeline=lambda settings: _Pipeline(),
+        validate_qdrant_contract=lambda settings, dim: SimpleNamespace(collection_name="legal_rag_vn"),
+        build_query_rewrite_service=lambda profile_id, query_mode: None,
+        build_search_payload=_build_payload,
+        get_model_profile=lambda profile_id: SimpleNamespace(id="default"),
+        get_setting=lambda name, default: default,
+    )
+
+    response = service.run(
+        SearchRequest(
+            query="thu hoi dat",
+            search_mode="legal",
+            top_k=5,
+            use_reranker=False,
+        )
+    )
+
+    assert isinstance(response, SearchResponse)
+    assert response.mode == "legal"
+    assert calls["apply_env"] == 1
+    assert calls["payload"] == 1
+
+
+def test_shared_legal_chat_service_persists_history():
+    saved = {"count": 0}
+
+    class _Settings:
+        def apply_env(self):
+            return None
+
+    class _Pipeline:
+        embedding_model = SimpleNamespace(embedding_dim=1024)
+
+        def query(self, **kwargs):
+            return SimpleNamespace(answer="Tra loi dich vu")
+
+    def _save_chat_history(**kwargs):
+        saved["count"] += 1
+        assert kwargs["answer"] == "Tra loi dich vu"
+        assert isinstance(kwargs["sources"], list)
+
+    service = SharedLegalChatService(
+        normalize_query_mode=lambda mode: "original",
+        backend_runtime_settings=lambda **kwargs: _Settings(),
+        get_legal_pipeline=lambda settings: _Pipeline(),
+        validate_qdrant_contract=lambda settings, dim: SimpleNamespace(collection_name="legal_rag_vn"),
+        build_query_rewrite_service=lambda profile_id, query_mode: None,
+        build_remote_llm=lambda profile_id: object(),
+        build_chat_payload=lambda result, **kwargs: {
+            "answer": kwargs["answer"],
+            "sources": [{"type": "legal", "score": 1.0}],
+            "search_time": 0.1,
+            "generation_time": 0.2,
+            "total_time": 0.3,
+            "rerank_time": 0.0,
+            "reranker_used": False,
+            "model_profile_id": kwargs["model_profile_id"],
+            "query_mode": kwargs["query_mode"],
+            "fallback_used": kwargs["fallback_used"],
+            "fallback_error": kwargs["fallback_error"],
+            "collection": kwargs["collection"],
+        },
+        get_model_profile=lambda profile_id: SimpleNamespace(id="default"),
+        get_setting=lambda name, default: default,
+        save_chat_history=_save_chat_history,
+    )
+
+    response = service.run(
+        ChatRequest(
+            message="thu hoi dat",
+            search_mode="legal",
+            top_k=5,
+            use_reranker=False,
+        )
+    )
+
+    assert isinstance(response, ChatResponse)
+    assert response.answer == "Tra loi dich vu"
+    assert saved["count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_chat_route_delegates_to_service(monkeypatch):
+    from backend import main as backend_main
+
+    class _Service:
+        def __init__(self):
+            self.called = False
+
+        def run(self, request):
+            self.called = True
+            return ChatResponse(
+                answer="delegated",
+                sources=[],
+                search_time=0.0,
+                generation_time=0.0,
+                total_time=0.0,
+            )
+
+    service = _Service()
+    monkeypatch.setattr(backend_main, "_shared_legal_enabled", lambda mode: True)
+    monkeypatch.setattr(backend_main, "get_shared_legal_chat_service", lambda: service)
+
+    response = await backend_main.chat(ChatRequest(message="x", search_mode="legal"))
+    assert response.answer == "delegated"
+    assert service.called is True
+
+
+@pytest.mark.asyncio
+async def test_search_route_delegates_to_service(monkeypatch):
+    from backend import main as backend_main
+
+    class _Service:
+        def __init__(self):
+            self.called = False
+
+        def run(self, request):
+            self.called = True
+            return SearchResponse(
+                results=[],
+                search_time=0.0,
+                mode=request.search_mode,
+            )
+
+    service = _Service()
+    monkeypatch.setattr(backend_main, "_shared_legal_enabled", lambda mode: True)
+    monkeypatch.setattr(backend_main, "get_shared_legal_search_service", lambda: service)
+
+    response = await backend_main.search(SearchRequest(query="x", search_mode="legal"))
+    assert response.mode == "legal"
+    assert service.called is True

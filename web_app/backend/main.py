@@ -46,7 +46,32 @@ load_dotenv(PROJECT_ROOT / ".env")
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field
+try:
+    from .api.schemas import (
+        ChatHistoryItem,
+        ChatRequest,
+        ChatResponse,
+        DocumentInfo,
+        RerankerSettingsResponse,
+        ScoreRequest,
+        ScoreResponse,
+        SearchRequest,
+        SearchResponse,
+        UploadResponse,
+    )
+except ImportError:
+    from api.schemas import (
+        ChatHistoryItem,
+        ChatRequest,
+        ChatResponse,
+        DocumentInfo,
+        RerankerSettingsResponse,
+        ScoreRequest,
+        ScoreResponse,
+        SearchRequest,
+        SearchResponse,
+        UploadResponse,
+    )
 import uvicorn
 
 # Local imports
@@ -138,140 +163,6 @@ _app_settings = {
 
 # Ensure upload directory exists
 Config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-
-
-# ============================================================================
-# Pydantic Models
-# ============================================================================
-
-class ChatRequest(BaseModel):
-    message: str
-    user_id: str = "default_user"
-    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    search_mode: str = "hybrid"  # legal, user, hybrid
-    top_k: int = 10
-    use_reranker: Optional[bool] = None  # None = use global setting
-    model_profile_id: Optional[str] = None
-    query_mode: str = "original"
-    response_mode: str = "chat"
-    require_active_only: bool = True
-    use_graph: bool = False
-
-class ChatResponse(BaseModel):
-    answer: str
-    sources: List[Dict]
-    search_time: float
-    generation_time: float
-    total_time: float
-    rerank_time: float = 0.0  # Time spent on reranking
-    reranker_used: bool = False  # Whether reranker was applied
-    
-    # Quality metrics (added for consistency)
-    quality_grade: Optional[str] = None
-    quality_score: Optional[float] = None
-    bert_score: Optional[float] = None
-    hallucination_score: Optional[float] = None
-    factuality_score: Optional[float] = None
-    context_relevance: Optional[float] = None
-    quality_feedback: Optional[str] = None
-    model_profile_id: Optional[str] = None
-    query_mode: Optional[str] = None
-    rewrite_used: bool = False
-    rewrite_status: str = "disabled"
-    rewrite_fallback_reason: str = ""
-    rewrite_strategy: str = "structured_synthesis"
-    rewrite_quality_passed: bool = False
-    rewritten_queries: List[str] = Field(default_factory=list)
-    retrieval_query_set: List[str] = Field(default_factory=list)
-    retrieval_query_plan: List[Dict[str, Any]] = Field(default_factory=list)
-    rewrite_context: Dict[str, Any] = Field(default_factory=dict)
-    rewrite_debug: Dict[str, Any] = Field(default_factory=dict)
-    per_subquery_hits: List[Dict] = Field(default_factory=list)
-    retrieval_union_count: int = 0
-    fallback_used: bool = False
-    fallback_error: str = ""
-    collection: Optional[str] = None
-
-class SearchRequest(BaseModel):
-    query: str
-    user_id: str = "default_user"
-    session_id: Optional[str] = None
-    search_mode: str = "hybrid"  # legal, user, hybrid
-    top_k: int = 10
-    use_reranker: Optional[bool] = None  # None = use global setting
-    model_profile_id: Optional[str] = None
-    query_mode: str = "original"
-    require_active_only: bool = True
-
-class SearchResponse(BaseModel):
-    results: List[Dict]
-    search_time: float
-    mode: str
-    rerank_time: float = 0.0
-    reranker_used: bool = False
-    model_profile_id: Optional[str] = None
-    query_mode: Optional[str] = None
-    rewrite_used: bool = False
-    rewrite_status: str = "disabled"
-    rewrite_fallback_reason: str = ""
-    rewrite_strategy: str = "structured_synthesis"
-    rewrite_quality_passed: bool = False
-    rewritten_queries: List[str] = Field(default_factory=list)
-    retrieval_query_set: List[str] = Field(default_factory=list)
-    retrieval_query_plan: List[Dict[str, Any]] = Field(default_factory=list)
-    rewrite_context: Dict[str, Any] = Field(default_factory=dict)
-    rewrite_debug: Dict[str, Any] = Field(default_factory=dict)
-    per_subquery_hits: List[Dict] = Field(default_factory=list)
-    retrieval_union_count: int = 0
-    fallback_used: bool = False
-    fallback_error: str = ""
-    collection: Optional[str] = None
-
-
-class ScoreRequest(BaseModel):
-    """Request để chấm điểm câu trả lời"""
-    query: str
-    answer: str
-    contexts: List[Dict]  # List of context documents
-    top_k: int = 5  # Số contexts để đánh giá
-
-
-class ScoreResponse(BaseModel):
-    """Response chấm điểm câu trả lời"""
-    overall_score: float  # 0-100
-    grade: str  # A, B, C, D, F
-    feedback: str
-    details: Dict  # Detailed scoring breakdown
-
-
-class RerankerSettingsResponse(BaseModel):
-    """Reranker settings"""
-    enabled: bool
-    alpha: float
-    model_name: str
-    model_loaded: bool
-
-class DocumentInfo(BaseModel):
-    doc_id: str
-    filename: str
-    file_type: str
-    file_size: int
-    chunk_count: int
-    upload_time: str
-    status: str
-
-class UploadResponse(BaseModel):
-    success: bool
-    doc_id: str
-    filename: str
-    chunk_count: int
-    message: str
-
-class ChatHistoryItem(BaseModel):
-    id: str
-    title: str
-    timestamp: str
-    preview: str
 
 
 # ============================================================================
@@ -975,28 +866,10 @@ async def lifespan(app: FastAPI):
     logger.info("👋 Shutting down...")
 
 
-app = FastAPI(
-    title="Legal RAG API",
-    description="Vietnamese Legal RAG Chatbot API with Dual-Store Architecture",
-    version="1.0.0",
-    lifespan=lifespan
-)
-
-# CORS for frontend
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Update for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
 # ============================================================================
 # API Endpoints
 # ============================================================================
 
-@app.get("/")
 async def root():
     """Health check"""
     return {
@@ -1006,7 +879,6 @@ async def root():
     }
 
 
-@app.get("/api/status")
 async def get_status():
     """Get system status"""
     try:
@@ -1065,7 +937,6 @@ async def get_status():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/settings/model-profiles")
 async def get_model_profiles():
     return {
         "profiles": [profile.to_public_dict() for profile in list_model_profiles()],
@@ -1073,7 +944,6 @@ async def get_model_profiles():
     }
 
 
-@app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Chat with the legal AI assistant"""
     if _shared_legal_enabled(request.search_mode):
@@ -1292,7 +1162,6 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/search", response_model=SearchResponse)
 async def search(request: SearchRequest):
     """Search documents"""
     if _shared_legal_enabled(request.search_mode):
@@ -1327,7 +1196,6 @@ async def search(request: SearchRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/upload", response_model=UploadResponse)
 async def upload_file(
     file: UploadFile = File(...),
     user_id: str = Form(default="default_user"),
@@ -1402,7 +1270,6 @@ async def upload_file(
             temp_path.unlink()
 
 
-@app.get("/api/documents")
 async def get_documents(
     user_id: str = "default_user",
     session_id: Optional[str] = None
@@ -1420,7 +1287,6 @@ async def get_documents(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.delete("/api/documents/{doc_id}")
 async def delete_document(
     doc_id: str,
     user_id: str = "default_user"
@@ -1440,7 +1306,6 @@ async def delete_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/history")
 async def get_history(session_id: str):
     """Get chat history for session"""
     if session_id in _chat_history:
@@ -1448,7 +1313,6 @@ async def get_history(session_id: str):
     return {"messages": []}
 
 
-@app.get("/api/sessions")
 async def get_sessions(user_id: str = "default_user"):
     """Get list of chat sessions"""
     sessions = []
@@ -1478,7 +1342,6 @@ async def get_sessions(user_id: str = "default_user"):
 # Reranker & Scoring Endpoints
 # ============================================================================
 
-@app.get("/api/settings/reranker", response_model=RerankerSettingsResponse)
 async def get_reranker_settings():
     """Get current reranker settings"""
     reranker = get_reranker()
@@ -1491,7 +1354,6 @@ async def get_reranker_settings():
     )
 
 
-@app.put("/api/settings/reranker")
 async def update_reranker_settings(
     enabled: bool = None,
     alpha: float = None
@@ -1525,7 +1387,6 @@ async def update_reranker_settings(
     }
 
 
-@app.post("/api/score", response_model=ScoreResponse)
 async def score_answer(request: ScoreRequest):
     """
     Score answer quality using QualityMonitor (BERTScore-based)
@@ -1593,7 +1454,6 @@ async def score_answer(request: ScoreRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/preload-reranker")
 async def preload_reranker():
     """Preload reranker model to GPU"""
     try:
@@ -1615,7 +1475,6 @@ async def preload_reranker():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/metrics/stats")
 async def get_metrics_statistics(
     user_id: Optional[str] = None,
     days: int = 7
@@ -1645,7 +1504,6 @@ async def get_metrics_statistics(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/metrics/history")
 async def get_metrics_history(
     session_id: str
 ):
@@ -1698,7 +1556,6 @@ async def get_metrics_history(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/metrics/all")
 async def get_all_metrics(
     user_id: Optional[str] = None,
     limit: int = 100,
@@ -1830,7 +1687,6 @@ async def get_all_metrics(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/metrics/export")
 async def export_all_metrics(
     format: str = "json",
     user_id: Optional[str] = None
@@ -2045,7 +1901,6 @@ async def export_all_metrics(
 # Legal OCR Endpoints
 # ============================================================================
 
-@app.post("/api/ocr/preview")
 async def ocr_preview(file: UploadFile = File(...)):
     try:
         content = await file.read()
@@ -2070,7 +1925,6 @@ async def ocr_preview(file: UploadFile = File(...)):
         logger.error(f"[OCR] Preview error: {e}")
         return {"success": False, "error": str(e)}
 
-@app.post("/api/ocr/extract")
 async def ocr_extract(
     file: UploadFile = File(...),
     mode: str = Form("Fast"),
@@ -2129,6 +1983,13 @@ async def ocr_extract(
         return {"success": False, "error": str(e)}
 
 
+try:
+    from .app_factory import create_app
+except ImportError:
+    from app_factory import create_app
+
+app = create_app()
+
 # ============================================================================
 # Main Entry
 # ============================================================================
@@ -2141,3 +2002,5 @@ if __name__ == "__main__":
         reload=True,
         log_level="info"
     )
+
+

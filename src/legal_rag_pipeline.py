@@ -771,6 +771,16 @@ class LegalRAGPipeline:
             query_rewrite_service=query_rewrite_service,
         )
         _, citations = self._format_context(search_results)
+        rewritten_queries = list(meta.get("rewritten_queries", []) or [])
+        rewrite_mode = str(meta.get("rewrite_mode") or "original")
+        rewrite_original_query = str(meta.get("rewrite_original_query") or question)
+        rewrite_queries_compact = list(meta.get("rewrite_queries_compact", []) or [])
+        rewrite_strategy = str(meta.get("rewrite_strategy") or "structured_synthesis")
+        rewrite_quality_passed = bool(meta.get("rewrite_quality_passed") or False)
+        retrieval_query_set = list(meta.get("retrieval_query_set", rewritten_queries) or rewritten_queries)
+        retrieval_query_plan = list(meta.get("retrieval_query_plan", []) or [])
+        query_facets = dict(meta.get("query_facets", {}) or {})
+        rewrite_debug = dict(meta.get("rewrite_debug", {}) or {})
         return LegalSearchResult(
             citations=citations,
             intent=str(meta["intent"]),
@@ -783,19 +793,19 @@ class LegalRAGPipeline:
             rewrite_used=bool(meta["rewrite_used"]),
             rewrite_status=str(meta["rewrite_status"]),
             rewrite_fallback_reason=str(meta["rewrite_fallback_reason"]),
-            rewritten_queries=list(meta["rewritten_queries"]),
+            rewritten_queries=rewritten_queries,
             missing_numbers=list(meta["missing_numbers"]),
             per_subquery_hits=list(meta["per_subquery_hits"]),
             retrieval_union_count=int(meta["retrieval_union_count"]),
-            rewrite_mode=str(meta["rewrite_mode"]),
-            rewrite_original_query=str(meta["rewrite_original_query"]),
-            rewrite_queries_compact=list(meta["rewrite_queries_compact"]),
-            rewrite_strategy=str(meta["rewrite_strategy"]),
-            rewrite_quality_passed=bool(meta["rewrite_quality_passed"]),
-            retrieval_query_set=list(meta["retrieval_query_set"]),
-            retrieval_query_plan=list(meta.get("retrieval_query_plan", []) or []),
-            query_facets=dict(meta["query_facets"]),
-            rewrite_debug=dict(meta["rewrite_debug"]),
+            rewrite_mode=rewrite_mode,
+            rewrite_original_query=rewrite_original_query,
+            rewrite_queries_compact=rewrite_queries_compact,
+            rewrite_strategy=rewrite_strategy,
+            rewrite_quality_passed=rewrite_quality_passed,
+            retrieval_query_set=retrieval_query_set,
+            retrieval_query_plan=retrieval_query_plan,
+            query_facets=query_facets,
+            rewrite_debug=rewrite_debug,
         )
 
     def query(
@@ -822,16 +832,26 @@ class LegalRAGPipeline:
             graph_expand_docs=graph_expand_docs,
             query_rewrite_service=query_rewrite_service,
         )
+        rewritten_queries = list(meta.get("rewritten_queries", []) or [])
+        rewrite_mode = str(meta.get("rewrite_mode") or "original")
+        rewrite_original_query = str(meta.get("rewrite_original_query") or question)
+        rewrite_queries_compact = list(meta.get("rewrite_queries_compact", []) or [])
+        rewrite_strategy = str(meta.get("rewrite_strategy") or "structured_synthesis")
+        rewrite_quality_passed = bool(meta.get("rewrite_quality_passed") or False)
+        retrieval_query_set = list(meta.get("retrieval_query_set", rewritten_queries) or rewritten_queries)
+        retrieval_query_plan = list(meta.get("retrieval_query_plan", []) or [])
+        query_facets = dict(meta.get("query_facets", {}) or {})
+        rewrite_debug = dict(meta.get("rewrite_debug", {}) or {})
         context, citations = self._format_context(search_results)
         query_context = self._build_rewrite_context_block(
-            original_query=str(meta["rewrite_original_query"]),
-            rewrite_mode=str(meta["rewrite_mode"]),
+            original_query=rewrite_original_query,
+            rewrite_mode=rewrite_mode,
             rewrite_status=str(meta["rewrite_status"]),
-            rewrite_quality_passed=bool(meta["rewrite_quality_passed"]),
-            rewrite_queries_compact=list(meta["rewrite_queries_compact"]),
+            rewrite_quality_passed=rewrite_quality_passed,
+            rewrite_queries_compact=rewrite_queries_compact,
             rewrite_fallback_reason=str(meta["rewrite_fallback_reason"]),
-            query_facets=dict(meta["query_facets"]),
-            rewrite_debug=dict(meta["rewrite_debug"]),
+            query_facets=query_facets,
+            rewrite_debug=rewrite_debug,
         )
         structured_context = {
             "query_context": query_context,
@@ -859,19 +879,19 @@ class LegalRAGPipeline:
             rewrite_used=bool(meta["rewrite_used"]),
             rewrite_status=str(meta["rewrite_status"]),
             rewrite_fallback_reason=str(meta["rewrite_fallback_reason"]),
-            rewritten_queries=list(meta["rewritten_queries"]),
+            rewritten_queries=rewritten_queries,
             missing_numbers=list(meta["missing_numbers"]),
             per_subquery_hits=list(meta["per_subquery_hits"]),
             retrieval_union_count=int(meta["retrieval_union_count"]),
-            rewrite_mode=str(meta["rewrite_mode"]),
-            rewrite_original_query=str(meta["rewrite_original_query"]),
-            rewrite_queries_compact=list(meta["rewrite_queries_compact"]),
-            rewrite_strategy=str(meta["rewrite_strategy"]),
-            rewrite_quality_passed=bool(meta["rewrite_quality_passed"]),
-            retrieval_query_set=list(meta["retrieval_query_set"]),
-            retrieval_query_plan=list(meta.get("retrieval_query_plan", []) or []),
-            query_facets=dict(meta["query_facets"]),
-            rewrite_debug=dict(meta["rewrite_debug"]),
+            rewrite_mode=rewrite_mode,
+            rewrite_original_query=rewrite_original_query,
+            rewrite_queries_compact=rewrite_queries_compact,
+            rewrite_strategy=rewrite_strategy,
+            rewrite_quality_passed=rewrite_quality_passed,
+            retrieval_query_set=retrieval_query_set,
+            retrieval_query_plan=retrieval_query_plan,
+            query_facets=query_facets,
+            rewrite_debug=rewrite_debug,
         )
 
     def _format_context(self, results: List) -> Tuple[str, List[Dict]]:

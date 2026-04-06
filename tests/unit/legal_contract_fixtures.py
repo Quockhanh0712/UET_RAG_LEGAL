@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict
 
-from src.legal_rag_pipeline import LegalAnswer, LegalSearchResult
+from src.legal_rag.contracts.results import LegalAnswer, LegalSearchResult
 from src.qdrant_store import SearchResult
 
 

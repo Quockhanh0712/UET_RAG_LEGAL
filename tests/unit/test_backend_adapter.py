@@ -1,7 +1,7 @@
 import pytest
 
 from src.adapters.backend_adapter import build_chat_payload, build_search_payload
-from tests.unit.legal_contract_fixtures import make_legal_answer, make_legal_search_result
+from tests.unit.legal_contract_fixtures import make_citation, make_legal_answer, make_legal_search_result
 
 
 def test_build_search_payload_exposes_trace_contract():
@@ -105,3 +105,33 @@ def test_build_chat_payload_exposes_trace_contract():
     assert payload["fallback_error"] == "llm_timeout"
     assert payload["collection"] == "legal_rag_vn"
     assert payload["sources"][0]["label"] == "Luat VB1 | Dieu 1 | Khoan 1 | Diem a"
+
+
+def test_build_chat_payload_preserves_user_uploaded_legal_metadata():
+    result = make_legal_answer(
+        citations=[
+            make_citation(
+                source_type="user",
+                doc_type="USER_UPLOAD",
+                filename="35_2024_QH15_588811.pdf",
+                page_number=2,
+                ten_van_ban="35_2024_QH15_588811.pdf",
+            )
+        ]
+    )
+
+    payload = build_chat_payload(
+        result,
+        answer="Tra loi mau",
+        collection="user_docs_private__truro7_vn_law_embedding__d768",
+        model_profile_id="default",
+        query_mode="rewrite_combine",
+    )
+
+    source = payload["sources"][0]
+    assert source["type"] == "user"
+    assert source["label"] == "Luat VB1 | Dieu 1 | Khoan 1 | Diem a"
+    assert "35_2024_QH15_588811.pdf" in source["detail"]
+    assert "Trang 2" in source["detail"]
+    assert source["citation_full"] == "Luat VB1 | Dieu 1 | Khoan 1 | Diem a"
+    assert source["legal_path"] == "Dieu 1, Khoan 1, Diem a"

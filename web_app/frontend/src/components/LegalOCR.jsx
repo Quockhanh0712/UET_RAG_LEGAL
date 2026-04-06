@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+﻿import React, { useState, useRef, useCallback } from 'react';
 import { Upload, FileUp, Zap, ScanEye, Code, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
 import JSONPretty from 'react-json-pretty';
@@ -110,8 +110,8 @@ function LegalOCR() {
                         <ScanEye className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-800 dark:text-white">Legal Entity Extraction</h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Trích xuất thực thể từ tài liệu pháp lý sang JSON</p>
+                        <h1 className="text-xl font-bold text-slate-800 dark:text-white">OCR Debug Preview</h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">TrÃ­ch xuáº¥t thá»±c thá»ƒ tá»« tÃ i liá»‡u phÃ¡p lÃ½ sang JSON</p>
                     </div>
                 </div>
 
@@ -122,7 +122,7 @@ function LegalOCR() {
                         className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg font-medium transition-colors"
                     >
                         {isExtracting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Code className="w-5 h-5" />}
-                        {isExtracting ? 'Đang trích xuất...' : 'Chạy Trích Xuất'}
+                        {isExtracting ? 'Äang trÃ­ch xuáº¥t...' : 'Cháº¡y TrÃ­ch Xuáº¥t'}
                     </button>
                 )}
             </div>
@@ -145,15 +145,15 @@ function LegalOCR() {
                                 className="hidden"
                             />
                             <FileUp className="w-16 h-16 text-slate-400 mb-4" />
-                            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">Kéo thả tài liệu vào đây</h3>
-                            <p className="text-slate-500 dark:text-slate-400 mt-2">Hỗ trợ PDF, PNG, JPG (Windows Optimized)</p>
+                            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200">KÃ©o tháº£ tÃ i liá»‡u vÃ o Ä‘Ã¢y</h3>
+                            <p className="text-slate-500 dark:text-slate-400 mt-2">Há»— trá»£ PDF, PNG, JPG (Windows Optimized)</p>
                         </div>
                     ) : (
                         <div className="flex-1 flex flex-col">
                             <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-semibold text-slate-700 dark:text-slate-200">Bản xem trước ({file.name})</h3>
+                                <h3 className="font-semibold text-slate-700 dark:text-slate-200">Báº£n xem trÆ°á»›c ({file.name})</h3>
                                 <button onClick={() => { setFile(null); setPreviewData(null); setResults(null); }} className="text-sm text-red-500 hover:text-red-600">
-                                    Tải file khác
+                                    Táº£i file khÃ¡c
                                 </button>
                             </div>
 
@@ -174,7 +174,7 @@ function LegalOCR() {
                 <div className="w-1/2 p-6 flex flex-col overflow-y-auto bg-white dark:bg-slate-800">
                     {/* Settings */}
                     <div className="mb-6">
-                        <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">Chế độ xử lý</h3>
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">Cháº¿ Ä‘á»™ xá»­ lÃ½</h3>
                         <div className="flex gap-4 mb-4">
                             <button
                                 onClick={() => setMode('Fast')}
@@ -201,11 +201,11 @@ function LegalOCR() {
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
                             {mode === 'Fast'
-                                ? "Dùng cho PDF số (có sẵn text layer). Nhanh, nhẹ, tiết kiệm tài nguyên."
-                                : "Dùng cho PDF scan, ảnh chụp, có dấu mộc. Gửi trực tiếp ảnh cho Vision Model xử lý."}
+                                ? "DÃ¹ng cho PDF sá»‘ (cÃ³ sáºµn text layer). Nhanh, nháº¹, tiáº¿t kiá»‡m tÃ i nguyÃªn."
+                                : "DÃ¹ng cho PDF scan, áº£nh chá»¥p, cÃ³ dáº¥u má»™c. Gá»­i trá»±c tiáº¿p áº£nh cho Vision Model xá»­ lÃ½."}
                         </p>
 
-                        <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">Cấu trúc JSON mong muốn</h3>
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-2">Cáº¥u trÃºc JSON mong muá»‘n</h3>
                         <textarea
                             value={promptJson}
                             onChange={(e) => setPromptJson(e.target.value)}
@@ -216,7 +216,7 @@ function LegalOCR() {
 
                     {/* Results */}
                     <div className="flex-1 flex flex-col">
-                        <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">Kết quả JSON</h3>
+                        <h3 className="font-semibold text-slate-700 dark:text-slate-200 mb-3">Káº¿t quáº£ JSON</h3>
 
                         {error && (
                             <div className="p-4 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg text-sm mb-4">
@@ -231,7 +231,7 @@ function LegalOCR() {
                                 </div>
                             ) : (
                                 <div className="h-full flex items-center justify-center text-slate-500 italic pb-8">
-                                    {isExtracting ? "Đang xử lý trên RTX 4090..." : "Chưa có dữ liệu"}
+                                    {isExtracting ? "Äang xá»­ lÃ½ trÃªn RTX 4090..." : "ChÆ°a cÃ³ dá»¯ liá»‡u"}
                                 </div>
                             )}
                         </div>
@@ -243,3 +243,4 @@ function LegalOCR() {
 }
 
 export default LegalOCR;
+

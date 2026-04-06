@@ -89,33 +89,47 @@ def format_context(results: List) -> Tuple[str, List[Dict]]:
                 header_parts.append(f"Diem {meta['diem_so']})")
 
         context_parts.append(f"{' | '.join(header_parts)}\n{result.content}")
-        citations.append(
-            {
-                "content": result.content,
-                "doc_id": meta.get("doc_id", meta.get("van_ban_id", "")),
-                "van_ban_id": meta.get("van_ban_id", ""),
-                "so_ky_hieu": meta.get("so_ky_hieu", ""),
-                "ten_van_ban": meta.get("ten_van_ban", ""),
-                "loai_van_ban": meta.get("loai_van_ban", ""),
-                "co_quan": meta.get("co_quan", meta.get("co_quan_ban_hanh", "")),
-                "law_family": meta.get("law_family", ""),
-                "chuong": meta.get("chuong", ""),
-                "ten_chuong": meta.get("ten_chuong", ""),
-                "dieu_so": meta.get("dieu_so", ""),
-                "tieu_de_dieu": meta.get("tieu_de_dieu", ""),
-                "khoan_so": meta.get("khoan_so", ""),
-                "diem_so": meta.get("diem_so", ""),
-                "chunk_type": meta.get("chunk_type", ""),
-                "segment_level": meta.get("segment_level", ""),
-                "legal_path": meta.get("legal_path", meta.get("path", "")),
-                "is_active": meta.get("is_active", True),
-                "citation_base": meta.get("citation_base", ""),
-                "citation_full": meta.get("citation_full", ""),
-                "token_len_est": meta.get("token_len_est", 0),
-                "encoder_profile": meta.get("encoder_profile", ""),
-                "score": result.score,
-            }
-        )
+        citation = {
+            "content": result.content,
+            "doc_id": meta.get("doc_id", meta.get("van_ban_id", "")),
+            "van_ban_id": meta.get("van_ban_id", ""),
+            "so_ky_hieu": meta.get("so_ky_hieu", ""),
+            "ten_van_ban": meta.get("ten_van_ban", ""),
+            "loai_van_ban": meta.get("loai_van_ban", ""),
+            "co_quan": meta.get("co_quan", meta.get("co_quan_ban_hanh", "")),
+            "law_family": meta.get("law_family", ""),
+            "chuong": meta.get("chuong", ""),
+            "ten_chuong": meta.get("ten_chuong", ""),
+            "dieu_so": meta.get("dieu_so", ""),
+            "tieu_de_dieu": meta.get("tieu_de_dieu", ""),
+            "khoan_so": meta.get("khoan_so", ""),
+            "diem_so": meta.get("diem_so", ""),
+            "chunk_type": meta.get("chunk_type", ""),
+            "segment_level": meta.get("segment_level", ""),
+            "legal_path": meta.get("legal_path", meta.get("path", "")),
+            "is_active": meta.get("is_active", True),
+            "citation_base": meta.get("citation_base", ""),
+            "citation_full": meta.get("citation_full", ""),
+            "token_len_est": meta.get("token_len_est", 0),
+            "encoder_profile": meta.get("encoder_profile", ""),
+            "score": result.score,
+        }
+        passthrough_keys = {
+            "source_type",
+            "filename",
+            "page_number",
+            "user_id",
+            "session_id",
+            "doc_type",
+            "doc_type_rank",
+            "status_label",
+            "provision_id",
+            "chunk_id",
+            "path",
+        }
+        for key, value in meta.items():
+            if key.startswith("overflow_") or key in passthrough_keys:
+                citation[key] = value
+        citations.append(citation)
 
     return "\n\n---\n\n".join(context_parts), citations
-

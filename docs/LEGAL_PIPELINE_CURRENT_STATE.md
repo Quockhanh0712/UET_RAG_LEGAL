@@ -91,8 +91,11 @@ Ket luan thang:
 - entrypoint:
   - `web_app/backend/main.py`
 - backend van giu cac path cu cho user docs/OCR/dashboard
-- legal path moi duoc bat boi flag:
+- shared runtime moi duoc bat boi flag:
   - `BACKEND_USE_SHARED_LEGAL_PIPELINE=true`
+- khi bat flag, `search_mode=legal|user|hybrid` deu di qua shared orchestration
+- retrieval cho `search_mode=user|hybrid` mac dinh la user-wide theo `user_id`
+- `session_id` van duoc giu cho upload lineage/history/status/artifact/debug, nhung khong con la default retrieval filter
 
 ### Shared runtime/pipeline
 
@@ -647,7 +650,7 @@ Dung de check:
 
 - UI model selector khong doi embedding retrieval
 - `Rewrite + Combine` khong phai rewrite-only
-- backend van con legacy path, nhung legal path moi chi duoc dung khi bat feature flag
+- backend van con path cu cho OCR/dashboard va cac route chua refactor, nhung chat/search shared runtime da phuc vu ca `legal|user|hybrid` khi bat feature flag
 
 ## 13. Du lieu vao/ra tong hop
 
@@ -718,4 +721,3 @@ Trang thai hien tai cua he thong la:
   - tuning retrieval
   - kiem soat ranking drift
   - benchmark chat luong tren bo query phap ly co nhan
-

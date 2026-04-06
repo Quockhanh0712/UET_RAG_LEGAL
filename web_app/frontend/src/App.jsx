@@ -43,6 +43,7 @@ function App() {
   // Documents state
   const [documents, setDocuments] = useState([]);
   const [uploadProgress, setUploadProgress] = useState(null);
+  const [uploadMode, setUploadMode] = useState(() => localStorage.getItem('uploadMode') || 'text');
 
   // Chat history state
   const [sessions, setSessions] = useState([]);
@@ -80,6 +81,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('topK', String(topK));
   }, [topK]);
+
+  useEffect(() => {
+    localStorage.setItem('uploadMode', uploadMode);
+  }, [uploadMode]);
 
   // Apply dark mode
   useEffect(() => {
@@ -158,6 +163,34 @@ function App() {
       console.error('Failed to fetch documents:', error);
     }
   };
+
+  const pollDocumentStatus = useCallback(async (docId) => {
+    const terminalStatuses = new Set(['ready', 'needs_ocr', 'failed']);
+    for (let attempt = 0; attempt < 30; attempt += 1) {
+      try {
+        const res = await fetch(`${API_BASE}/documents/${docId}/status?user_id=${userId}`);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.detail || 'Status poll failed');
+        }
+        setUploadProgress(prev => (
+          prev && prev.docId === docId
+            ? { ...prev, status: data.status, chunkCount: data.chunk_count || 0 }
+            : prev
+        ));
+        await fetchDocuments();
+        if (terminalStatuses.has(data.status)) {
+          return data;
+        }
+      } catch (error) {
+        console.error('Status poll error:', error);
+        break;
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    return null;
+  }, [userId]);
 
   const fetchSessions = async () => {
     try {
@@ -443,13 +476,15 @@ function App() {
     }
   };
 
-  const uploadFile = async (file) => {
+  const uploadFile = async (file, modeOverride = uploadMode) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('user_id', userId);
     formData.append('session_id', sessionId);
+    formData.append('content_mode', modeOverride);
+    formData.append('ocr_provider', 'default');
 
-    setUploadProgress({ filename: file.name, progress: 0 });
+    setUploadProgress({ filename: file.name, status: 'queued', mode: modeOverride });
 
     try {
       const res = await fetch(`${API_BASE}/upload`, {
@@ -460,13 +495,35 @@ function App() {
       const data = await res.json();
 
       if (data.success) {
-        setToast({
-          type: 'success',
-          message: `✅ Đã tải lên "${data.filename}" (${data.chunk_count} đoạn)`,
+        setUploadProgress({
+          filename: data.filename,
+          docId: data.doc_id,
+          status: data.status || 'queued',
+          mode: modeOverride,
+          chunkCount: data.chunk_count || 0,
         });
-        fetchDocuments();
+        await fetchDocuments();
+        const finalStatus = await pollDocumentStatus(data.doc_id);
+        if (finalStatus?.status === 'ready') {
+          setToast({
+            type: 'success',
+            message: `✅ "${data.filename}" đã sẵn sàng (${finalStatus.chunk_count || 0} đoạn)`,
+          });
+        } else if (finalStatus?.status === 'needs_ocr') {
+          setToast({
+            type: 'info',
+            message: `ℹ️ "${data.filename}" cần OCR. Hãy tải lại với chế độ OCR.`,
+          });
+        } else if (finalStatus?.status === 'failed') {
+          throw new Error(finalStatus.error_message || 'Ingest failed');
+        } else {
+          setToast({
+            type: 'success',
+            message: `✅ "${data.filename}" đã được đưa vào hàng đợi xử lý`,
+          });
+        }
       } else {
-        throw new Error(data.message || 'Upload failed');
+        throw new Error(data.message || data.detail || 'Upload failed');
       }
     } catch (error) {
       console.error('Upload error:', error);
@@ -641,6 +698,8 @@ ${new Date().toLocaleString('vi-VN')}
         onDeleteDocument={deleteDocument}
         onUploadFile={uploadFile}
         uploadProgress={uploadProgress}
+        uploadMode={uploadMode}
+        setUploadMode={setUploadMode}
         systemStatus={systemStatus}
         searchMode={searchMode}
         setSearchMode={setSearchMode}

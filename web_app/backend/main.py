@@ -75,6 +75,7 @@ except ImportError:
 import uvicorn
 
 # Local imports
+from document_ingestion_service import get_document_ingestion_service
 from user_store import get_user_store, UserDocumentStore
 from smart_chunker import SmartRecursiveChunker
 from vietnamese_reranker import get_reranker, get_answer_scorer
@@ -89,6 +90,7 @@ from database import (
     get_metrics_stats
 )
 from src.adapters.backend_adapter import build_chat_payload, build_search_payload
+from src.config.embedding_contract import DEFAULT_LEGAL_EMBEDDING_MODEL
 from src.config.runtime_settings import load_runtime_settings
 from src.factories.legal_pipeline_factory import get_legal_pipeline
 from src.runtime.qdrant_contract import validate_qdrant_contract
@@ -139,10 +141,10 @@ class Config:
     USER_COLLECTION = "user_docs_private"   # User uploads
     
     # Embedding
-    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "huyydangg/DEk21_hcmute_embedding")
+    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", DEFAULT_LEGAL_EMBEDDING_MODEL)
     
     # LLM
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
     BACKEND_USE_SHARED_LEGAL_PIPELINE = os.getenv("BACKEND_USE_SHARED_LEGAL_PIPELINE", "false").lower() == "true"
     BACKEND_RUNTIME_PROFILE = os.getenv("BACKEND_RUNTIME_PROFILE", "chainlit_demo")
@@ -188,7 +190,8 @@ _shared_legal_chat_service = None
 
 
 def _shared_legal_enabled(search_mode: str) -> bool:
-    return bool(Config.BACKEND_USE_SHARED_LEGAL_PIPELINE and str(search_mode or "").strip().lower() == "legal")
+    mode = str(search_mode or "").strip().lower()
+    return bool(Config.BACKEND_USE_SHARED_LEGAL_PIPELINE and mode in {"legal", "user", "hybrid"})
 
 
 def _normalize_query_mode(query_mode: str | None) -> str:
@@ -338,6 +341,7 @@ def get_shared_legal_search_service() -> SharedLegalSearchService:
             build_search_payload=build_search_payload,
             get_model_profile=get_model_profile,
             get_setting=_get_setting,
+            get_user_store=get_user_store,
         )
     return _shared_legal_search_service
 
@@ -356,6 +360,7 @@ def get_shared_legal_chat_service() -> SharedLegalChatService:
             get_model_profile=get_model_profile,
             get_setting=_get_setting,
             save_chat_history=_save_shared_chat_history,
+            get_user_store=get_user_store,
         )
     return _shared_legal_chat_service
 
@@ -783,6 +788,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting Legal RAG API...")
     
     # Pre-load resources
+    get_document_ingestion_service().initialize()
     get_qdrant_client()
     get_embedding_model()
     get_bm25_encoder()
@@ -837,7 +843,7 @@ async def get_status():
                 "user_documents": user_count,
                 "embedding_model": settings.embedding_model,
                 "llm_model": Config.OLLAMA_MODEL,
-                "available_model_profiles": [profile.to_public_dict() for profile in list_model_profiles()],
+                "available_model_profiles": [profile.to_public_dict() for profile in list_model_profiles(enabled_only=True)],
                 "collection_resolved": contract.collection_name,
                 "collection_status": contract.collection_status,
             }
@@ -859,7 +865,7 @@ async def get_status():
             "user_documents": user_count,
             "embedding_model": Config.EMBEDDING_MODEL,
             "llm_model": Config.OLLAMA_MODEL,
-            "available_model_profiles": [profile.to_public_dict() for profile in list_model_profiles()],
+            "available_model_profiles": [profile.to_public_dict() for profile in list_model_profiles(enabled_only=True)],
             "collection_resolved": Config.LEGAL_COLLECTION,
         }
     except Exception as e:
@@ -868,7 +874,7 @@ async def get_status():
 
 async def get_model_profiles():
     return {
-        "profiles": [profile.to_public_dict() for profile in list_model_profiles()],
+        "profiles": [profile.to_public_dict() for profile in list_model_profiles(enabled_only=True)],
         "default_profile_id": get_default_model_profile_id(),
     }
 
@@ -901,7 +907,7 @@ async def chat(request: ChatRequest):
             # Build helpful error message based on search mode
             try:
                 user_store = get_user_store()
-                user_docs = user_store.get_user_documents(request.user_id, request.session_id)
+                user_docs = user_store.get_user_documents(request.user_id)
                 doc_count = len(user_docs)
             except:
                 doc_count = 0
@@ -1128,75 +1134,18 @@ async def search(request: SearchRequest):
 async def upload_file(
     file: UploadFile = File(...),
     user_id: str = Form(default="default_user"),
-    session_id: str = Form(default=None)
+    session_id: str = Form(default=None),
+    content_mode: str = Form(default="text"),
+    ocr_provider: str = Form(default="default"),
 ):
-    """Upload user document"""
-    
-    if session_id is None:
-        session_id = str(uuid.uuid4())
-    
-    # Validate file type
-    allowed_types = ['.pdf', '.docx', '.doc', '.txt']
-    file_ext = Path(file.filename).suffix.lower()
-    
-    if file_ext not in allowed_types:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type. Allowed: {', '.join(allowed_types)}"
-        )
-    
-    # Save file temporarily
-    temp_path = Config.UPLOAD_DIR / f"{uuid.uuid4().hex}_{file.filename}"
-    
-    try:
-        logger.info(f"[UPLOAD] Receiving file: {file.filename} ({file_ext})")
-        
-        with open(temp_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
-        
-        logger.info(f"[UPLOAD] Saved to: {temp_path}, size: {temp_path.stat().st_size} bytes")
-        
-        # Process file
-        user_store = get_user_store()
-        success, doc_id, chunk_count = await user_store.upload_file(
-            file_path=str(temp_path),
-            user_id=user_id,
-            session_id=session_id,
-            filename=file.filename
-        )
-        
-        logger.info(f"[UPLOAD] Processing result: success={success}, chunks={chunk_count}")
-        
-        if success:
-            return UploadResponse(
-                success=True,
-                doc_id=doc_id,
-                filename=file.filename,
-                chunk_count=chunk_count,
-                message=f"Đã tải lên và xử lý {chunk_count} đoạn văn bản"
-            )
-        else:
-            logger.error(f"[UPLOAD] Processing failed for {file.filename}")
-            
-            # Check if it's a .doc file that couldn't be processed
-            if file_ext == '.doc':
-                raise HTTPException(
-                    status_code=400, 
-                    detail="Không thể xử lý file .doc (Word 97-2003 cũ). Vui lòng chuyển đổi sang .docx: Mở file trong Word → Save As → chọn .docx"
-                )
-            
-            raise HTTPException(status_code=500, detail=f"Không thể xử lý file {file.filename}")
-            
-    except Exception as e:
-        logger.error(f"[UPLOAD] Upload error for {file.filename}: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=str(e))
-    
-    finally:
-        # Cleanup temp file
-        if temp_path.exists():
-            temp_path.unlink()
+    service = get_document_ingestion_service()
+    return await service.submit_upload(
+        upload=file,
+        user_id=user_id,
+        session_id=session_id,
+        content_mode=content_mode,
+        ocr_provider=ocr_provider,
+    )
 
 
 async def get_documents(
@@ -1204,16 +1153,8 @@ async def get_documents(
     session_id: Optional[str] = None
 ):
     """Get user's uploaded documents"""
-    try:
-        user_store = get_user_store()
-        documents = user_store.get_user_documents(user_id, session_id)
-        
-        return {
-            "documents": [doc.to_dict() for doc in documents]
-        }
-    except Exception as e:
-        logger.error(f"Get documents error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    service = get_document_ingestion_service()
+    return service.list_documents(user_id=user_id, session_id=session_id)
 
 
 async def delete_document(
@@ -1221,18 +1162,8 @@ async def delete_document(
     user_id: str = "default_user"
 ):
     """Delete user document"""
-    try:
-        user_store = get_user_store()
-        success = user_store.delete_document(doc_id, user_id)
-        
-        if success:
-            return {"message": f"Document {doc_id} deleted"}
-        else:
-            raise HTTPException(status_code=404, detail="Document not found")
-            
-    except Exception as e:
-        logger.error(f"Delete document error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    service = get_document_ingestion_service()
+    return await service.delete_document(doc_id=doc_id, user_id=user_id)
 
 
 async def get_history(session_id: str):
@@ -1831,85 +1762,16 @@ async def export_all_metrics(
 # ============================================================================
 
 async def ocr_preview(file: UploadFile = File(...)):
-    try:
-        content = await file.read()
-        import fitz
-        import base64
-        
-        if file.filename.lower().endswith(".pdf"):
-            doc = fitz.open(stream=content, filetype="pdf")
-            if len(doc) > 0:
-                page = doc.load_page(0)
-                pix = page.get_pixmap()
-                img_bytes = pix.tobytes("png")
-                b64 = base64.b64encode(img_bytes).decode('utf-8')
-                doc.close()
-                return {"success": True, "image_b64": b64, "type": "pdf"}
-        else:
-            b64 = base64.b64encode(content).decode('utf-8')
-            return {"success": True, "image_b64": b64, "type": "image"}
-            
-        return {"success": False, "error": "Unsupported file format"}
-    except Exception as e:
-        logger.error(f"[OCR] Preview error: {e}")
-        return {"success": False, "error": str(e)}
+    service = get_document_ingestion_service()
+    return await service.preview_file(upload=file)
 
 async def ocr_extract(
     file: UploadFile = File(...),
     mode: str = Form("Fast"),
     prompt_json: str = Form("{}")
 ):
-    try:
-        content = await file.read()
-        import fitz
-        import base64
-        import json
-        llm = get_ollama_client()
-        results = []
-        
-        is_pdf = file.filename.lower().endswith((".pdf"))
-        
-        if "fast" in mode.lower() and is_pdf:
-            doc = fitz.open(stream=content, filetype="pdf")
-            for page in doc:
-                text = page.get_text()
-                full_prompt = f"Bạn phải tuân thủ chặt chẽ nội dung được cung cấp. Không được đoán hoặc thêm thông tin ngoài. Chỉ trích xuất dữ liệu từ văn bản sau:\n\nCấu trúc JSON: {prompt_json}\n\nNội dung tài liệu: {text}"
-                res_str = llm.chat_generate(model="qwen3:8b", prompt=full_prompt)
-                try:
-                    res_json = json.loads(res_str)
-                except:
-                    res_json = {"raw": res_str}
-                results.append({f"Trang {page.number + 1}": res_json})
-            doc.close()
-            
-        else:
-            # Accurate Mode
-            imgs_b64 = []
-            if is_pdf:
-                doc = fitz.open(stream=content, filetype="pdf")
-                for page_num in range(len(doc)):
-                    page = doc.load_page(page_num)
-                    pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
-                    img_data = pix.tobytes("png")
-                    imgs_b64.append(base64.b64encode(img_data).decode('utf-8'))
-                doc.close()
-            else:
-                imgs_b64 = [base64.b64encode(content).decode('utf-8')]
-                
-            for i, b64 in enumerate(imgs_b64):
-                full_prompt = f"Bạn phải tuân thủ chặt chẽ nội dung trong ảnh. Không được đoán hoặc thêm thông tin ngoài. Chỉ trích xuất dữ liệu từ ảnh theo cấu trúc này:\n\n{prompt_json}"
-                res_str = llm.chat_generate(model="qwen3-vl:8b", prompt=full_prompt, images=[b64])
-                try:
-                    res_json = json.loads(res_str)
-                except:
-                    res_json = {"raw": res_str}
-                results.append({f"Trang {i+1}": res_json})
-                
-        return {"success": True, "results": results}
-        
-    except Exception as e:
-        logger.error(f"[OCR] Extract error: {e}")
-        return {"success": False, "error": str(e)}
+    service = get_document_ingestion_service()
+    return await service.extract_debug(upload=file, mode=mode, prompt_json=prompt_json)
 
 
 try:

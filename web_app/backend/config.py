@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 from typing import Optional
 
+from src.config.embedding_contract import DEFAULT_LEGAL_EMBEDDING_MODEL
+
 
 class Settings:
     """Application settings with environment variable support."""
@@ -20,14 +22,14 @@ class Settings:
     QDRANT_USER_COLLECTION: str = "user_docs_private"
     
     # Embedding Settings
-    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", "huyydangg/DEk21_hcmute_embedding")
+    EMBEDDING_MODEL: str = os.getenv("EMBEDDING_MODEL", DEFAULT_LEGAL_EMBEDDING_MODEL)
     EMBEDDING_DEVICE: str = os.getenv("EMBEDDING_DEVICE", "cuda")
     EMBEDDING_BATCH_SIZE: int = int(os.getenv("EMBEDDING_BATCH_SIZE", "32"))
     USE_FP16: bool = os.getenv("USE_FP16", "true").lower() == "true"
     
     # LLM Settings
     LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")
-    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
     OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
     
     # Reranker Settings

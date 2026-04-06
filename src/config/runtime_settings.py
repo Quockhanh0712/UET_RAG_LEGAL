@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict
 
+from src.config.embedding_contract import DEFAULT_LEGAL_EMBEDDING_MODEL
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
@@ -41,7 +43,7 @@ CHAINLIT_LOCKED_DEFAULTS: Dict[str, str] = {
     "QDRANT_USE_CLOUD": "true",
     "QDRANT_COLLECTION": "legal_documents",
     "QDRANT_COLLECTION_BY_MODEL": "true",
-    "EMBEDDING_MODEL": "truro7/vn-law-embedding",
+    "EMBEDDING_MODEL": DEFAULT_LEGAL_EMBEDDING_MODEL,
     "EMBEDDING_NORMALIZE": "true",
     "EMBEDDING_DEVICE": "cuda",
     "USE_FP16": "true",
@@ -56,7 +58,7 @@ CHAINLIT_LOCKED_DEFAULTS: Dict[str, str] = {
 
 
 CHAINLIT_ENV_OVERRIDES: Dict[str, str] = {
-    "OLLAMA_MODEL": "qwen3:8b",
+    "OLLAMA_MODEL": "qwen3.5:9b",
     "OLLAMA_URL": "http://222.255.250.24:11434",
     "QUERY_REWRITER_ENABLED": "false",
     "QUERY_REWRITER_URL": "http://222.255.250.24:8080/v1/completions",
@@ -201,4 +203,3 @@ def load_runtime_settings(profile_name: str = "chainlit_demo") -> RuntimeSetting
         qdrant_contract_strict=_env_bool("QDRANT_CONTRACT_STRICT", False),
     )
     return settings
-

@@ -2,17 +2,30 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
-from src.legal_rag_pipeline import LegalAnswer, LegalSearchResult
+from src.legal_rag.contracts.results import LegalAnswer, LegalSearchResult
 
 
 def format_legal_source(citation: Dict[str, Any]) -> Dict[str, Any]:
     doc_id = str(citation.get('doc_id') or citation.get('van_ban_id') or '')
     legal_path = str(citation.get('legal_path') or citation.get('path') or '')
     citation_full = str(citation.get('citation_full') or '').strip()
-    label = citation_full or str(citation.get('ten_van_ban') or doc_id or 'Van ban phap ly')
-    detail = legal_path
+    source_type = str(citation.get('source_type') or 'legal').strip().lower()
+    filename = str(citation.get('filename') or citation.get('ten_van_ban') or '').strip()
+    page_number = citation.get('page_number')
+    page_detail = f"Trang {page_number}" if page_number not in (None, "") else ""
+
+    if source_type == 'user_upload':
+        source_type = 'user'
+
+    if source_type == 'user':
+        label = citation_full or filename or str(citation.get('ten_van_ban') or doc_id or 'Tai lieu nguoi dung')
+        detail_parts = [item for item in (filename, legal_path, page_detail) if str(item or '').strip()]
+        detail = " | ".join(detail_parts)
+    else:
+        label = citation_full or str(citation.get('ten_van_ban') or doc_id or 'Van ban phap ly')
+        detail = legal_path
     return {
-        'type': 'legal',
+        'type': source_type if source_type in {'legal', 'user'} else 'legal',
         'label': label,
         'detail': detail,
         'score': float(citation.get('score', 0.0) or 0.0),
@@ -24,6 +37,9 @@ def format_legal_source(citation: Dict[str, Any]) -> Dict[str, Any]:
         'chunk_type': str(citation.get('chunk_type', '') or ''),
         'is_active': bool(citation.get('is_active', True)),
         'ten_van_ban': str(citation.get('ten_van_ban', '') or ''),
+        'filename': filename,
+        'page_number': page_number,
+        'source_type': source_type,
     }
 
 

@@ -23,15 +23,17 @@ Muc tieu hien tai:
 
 ### Backend
 - FastAPI app: `web_app/backend/main.py`
-- legal shared pipeline chi duoc dung khi:
+- shared runtime duoc dung khi:
   - `BACKEND_USE_SHARED_LEGAL_PIPELINE=true`
-  - request `search_mode=legal`
+  - request `search_mode` nam trong `legal|user|hybrid`
 
 ### Shared legal runtime
 - runtime settings: `src/config/runtime_settings.py`
 - pipeline factory: `src/factories/legal_pipeline_factory.py`
 - main pipeline: `src/legal_rag_pipeline.py`
 - backend adapter: `src/adapters/backend_adapter.py`
+- user-doc retrieval cho `user|hybrid` di qua active versioned collection cua `UserDocumentIndexer`
+- user-doc retrieval mac dinh la user-wide theo `user_id`, khong khoa theo `session_id`
 
 ### Retrieval stack
 - embeddings: `truro7/vn-law-embedding`

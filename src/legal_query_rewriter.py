@@ -5,14 +5,25 @@ from __future__ import annotations
 import json
 import re
 import time
-from dataclasses import asdict, dataclass, field
 from typing import Dict, List, Sequence, Tuple
 
 from src.legal_data_processing import strip_accents
-from src.services.remote_llm_client import RemoteLLMClient
+from src.legal_rag.rewrite.gateway import call_rewrite_gateway
+from src.legal_rag.rewrite.heuristics import extract_named_law_hints
+from src.legal_rag.rewrite.models import (
+    DEFAULT_QUESTION_FOCUS,
+    ClauseUnit,
+    KeyCondition,
+    QueryRewriteResult,
+    QuestionUnit,
+    StructuredRewriteExtraction,
+    SurfaceActor,
+)
+from src.legal_rag.rewrite.parser import merge_question_units
+from src.legal_rag.rewrite.quality_gate import evaluate_quality_gate
+from src.legal_rag.rewrite.synthesis import deduplicate_query_plan
 
 ALLOWED_ISSUE_TAGS = {"hinh_su", "dan_su", "hanh_chinh", "boi_thuong"}
-DEFAULT_QUESTION_FOCUS = "chu_the_chiu_trach_nhiem"
 ALLOWED_ACTOR_TYPES = {
     "ca_nhan",
     "to_chuc",
@@ -151,131 +162,6 @@ LAW_HINT_PATTERNS: Tuple[str, ...] = (
     r"\b(Quyet dinh\s+[A-ZA-Za-z0-9/\- ]{2,80})",
 )
 
-
-@dataclass
-class SurfaceActor:
-    name: str
-    actor_type: str = "khong_ro"
-    source_span: str = ""
-
-    def to_public_dict(self) -> Dict[str, str]:
-        return asdict(self)
-
-
-@dataclass
-class KeyCondition:
-    kind: str
-    value: str
-    source_span: str = ""
-
-    def to_public_dict(self) -> Dict[str, str]:
-        return asdict(self)
-
-
-@dataclass
-class ClauseUnit:
-    clause_label: str
-    actor_refs: List[str] = field(default_factory=list)
-    act_span: str = ""
-    condition_refs: List[str] = field(default_factory=list)
-    intent: str = "xac_dinh_chu_the"
-
-    def to_public_dict(self) -> Dict[str, object]:
-        return asdict(self)
-
-
-@dataclass
-class QuestionUnit:
-    question_label: str
-    actor_refs: List[str] = field(default_factory=list)
-    act_span: str = ""
-    condition_refs: List[str] = field(default_factory=list)
-    legal_axis: str = ""
-    user_asked_text: str = ""
-    intent: str = "xac_dinh_chu_the"
-
-    def to_public_dict(self) -> Dict[str, object]:
-        return asdict(self)
-
-
-@dataclass
-class StructuredRewriteExtraction:
-    needs_decomposition: bool = False
-    main_act: str = ""
-    surface_actors: List[SurfaceActor] = field(default_factory=list)
-    conditions: List[KeyCondition] = field(default_factory=list)
-    explicit_legal_axes: List[str] = field(default_factory=list)
-    question_focus: str = DEFAULT_QUESTION_FOCUS
-    clause_units: List[ClauseUnit] = field(default_factory=list)
-    named_law_hints: List[str] = field(default_factory=list)
-    question_units: List[QuestionUnit] = field(default_factory=list)
-    main_act_candidate_reasons: List[str] = field(default_factory=list)
-
-
-@dataclass
-class QueryRewriteResult:
-    original_query: str
-    queries: List[str]
-    status: str
-    raw_response: str = ""
-    missing_numbers: List[str] = field(default_factory=list)
-    fallback_reason: str = ""
-    latency_ms: float = 0.0
-    rewrite_strategy: str = "structured_synthesis"
-    quality_passed: bool = False
-    retrieval_query_set: List[str] = field(default_factory=list)
-    actor_mentions: List[str] = field(default_factory=list)
-    issue_tags: List[str] = field(default_factory=list)
-    question_focus: str = DEFAULT_QUESTION_FOCUS
-    needs_decomposition: bool = False
-    rejection_reasons: List[str] = field(default_factory=list)
-    main_act: str = ""
-    surface_actors: List[Dict[str, str]] = field(default_factory=list)
-    conditions: List[Dict[str, str]] = field(default_factory=list)
-    clause_units: List[Dict[str, object]] = field(default_factory=list)
-    named_law_hints: List[str] = field(default_factory=list)
-    question_units: List[Dict[str, object]] = field(default_factory=list)
-    retrieval_query_plan: List[Dict[str, object]] = field(default_factory=list)
-    main_act_candidate_reasons: List[str] = field(default_factory=list)
-    decomposition_policy: str = "objective_question_unit"
-
-    @property
-    def rewrite_used(self) -> bool:
-        effective_queries = self.retrieval_query_set or self.queries
-        return self.status == "ok" and any(q != self.original_query for q in effective_queries)
-
-    @property
-    def query_facets(self) -> Dict[str, object]:
-        return {
-            "actors": list(self.actor_mentions),
-            "issues": list(self.issue_tags),
-            "focus": self.question_focus,
-            "main_act": self.main_act,
-            "conditions": [item.get("value", "") for item in self.conditions if str(item.get("value", "")).strip()],
-        }
-
-    @property
-    def debug_payload(self) -> Dict[str, object]:
-        return {
-            "needs_decomposition": bool(self.needs_decomposition),
-            "main_act": self.main_act,
-            "main_act_candidate_reasons": list(self.main_act_candidate_reasons),
-            "actor_mentions": list(self.actor_mentions),
-            "surface_actors": list(self.surface_actors),
-            "conditions": list(self.conditions),
-            "issue_tags": list(self.issue_tags),
-            "explicit_legal_axes": list(self.issue_tags),
-            "question_focus": self.question_focus,
-            "clause_units": list(self.clause_units),
-            "named_law_hints": list(self.named_law_hints),
-            "question_units": list(self.question_units),
-            "retrieval_query_plan": list(self.retrieval_query_plan),
-            "decomposition_policy": self.decomposition_policy,
-            "rejection_reasons": list(self.rejection_reasons),
-            "quality_fail_reasons": list(self.rejection_reasons),
-        }
-
-
 class LegalQueryRewriter:
     EXTRACTION_SCHEMA: Dict[str, object] = {
         "type": "object",
@@ -371,8 +257,14 @@ __USER_QUERY__"""
         return template.replace("__USER_QUERY__", user_query)
 
     def _call_llm(self, prompt: str) -> str:
-        client = RemoteLLMClient(provider_type=self.provider_type, base_url=self.base_url, model=self.model_name, timeout_s=self.timeout_s)
-        return client.generate_prompt(prompt=prompt, task="rewrite", format_schema=self.EXTRACTION_SCHEMA)
+        return call_rewrite_gateway(
+            prompt=prompt,
+            provider_type=self.provider_type,
+            base_url=self.base_url,
+            model_name=self.model_name,
+            timeout_s=self.timeout_s,
+            extraction_schema=self.EXTRACTION_SCHEMA,
+        )
 
     def _default_actor_type(self, name: str) -> str:
         normalized = self._normalize_key(name)
@@ -445,18 +337,13 @@ __USER_QUERY__"""
         return conditions[:8]
 
     def _heuristic_named_law_hints(self, query: str) -> List[str]:
-        hints: List[str] = []
-        seen = set()
-        for pattern in LAW_HINT_PATTERNS:
-            for match in re.finditer(pattern, query):
-                value = self._normalize_text(match.group(1)).rstrip(" ,.;:?!")
-                key = self._normalize_key(value)
-                if key and key not in seen:
-                    seen.add(key)
-                    hints.append(value)
-                    if len(hints) >= 4:
-                        return hints
-        return hints
+        return extract_named_law_hints(
+            query,
+            law_hint_patterns=LAW_HINT_PATTERNS,
+            normalize_text_fn=self._normalize_text,
+            normalize_key_fn=self._normalize_key,
+            limit=4,
+        )
 
     def _heuristic_explicit_axes(self, query: str) -> List[str]:
         normalized = self._normalize_key(query)
@@ -813,23 +700,12 @@ __USER_QUERY__"""
         return values[:limit]
 
     def _merge_question_units(self, preferred: Sequence[QuestionUnit], fallback: Sequence[QuestionUnit]) -> List[QuestionUnit]:
-        merged: List[QuestionUnit] = []
-        seen = set()
-        for group in (preferred, fallback):
-            for unit in group:
-                key = "|".join(
-                    [
-                        self._normalize_key(unit.intent),
-                        self._normalize_key(unit.legal_axis),
-                        self._normalize_key(unit.act_span),
-                        ",".join(sorted(self._normalize_key(actor) for actor in unit.actor_refs)),
-                        ",".join(sorted(self._normalize_key(condition) for condition in unit.condition_refs)),
-                    ]
-                )
-                if key and key not in seen:
-                    seen.add(key)
-                    merged.append(unit)
-        return merged[:3]
+        return merge_question_units(
+            preferred,
+            fallback,
+            normalize_key_fn=self._normalize_key,
+            max_units=3,
+        )
 
     def _augment_question_units(
         self,
@@ -1096,14 +972,11 @@ __USER_QUERY__"""
                 "uses_named_law_hint": bool(uses_named_law_hint),
                 "priority": index,
             })
-        seen = set()
-        deduped: List[Dict[str, object]] = []
-        for item in plan:
-            key = self._normalize_key(str(item.get("query", "")))
-            if key and key not in seen:
-                seen.add(key)
-                deduped.append(item)
-        return deduped[: self.max_subqueries]
+        return deduplicate_query_plan(
+            plan,
+            normalize_key_fn=self._normalize_key,
+            max_subqueries=self.max_subqueries,
+        )
 
     def _quality_gate(
         self,
@@ -1111,61 +984,15 @@ __USER_QUERY__"""
         query_plan: Sequence[Dict[str, object]],
         original_query: str,
     ) -> List[str]:
-        reasons: List[str] = []
-        if not extraction.main_act:
-            if extraction.surface_actors:
-                reasons.append("missing_main_act_for_scenario")
-        elif self._is_generic_main_act(extraction.main_act):
-            reasons.append("generic_main_act")
-        if not query_plan:
-            reasons.append("empty_query_plan")
-            return reasons
-
-        original_key = self._normalize_key(original_query)
-        main_act_key = self._normalize_key(extraction.main_act)
-        actor_keys = [self._normalize_key(actor.name) for actor in extraction.surface_actors]
-        condition_values = [condition.value for condition in extraction.conditions if condition.kind in {"tuoi", "so_tien", "so_lan", "quan_he_lao_dong"}]
-        matched_units = set()
-
-        for item in query_plan:
-            query = self._normalize_text(item.get("query", ""))
-            query_key = self._normalize_key(query)
-            if not query_key:
-                reasons.append("blank_query")
-                continue
-            if main_act_key and main_act_key not in query_key:
-                reasons.append("query_missing_main_act")
-            if "hanh vi duoc neu" in query_key or "tinh huong duoc neu" in query_key:
-                reasons.append("generic_query_template")
-            if any(token in query_key for token in DRIFT_TOKENS):
-                reasons.append("topic_drift")
-            if len(query_key.split()) < 5:
-                reasons.append("query_too_short")
-            if actor_keys and all(token not in query_key for token in actor_keys if token):
-                reasons.append("query_missing_actor_anchor")
-            if extraction.named_law_hints:
-                hint_hits = sum(1 for hint in extraction.named_law_hints if self._normalize_key(hint) in query_key)
-                main_hits = 1 if main_act_key and main_act_key in query_key else 0
-                if hint_hits and not main_hits:
-                    reasons.append("named_law_override")
-            if any(token in query_key for token in ("co toi", "pham toi", "vo toi", "nan nhan", "duoc mien trach nhiem hinh su")):
-                if not any(token in query_key for token in ("dieu kien", "xem xet", "co duoc", "co phai")):
-                    reasons.append("premature_legal_conclusion")
-            if any(self._normalize_key(str(item.get("source_question_unit", ""))) == self._normalize_key(unit.question_label) for unit in extraction.question_units):
-                matched_units.add(self._normalize_key(str(item.get("source_question_unit", ""))))
-
-        for value in condition_values:
-            value_key = self._normalize_key(value)
-            if value_key and not any(value_key in self._normalize_key(str(item.get("query", ""))) for item in query_plan):
-                question_sensitive = any(value_key in self._normalize_key(unit.user_asked_text) or value_key in self._normalize_key(" ".join(unit.condition_refs)) for unit in extraction.question_units)
-                if question_sensitive:
-                    reasons.append("condition_not_preserved")
-                    break
-        if extraction.question_units and len(matched_units) < len(extraction.question_units[: self.max_subqueries]):
-            reasons.append("question_unit_coverage_failed")
-        if extraction.main_act and self._normalize_key(extraction.main_act) not in original_key:
-            reasons.append("main_act_not_grounded_in_original_query")
-        return sorted(set(reasons))
+        return evaluate_quality_gate(
+            extraction=extraction,
+            query_plan=query_plan,
+            original_query=original_query,
+            normalize_key_fn=self._normalize_key,
+            normalize_text_fn=self._normalize_text,
+            is_generic_main_act_fn=self._is_generic_main_act,
+            drift_tokens=DRIFT_TOKENS,
+        )
 
     def rewrite_query(self, user_query: str, force: bool = False) -> QueryRewriteResult:
         original_query = self._normalize_text(user_query)

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 LLM_PROVIDER = os.getenv("LLM_PROVIDER", "gemini")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen2.5:3b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 
 # HuggingFace Transformers Model (Vietnamese Legal LLM)

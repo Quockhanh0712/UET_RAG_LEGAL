@@ -1,0 +1,43 @@
+{
+  "name": "my-plugin",
+  "version": "0.1.0",
+  "description": "[TODO: brief plugin description]",
+  "author": {
+    "name": "[TODO: author name]",
+    "email": "[TODO: author email]",
+    "url": "[TODO: author url]"
+  },
+  "homepage": "[TODO: homepage url]",
+  "repository": "[TODO: repository url]",
+  "license": "MIT",
+  "keywords": [
+    "[TODO: keyword-1]",
+    "[TODO: keyword-2]"
+  ],
+  "skills": "./skills/",
+  "hooks": "./hooks.json",
+  "mcpServers": "./.mcp.json",
+  "apps": "./.app.json",
+  "interface": {
+    "displayName": "[TODO: plugin display name]",
+    "shortDescription": "[TODO: short description]",
+    "longDescription": "[TODO: long description]",
+    "developerName": "[TODO: developer name]",
+    "category": "Productivity",
+    "capabilities": [
+      "[TODO: capability]"
+    ],
+    "websiteURL": "[TODO: website url]",
+    "privacyPolicyURL": "[TODO: privacy policy url]",
+    "termsOfServiceURL": "[TODO: terms of service url]",
+    "defaultPrompt": [
+      "[TODO: starter prompt]"
+    ],
+    "brandColor": "#3B82F6",
+    "composerIcon": "./assets/icon.png",
+    "logo": "./assets/logo.png",
+    "screenshots": [
+      "./assets/screenshot1.png"
+    ]
+  }
+}

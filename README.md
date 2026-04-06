@@ -84,9 +84,12 @@ OLLAMA_QWEN3_ENABLED=false
 ```
 
 Notes:
-- `BACKEND_USE_SHARED_LEGAL_PIPELINE=true` is mandatory for the shared legal backend path.
-- The shared legal endpoints only activate when the request uses `search_mode=legal`.
-- If you send `search_mode=hybrid`, the backend falls back to the legacy route.
+- `BACKEND_USE_SHARED_LEGAL_PIPELINE=true` is mandatory for the shared backend path.
+- With the flag on, the shared runtime serves `search_mode=legal|user|hybrid`.
+- For `search_mode=user|hybrid`, user-document retrieval is user-wide by default:
+  - the filter defaults to `user_id`
+  - `session_id` is still stored for upload lineage, history, status, artifacts, and debug metadata
+  - `session_id` is no longer the default retrieval filter
 
 ## 8. Run backend
 
@@ -122,7 +125,7 @@ npm run dev
 Frontend URL:
 - `http://127.0.0.1:3000`
 
-## 10. Shared legal API usage
+## 10. Shared runtime API usage
 
 ### Search
 
@@ -138,6 +141,12 @@ POST /api/search
   "require_active_only": true
 }
 ```
+
+`search_mode` can be:
+
+- `legal`: shared legal corpus retrieval only
+- `user`: shared runtime over the active versioned user-doc collection
+- `hybrid`: shared merge of legal corpus + user-doc retrieval
 
 ### Chat
 
@@ -155,6 +164,8 @@ POST /api/chat
   "use_graph": false
 }
 ```
+
+For `user` and the user branch inside `hybrid`, uploaded documents are searched across the full user scope by default, not only the current chat session.
 
 ## 11. Query mode
 

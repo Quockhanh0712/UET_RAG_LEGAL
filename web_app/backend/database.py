@@ -23,7 +23,7 @@ from datetime import datetime
 from typing import Optional, List, Dict
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey, Index
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey, Index, inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship, Session
 from sqlalchemy.pool import StaticPool
@@ -234,10 +234,19 @@ class UploadedDocument(Base):
     file_type = Column(String, nullable=True)  # 'pdf', 'docx', 'txt'
     file_size = Column(Integer, nullable=True)  # bytes
     chunk_count = Column(Integer, nullable=True)
-    
+    job_id = Column(String, nullable=True, index=True)
+    ingest_mode = Column(String, nullable=True)
+    page_count = Column(Integer, nullable=True)
+    text_chars = Column(Integer, nullable=True)
+    parser_used = Column(String, nullable=True)
+    ocr_provider = Column(String, nullable=True)
+    error_message = Column(Text, nullable=True)
+
     upload_time = Column(DateTime, default=datetime.now)
-    status = Column(String, default='active')  # 'active' or 'deleted'
-    
+    indexed_at = Column(DateTime, nullable=True)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    status = Column(String, default='queued')  # queued, running, needs_ocr, ready, failed, deleted
+
     # Indexes
     __table_args__ = (
         Index('idx_user_status', 'user_id', 'status'),
@@ -253,8 +262,56 @@ class UploadedDocument(Base):
             "file_type": self.file_type,
             "file_size": self.file_size,
             "chunk_count": self.chunk_count,
+            "job_id": self.job_id,
+            "ingest_mode": self.ingest_mode,
+            "page_count": self.page_count,
+            "text_chars": self.text_chars,
+            "parser_used": self.parser_used,
+            "ocr_provider": self.ocr_provider,
+            "error_message": self.error_message,
             "upload_time": self.upload_time.isoformat() if self.upload_time else None,
+            "indexed_at": self.indexed_at.isoformat() if self.indexed_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "status": self.status
+        }
+
+
+class DocumentIngestJob(Base):
+    """Background ingestion job state for uploaded documents."""
+
+    __tablename__ = "document_ingest_jobs"
+
+    id = Column(String, primary_key=True)
+    doc_id = Column(String, ForeignKey("uploaded_documents.id"), nullable=False, index=True)
+    user_id = Column(String, nullable=False, index=True)
+    session_id = Column(String, nullable=True, index=True)
+    filename = Column(String, nullable=False)
+    content_mode = Column(String, nullable=False)
+    ocr_provider = Column(String, nullable=True)
+    parser_used = Column(String, nullable=True)
+    status = Column(String, nullable=False, default="queued")
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.now)
+    updated_at = Column(DateTime, default=datetime.now, onupdate=datetime.now)
+    started_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+
+    def to_dict(self) -> Dict:
+        return {
+            "job_id": self.id,
+            "doc_id": self.doc_id,
+            "user_id": self.user_id,
+            "session_id": self.session_id,
+            "filename": self.filename,
+            "content_mode": self.content_mode,
+            "ocr_provider": self.ocr_provider,
+            "parser_used": self.parser_used,
+            "status": self.status,
+            "error_message": self.error_message,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+            "started_at": self.started_at.isoformat() if self.started_at else None,
+            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
         }
 
 
@@ -291,15 +348,48 @@ def get_db():
 def init_db():
     """Initialize database (create all tables)"""
     print(f"📦 Initializing database at {DB_PATH}")
-    Base.metadata.create_all(bind=engine)
+    ensure_db_schema()
     print("✅ Database initialized successfully")
+
+
+def ensure_db_schema():
+    """Create tables and add backward-compatible columns for SQLite deployments."""
+    Base.metadata.create_all(bind=engine)
+
+    inspector = inspect(engine)
+    if not inspector.has_table("uploaded_documents"):
+        return
+
+    existing_columns = {column["name"] for column in inspector.get_columns("uploaded_documents")}
+    missing_column_ddls = {
+        "job_id": "ALTER TABLE uploaded_documents ADD COLUMN job_id VARCHAR",
+        "ingest_mode": "ALTER TABLE uploaded_documents ADD COLUMN ingest_mode VARCHAR",
+        "page_count": "ALTER TABLE uploaded_documents ADD COLUMN page_count INTEGER",
+        "text_chars": "ALTER TABLE uploaded_documents ADD COLUMN text_chars INTEGER",
+        "parser_used": "ALTER TABLE uploaded_documents ADD COLUMN parser_used VARCHAR",
+        "ocr_provider": "ALTER TABLE uploaded_documents ADD COLUMN ocr_provider VARCHAR",
+        "error_message": "ALTER TABLE uploaded_documents ADD COLUMN error_message TEXT",
+        "indexed_at": "ALTER TABLE uploaded_documents ADD COLUMN indexed_at DATETIME",
+        "updated_at": "ALTER TABLE uploaded_documents ADD COLUMN updated_at DATETIME",
+    }
+
+    with engine.begin() as conn:
+        for column_name, ddl in missing_column_ddls.items():
+            if column_name not in existing_columns:
+                conn.exec_driver_sql(ddl)
+
+        # Ensure updated_at is initialized for older rows.
+        conn.exec_driver_sql(
+            "UPDATE uploaded_documents SET updated_at = COALESCE(updated_at, upload_time) "
+            "WHERE updated_at IS NULL"
+        )
 
 
 def reset_db():
     """Reset database (drop all tables and recreate)"""
     print("⚠️  Resetting database...")
     Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
+    ensure_db_schema()
     print("✅ Database reset complete")
 
 
@@ -402,6 +492,195 @@ def save_message_sources(message_id: str, sources: List[Dict]) -> List[MessageSo
             db.refresh(obj)
         
         return source_objects
+
+
+def save_uploaded_document(
+    *,
+    doc_id: str,
+    user_id: str,
+    session_id: Optional[str],
+    filename: str,
+    file_type: str,
+    file_size: int,
+    chunk_count: int = 0,
+    job_id: Optional[str] = None,
+    ingest_mode: Optional[str] = None,
+    page_count: Optional[int] = None,
+    text_chars: Optional[int] = None,
+    parser_used: Optional[str] = None,
+    ocr_provider: Optional[str] = None,
+    error_message: Optional[str] = None,
+    status: str = "queued",
+    indexed_at: Optional[datetime] = None,
+) -> UploadedDocument:
+    """Create or update uploaded document metadata."""
+    with get_db() as db:
+        document = db.query(UploadedDocument).filter_by(id=doc_id).first()
+        if document is None:
+            document = UploadedDocument(
+                id=doc_id,
+                user_id=user_id,
+                session_id=session_id,
+                filename=filename,
+                file_type=file_type,
+                file_size=file_size,
+                upload_time=datetime.now(),
+            )
+            db.add(document)
+
+        document.user_id = user_id
+        document.session_id = session_id
+        document.filename = filename
+        document.file_type = file_type
+        document.file_size = file_size
+        document.chunk_count = chunk_count
+        document.job_id = job_id
+        document.ingest_mode = ingest_mode
+        document.page_count = page_count
+        document.text_chars = text_chars
+        document.parser_used = parser_used
+        document.ocr_provider = ocr_provider
+        document.error_message = error_message
+        document.status = status
+        document.indexed_at = indexed_at
+        document.updated_at = datetime.now()
+
+        db.commit()
+        db.refresh(document)
+        return document
+
+
+def get_uploaded_document(doc_id: str, user_id: Optional[str] = None) -> Optional[UploadedDocument]:
+    with get_db() as db:
+        query = db.query(UploadedDocument).filter_by(id=doc_id)
+        if user_id is not None:
+            query = query.filter_by(user_id=user_id)
+        document = query.first()
+        if document is None:
+            return None
+        db.expunge(document)
+        return document
+
+
+def list_uploaded_documents(
+    user_id: str,
+    session_id: Optional[str] = None,
+    include_deleted: bool = False,
+) -> List[UploadedDocument]:
+    with get_db() as db:
+        query = db.query(UploadedDocument).filter_by(user_id=user_id)
+        if session_id is not None:
+            query = query.filter_by(session_id=session_id)
+        if not include_deleted:
+            query = query.filter(UploadedDocument.status != "deleted")
+        documents = query.order_by(UploadedDocument.upload_time.desc()).all()
+        for document in documents:
+            db.expunge(document)
+        return documents
+
+
+def mark_uploaded_document_deleted(doc_id: str, user_id: str) -> bool:
+    with get_db() as db:
+        document = db.query(UploadedDocument).filter_by(id=doc_id, user_id=user_id).first()
+        if document is None:
+            return False
+        document.status = "deleted"
+        document.updated_at = datetime.now()
+        db.commit()
+        return True
+
+
+def delete_uploaded_document(doc_id: str, user_id: str) -> bool:
+    with get_db() as db:
+        document = db.query(UploadedDocument).filter_by(id=doc_id, user_id=user_id).first()
+        if document is None:
+            return False
+        db.delete(document)
+        db.commit()
+        return True
+
+
+def save_document_ingest_job(
+    *,
+    job_id: str,
+    doc_id: str,
+    user_id: str,
+    session_id: Optional[str],
+    filename: str,
+    content_mode: str,
+    status: str,
+    ocr_provider: Optional[str] = None,
+    parser_used: Optional[str] = None,
+    error_message: Optional[str] = None,
+    started_at: Optional[datetime] = None,
+    completed_at: Optional[datetime] = None,
+) -> DocumentIngestJob:
+    """Create or update ingestion job metadata."""
+    with get_db() as db:
+        job = db.query(DocumentIngestJob).filter_by(id=job_id).first()
+        if job is None:
+            job = DocumentIngestJob(
+                id=job_id,
+                doc_id=doc_id,
+                user_id=user_id,
+                session_id=session_id,
+                filename=filename,
+                content_mode=content_mode,
+                created_at=datetime.now(),
+            )
+            db.add(job)
+
+        job.doc_id = doc_id
+        job.user_id = user_id
+        job.session_id = session_id
+        job.filename = filename
+        job.content_mode = content_mode
+        job.status = status
+        job.ocr_provider = ocr_provider
+        job.parser_used = parser_used
+        job.error_message = error_message
+        if started_at is not None:
+            job.started_at = started_at
+        if completed_at is not None:
+            job.completed_at = completed_at
+        job.updated_at = datetime.now()
+
+        db.commit()
+        db.refresh(job)
+        return job
+
+
+def get_document_ingest_job(job_id: str) -> Optional[DocumentIngestJob]:
+    with get_db() as db:
+        job = db.query(DocumentIngestJob).filter_by(id=job_id).first()
+        if job is None:
+            return None
+        db.expunge(job)
+        return job
+
+
+def get_document_ingest_job_for_doc(doc_id: str) -> Optional[DocumentIngestJob]:
+    with get_db() as db:
+        job = (
+            db.query(DocumentIngestJob)
+            .filter_by(doc_id=doc_id)
+            .order_by(DocumentIngestJob.created_at.desc())
+            .first()
+        )
+        if job is None:
+            return None
+        db.expunge(job)
+        return job
+
+
+def delete_document_ingest_jobs(doc_id: str) -> int:
+    with get_db() as db:
+        jobs = db.query(DocumentIngestJob).filter_by(doc_id=doc_id).all()
+        deleted = len(jobs)
+        for job in jobs:
+            db.delete(job)
+        db.commit()
+        return deleted
 
 
 def get_session_messages(session_id: str) -> List[Message]:

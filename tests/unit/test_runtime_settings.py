@@ -14,9 +14,9 @@ def test_chainlit_profile_locks_model_and_reads_runtime_overrides(monkeypatch, t
     settings = load_runtime_settings("chainlit_demo")
 
     assert settings.embedding_model == "truro7/vn-law-embedding"
+    assert settings.ollama_model == "qwen3.5:9b"
     assert settings.query_rewriter_enabled is True
     assert settings.chainlit_top_k == 7
     assert settings.bm25_path == Path(tmp_path / "bm25.json")
     assert settings.qdrant_url == "https://example.qdrant.io:6333"
     assert settings.qdrant_api_key == "secret"
-

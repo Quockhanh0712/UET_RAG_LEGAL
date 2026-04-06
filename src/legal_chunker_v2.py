@@ -13,14 +13,17 @@ Retrieval chunking strategy is deterministic and legal-aware:
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
 
+from src.config.embedding_contract import resolve_normalize_embeddings
 from src.embeddings import DEFAULT_MODEL, count_text_tokens
+from src.legal_rag.chunking.metadata_builder import build_provision_id, generate_chunk_id
+from src.legal_rag.chunking.policy import build_chunking_policy
+from src.legal_rag.chunking.provision_chunker import build_unit_windows
 from src.legal_data_processing import (
     build_citation_base,
     build_citation_full,
@@ -212,18 +215,26 @@ class LegalChunkerV2:
         hard_cap_tokens: int = 448,
         overlap_tokens: int = 64,
     ):
-        self.min_chars = min_chars
-        self.max_chars = max_chars
-        self.overlap_chars = overlap_chars
+        self.policy = build_chunking_policy(
+            min_chars=min_chars,
+            max_chars=max_chars,
+            overlap_chars=overlap_chars,
+            target_chunk_tokens=target_chunk_tokens,
+            hard_cap_tokens=hard_cap_tokens,
+            overlap_tokens=overlap_tokens,
+        )
+        self.min_chars = self.policy.min_chars
+        self.max_chars = self.policy.max_chars
+        self.overlap_chars = self.policy.overlap_chars
         self.encoder_model_name = str(encoder_model_name or DEFAULT_MODEL)
         self.encoder_max_len = int(encoder_max_len)
-        self.target_chunk_tokens = int(target_chunk_tokens)
-        self.hard_cap_tokens = int(hard_cap_tokens)
-        self.overlap_tokens = int(overlap_tokens)
+        self.target_chunk_tokens = self.policy.target_chunk_tokens
+        self.hard_cap_tokens = self.policy.hard_cap_tokens
+        self.overlap_tokens = self.policy.overlap_tokens
         self._encoder_profile = self._build_encoder_profile()
 
     def _build_encoder_profile(self) -> str:
-        normalize_flag = os.getenv("EMBEDDING_NORMALIZE", "true").strip().lower()
+        normalize_flag = "true" if resolve_normalize_embeddings() else "false"
         slug = re.sub(r"[^a-z0-9]+", "_", self.encoder_model_name.lower()).strip("_")
         return f"{slug}|norm={normalize_flag}"
 
@@ -258,12 +269,7 @@ class LegalChunkerV2:
         return self._restore_numeric_dots(stabilized)
 
     def _build_provision_id(self, doc_id: str, dieu_so: str = "", suffix: str = "") -> str:
-        parts = [doc_id or "UNKNOWN"]
-        if dieu_so:
-            parts.append(f"D{dieu_so}")
-        if suffix:
-            parts.append(suffix)
-        return "_".join(parts)
+        return build_provision_id(doc_id, dieu_so=dieu_so, suffix=suffix)
 
     def _generate_chunk_id(
         self,
@@ -273,11 +279,13 @@ class LegalChunkerV2:
         text: str,
         overflow_index: int = 1,
     ) -> str:
-        digest = hashlib.md5(text.encode("utf-8")).hexdigest()[:8]
-        base = self._build_provision_id(doc_id, dieu_so)
-        if overflow_index > 1:
-            base = f"{base}_W{overflow_index}"
-        return f"{base}_C{chunk_index}_{digest}"
+        return generate_chunk_id(
+            doc_id=doc_id,
+            dieu_so=dieu_so,
+            chunk_index=chunk_index,
+            text=text,
+            overflow_index=overflow_index,
+        )
 
     @staticmethod
     def _chapter_at(
@@ -531,29 +539,16 @@ class LegalChunkerV2:
             ]
 
         windows: List[_ArticleWindow] = []
-        cursor = 0
-        while cursor < len(expanded_units):
-            current_units: List[_TextUnit] = []
-            token_total = header_tokens
-            idx = cursor
-            while idx < len(expanded_units):
-                unit = expanded_units[idx]
-                if current_units and token_total + unit.token_len > self.target_chunk_tokens:
-                    break
-                if current_units and token_total + unit.token_len > self.hard_cap_tokens:
-                    break
-                current_units.append(unit)
-                token_total += unit.token_len
-                idx += 1
-                if token_total >= self.target_chunk_tokens:
-                    break
-
-            if not current_units:
-                unit = expanded_units[cursor]
-                current_units = [unit]
-                token_total = header_tokens + unit.token_len
-                idx = cursor + 1
-
+        target_budget = max(32, self.target_chunk_tokens - header_tokens)
+        hard_budget = max(40, self.hard_cap_tokens - header_tokens)
+        unit_windows = build_unit_windows(
+            expanded_units,
+            token_getter=lambda unit: int(unit.token_len),
+            target_chunk_tokens=target_budget,
+            hard_cap_tokens=hard_budget,
+            overlap_tokens=self.overlap_tokens,
+        )
+        for current_units in unit_windows:
             body_start = current_units[0].start
             body_end = current_units[-1].end
             window_body = normalize_whitespace(normalized_body[body_start:body_end])
@@ -570,18 +565,6 @@ class LegalChunkerV2:
                     fallback_reason="article_window",
                 )
             )
-
-            if idx >= len(expanded_units):
-                break
-
-            next_cursor = idx
-            overlap_sum = 0
-            back = idx - 1
-            while back > cursor and overlap_sum < self.overlap_tokens:
-                overlap_sum += expanded_units[back].token_len
-                next_cursor = back
-                back -= 1
-            cursor = next_cursor if next_cursor > cursor else min(idx, cursor + 1)
 
         total = len(windows)
         for item in windows:
@@ -746,27 +729,14 @@ class LegalChunkerV2:
             return [chunk]
 
         chunks: List[LegalChunk] = []
-        cursor = 0
-        while cursor < len(expanded_units):
-            current_units: List[_TextUnit] = []
-            token_total = 0
-            idx = cursor
-            while idx < len(expanded_units):
-                unit = expanded_units[idx]
-                if current_units and token_total + unit.token_len > self.target_chunk_tokens:
-                    break
-                if current_units and token_total + unit.token_len > self.hard_cap_tokens:
-                    break
-                current_units.append(unit)
-                token_total += unit.token_len
-                idx += 1
-                if token_total >= self.target_chunk_tokens:
-                    break
-
-            if not current_units:
-                current_units = [expanded_units[cursor]]
-                idx = cursor + 1
-
+        unit_windows = build_unit_windows(
+            expanded_units,
+            token_getter=lambda unit: int(unit.token_len),
+            target_chunk_tokens=self.target_chunk_tokens,
+            hard_cap_tokens=self.hard_cap_tokens,
+            overlap_tokens=self.overlap_tokens,
+        )
+        for current_units in unit_windows:
             body_start = current_units[0].start
             body_end = current_units[-1].end
             window_body = piece[body_start:body_end].strip()
@@ -783,18 +753,6 @@ class LegalChunkerV2:
                     fallback_reason="no_article_detected_window",
                 )
             )
-
-            if idx >= len(expanded_units):
-                break
-
-            next_cursor = idx
-            overlap_sum = 0
-            back = idx - 1
-            while back > cursor and overlap_sum < self.overlap_tokens:
-                overlap_sum += expanded_units[back].token_len
-                next_cursor = back
-                back -= 1
-            cursor = next_cursor if next_cursor > cursor else min(idx, cursor + 1)
 
         total = len(chunks)
         for chunk in chunks:

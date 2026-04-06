@@ -122,6 +122,13 @@ class DocumentInfo(BaseModel):
     chunk_count: int
     upload_time: str
     status: str
+    job_id: Optional[str] = None
+    ingest_mode: Optional[str] = None
+    page_count: Optional[int] = None
+    text_chars: Optional[int] = None
+    parser_used: Optional[str] = None
+    ocr_provider: Optional[str] = None
+    error_message: Optional[str] = None
 
 
 class UploadResponse(BaseModel):
@@ -130,6 +137,23 @@ class UploadResponse(BaseModel):
     filename: str
     chunk_count: int
     message: str
+    job_id: Optional[str] = None
+    status: str = "queued"
+
+
+class DocumentStatusResponse(BaseModel):
+    doc_id: str
+    filename: str
+    status: str
+    chunk_count: int = 0
+    job_id: Optional[str] = None
+    ingest_mode: Optional[str] = None
+    page_count: Optional[int] = None
+    text_chars: Optional[int] = None
+    parser_used: Optional[str] = None
+    ocr_provider: Optional[str] = None
+    error_message: Optional[str] = None
+    job: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatHistoryItem(BaseModel):

@@ -63,9 +63,9 @@ def _build_profiles() -> Dict[str, ModelProfile]:
             id='qwen3_8b_ollama_remote',
             label='Qwen3 8B',
             provider_type='ollama_generate',
-            base_url=_env_str('OLLAMA_URL', 'http://222.255.250.24:11434'),
-            model=_env_str('OLLAMA_MODEL', 'qwen3:8b'),
-            timeout_s=_env_float('OLLAMA_TIMEOUT_S', 120.0),
+            base_url=_env_str('OLLAMA_QWEN3_URL', _env_str('OLLAMA_URL', 'http://222.255.250.24:11434')),
+            model=_env_str('OLLAMA_QWEN3_MODEL', 'qwen3:8b'),
+            timeout_s=_env_float('OLLAMA_QWEN3_TIMEOUT_S', 120.0),
             supports_rewrite=True,
             supports_answer=True,
             enabled=_env_str('OLLAMA_QWEN3_ENABLED', 'false').lower() in {'1', 'true', 'yes', 'on'},
@@ -74,7 +74,7 @@ def _build_profiles() -> Dict[str, ModelProfile]:
     return profiles
 
 
-def list_model_profiles(enabled_only: bool = True) -> List[ModelProfile]:
+def list_model_profiles(enabled_only: bool = False) -> List[ModelProfile]:
     profiles = list(_build_profiles().values())
     if enabled_only:
         profiles = [profile for profile in profiles if profile.enabled]

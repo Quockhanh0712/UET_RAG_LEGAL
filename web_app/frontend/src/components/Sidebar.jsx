@@ -34,6 +34,8 @@ function Sidebar({
   onDeleteDocument,
   onUploadFile,
   uploadProgress,
+  uploadMode,
+  setUploadMode,
   systemStatus,
   searchMode,
   setSearchMode,
@@ -65,16 +67,15 @@ function Sidebar({
     files.forEach(file => {
       if (file.type === 'application/pdf' ||
         file.name.endsWith('.docx') ||
-        file.name.endsWith('.doc') ||
         file.name.endsWith('.txt')) {
-        onUploadFile(file);
+        onUploadFile(file, uploadMode);
       }
     });
-  }, [onUploadFile]);
+  }, [onUploadFile, uploadMode]);
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    files.forEach(file => onUploadFile(file));
+    files.forEach(file => onUploadFile(file, uploadMode));
     e.target.value = '';
   };
 
@@ -142,7 +143,7 @@ function Sidebar({
             )}
           >
             <ScanEye className="w-4 h-4" />
-            Trích xuất tài liệu
+            OCR Preview
           </button>
           <button
             onClick={() => setCurrentView('dashboard')}
@@ -281,11 +282,17 @@ function Sidebar({
                         key={doc.doc_id}
                         className="flex items-center justify-between px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-sm group"
                       >
-                        <div className="flex items-center gap-2 truncate">
+                        <div className="flex items-start gap-2 truncate">
                           <FileText className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-                          <span className="truncate text-primary-700 dark:text-primary-300" title={doc.filename}>
-                            {doc.filename}
-                          </span>
+                          <div className="min-w-0">
+                            <span className="block truncate text-primary-700 dark:text-primary-300" title={doc.filename}>
+                              {doc.filename}
+                            </span>
+                            <div className="flex items-center gap-2 text-xs text-primary-500 dark:text-primary-400">
+                              <span>{doc.status}</span>
+                              <span>{doc.chunk_count || 0} đoạn</span>
+                            </div>
+                          </div>
                         </div>
                         <button
                           onClick={() => onDeleteDocument(doc.doc_id)}
@@ -304,10 +311,51 @@ function Sidebar({
                   <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
                     <div className="flex items-center gap-2 text-sm text-blue-700 dark:text-blue-300">
                       <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full" />
-                      <span className="truncate">Đang tải: {uploadProgress.filename}</span>
+                      <span className="truncate">
+                        {uploadProgress.status === 'queued' ? 'Đã vào hàng đợi' : 'Đang xử lý'}: {uploadProgress.filename}
+                      </span>
                     </div>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Chế độ: {uploadProgress.mode === 'ocr' ? 'OCR' : 'Text'}
+                    </p>
                   </div>
                 )}
+
+                <div className="mb-3">
+                  <div className="text-xs font-medium text-primary-500 dark:text-primary-400 mb-2 uppercase tracking-wide">
+                    Chế độ ingest
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUploadMode('text');
+                      }}
+                      className={clsx(
+                        "px-3 py-2 rounded-lg text-sm border transition-colors",
+                        uploadMode === 'text'
+                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300"
+                          : "border-primary-300 dark:border-primary-600 text-primary-600 dark:text-primary-400"
+                      )}
+                    >
+                      Text
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setUploadMode('ocr');
+                      }}
+                      className={clsx(
+                        "px-3 py-2 rounded-lg text-sm border transition-colors",
+                        uploadMode === 'ocr'
+                          ? "border-amber-500 bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300"
+                          : "border-primary-300 dark:border-primary-600 text-primary-600 dark:text-primary-400"
+                      )}
+                    >
+                      OCR
+                    </button>
+                  </div>
+                </div>
 
                 {/* Upload Area */}
                 <div
@@ -322,13 +370,13 @@ function Sidebar({
                       : "border-primary-300 dark:border-primary-600 hover:border-indigo-400 hover:bg-primary-100 dark:hover:bg-primary-800"
                   )}
                 >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.docx,.doc,.txt"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                    multiple
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                      multiple
                   />
                   <FileUp className="w-6 h-6 mx-auto text-primary-400 dark:text-primary-500 mb-2" />
                   <p className="text-xs text-primary-500 dark:text-primary-400">

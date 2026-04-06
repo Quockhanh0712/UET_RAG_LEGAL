@@ -1,7 +1,0 @@
-# Chainlit demo dependencies for hybrid legal retrieval
-# Install in the project venv:
-#   .venv\Scripts\pip.exe install -r requirements-chainlit.txt
-
--r requirements.txt
-
-chainlit==2.10.0

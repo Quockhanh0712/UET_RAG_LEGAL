@@ -88,3 +88,42 @@ def test_build_qdrant_payload_full_keeps_compatibility_aliases():
     assert full_payload["path"] == "Dieu 1"
     assert full_payload["citation_short"] == "Dieu 1"
     assert full_payload["hierarchy"] == {"dieu": "1"}
+
+
+def test_build_qdrant_payload_lean_keeps_user_tenant_fields():
+    payload = {
+        "chunk_id": "user_chunk_1",
+        "content": "Tai lieu rieng cua nguoi dung",
+        "doc_id": "user_doc_1",
+        "van_ban_id": "user_doc_1",
+        "so_ky_hieu": "user_doc_1",
+        "ten_van_ban": "Hop dong mau",
+        "loai_van_ban": "PDF",
+        "doc_type": "USER_UPLOAD",
+        "law_family": "Hop dong mau",
+        "legal_path": "Trang 1",
+        "citation_full": "Hop dong mau | Trang 1",
+        "chunk_type": "GenericDocumentChunk",
+        "segment_level": "page_block_window",
+        "user_id": "user-123",
+        "session_id": "session-abc",
+        "filename": "hop_dong.pdf",
+        "source_type": "user_upload",
+        "page_number": 1,
+        "upload_time": "2026-04-04T10:00:00",
+        "ingest_mode": "ocr",
+        "parser_used": "pymupdf+ocrmypdf",
+        "ocr_provider": "default",
+    }
+
+    lean_payload = build_qdrant_payload(payload, profile="lean")
+
+    assert lean_payload["user_id"] == "user-123"
+    assert lean_payload["session_id"] == "session-abc"
+    assert lean_payload["filename"] == "hop_dong.pdf"
+    assert lean_payload["source_type"] == "user_upload"
+    assert lean_payload["page_number"] == 1
+    assert lean_payload["upload_time"] == "2026-04-04T10:00:00"
+    assert lean_payload["ingest_mode"] == "ocr"
+    assert lean_payload["parser_used"] == "pymupdf+ocrmypdf"
+    assert lean_payload["ocr_provider"] == "default"

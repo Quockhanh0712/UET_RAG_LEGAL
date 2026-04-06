@@ -17,12 +17,14 @@ os.environ.setdefault("USE_TORCH", "1")
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer
 
+from src.config.embedding_contract import resolve_embedding_model_name, resolve_normalize_embeddings
+
 logger = logging.getLogger(__name__)
 
-DEFAULT_MODEL = os.getenv("EMBEDDING_MODEL", "AITeamVN/Vietnamese_Embedding")
+DEFAULT_MODEL = resolve_embedding_model_name()
 EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "8"))
 USE_FP16 = os.getenv("USE_FP16", "true").lower() == "true"
-DEFAULT_NORMALIZE_EMBEDDINGS = os.getenv("EMBEDDING_NORMALIZE", "true").lower() == "true"
+DEFAULT_NORMALIZE_EMBEDDINGS = resolve_normalize_embeddings()
 DEFAULT_QUERY_PREFIX = os.getenv("EMBEDDING_QUERY_PREFIX", "").strip()
 DEFAULT_PASSAGE_PREFIX = os.getenv("EMBEDDING_PASSAGE_PREFIX", "").strip()
 

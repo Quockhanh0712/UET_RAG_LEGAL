@@ -219,7 +219,7 @@ Reranker Used: ${data.performance.reranker_used ? 'Yes' : 'No'}
                 Chỉ Số Chi Tiết
               </h3>
             </div>
-            
+
             <div className="space-y-4">
               {/* BERTScore */}
               <MetricBar
@@ -312,7 +312,7 @@ Reranker Used: ${data.performance.reranker_used ? 'Yes' : 'No'}
                 {message.sources.map((source, i) => {
                   const isExpanded = expandedSources[i];
                   const hasContent = source.content || source.content_preview;
-                  
+
                   return (
                     <div key={i} className="bg-white dark:bg-primary-800 rounded-lg overflow-hidden">
                       {/* Header */}
@@ -351,7 +351,7 @@ Reranker Used: ${data.performance.reranker_used ? 'Yes' : 'No'}
                           </button>
                         )}
                       </div>
-                      
+
                       {/* Content */}
                       {hasContent && (
                         <div className={clsx(

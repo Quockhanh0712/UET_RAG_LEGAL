@@ -267,3 +267,86 @@ def test_generic_document_chunker_enforces_cap_overlap_and_stable_ids(monkeypatc
     assert all(chunk.citation_full for chunk in first_run)
     assert "alpha2" in first_run[0].content
     assert "alpha2" in first_run[1].content
+
+
+def test_generic_document_chunker_profiles_structured_semi_and_flat_documents(monkeypatch):
+    monkeypatch.setattr("src.document_ingestion.chunking.count_text_tokens", _word_token_counter)
+    chunker = GenericDocumentChunker(target_chunk_tokens=24, hard_cap_tokens=28, overlap_tokens=4)
+
+    structured = ExtractedDocument(
+        file_path=Path(__file__),
+        file_type="txt",
+        parser_used="plain-text",
+        text="",
+        normalized_text="",
+        pages=[
+            ExtractedPage(
+                page_number=1,
+                text="1. Tong quan\n\nNoi dung a\n\n2. Nghia vu\n\nNoi dung b\n\n3. Ket luan\n\nNoi dung c",
+                blocks=["1. Tong quan", "Noi dung a", "2. Nghia vu", "Noi dung b", "3. Ket luan", "Noi dung c"],
+                start_char=0,
+                end_char=80,
+            )
+        ],
+    )
+    semi_structured = ExtractedDocument(
+        file_path=Path(__file__),
+        file_type="txt",
+        parser_used="plain-text",
+        text="",
+        normalized_text="",
+        pages=[
+            ExtractedPage(
+                page_number=1,
+                text="SECTION Overview\n\nDay la phan mo ta.\n\nThem mot doan bo sung.",
+                blocks=["SECTION Overview", "Day la phan mo ta.", "Them mot doan bo sung."],
+                start_char=0,
+                end_char=64,
+            )
+        ],
+    )
+    flat = ExtractedDocument(
+        file_path=Path(__file__),
+        file_type="txt",
+        parser_used="ocr",
+        text="Day la doan van ban lien tuc khong co tieu de ro rang va cung khong co danh so muc.",
+        normalized_text="Day la doan van ban lien tuc khong co tieu de ro rang va cung khong co danh so muc.",
+        pages=[ExtractedPage(page_number=1, text="Day la doan van ban lien tuc khong co tieu de ro rang va cung khong co danh so muc.", start_char=0, end_char=86)],
+    )
+
+    assert chunker._profile_document(chunker._build_block_units(structured), structured)[0] == "structured_generic"
+    assert chunker._profile_document(chunker._build_block_units(semi_structured), semi_structured)[0] == "semi_structured"
+    assert chunker._profile_document(chunker._build_block_units(flat), flat)[0] == "flat_text_or_ocr"
+
+
+def test_generic_document_chunker_emits_parent_section_metadata_and_artifacts(monkeypatch):
+    monkeypatch.setattr("src.document_ingestion.chunking.count_text_tokens", _word_token_counter)
+    chunker = GenericDocumentChunker(target_chunk_tokens=18, hard_cap_tokens=22, overlap_tokens=4)
+    request = _build_request()
+    extracted = ExtractedDocument(
+        file_path=request.saved_file_path,
+        file_type="txt",
+        parser_used="plain-text",
+        text="1. Tong quan\n\nDoan noi dung thu nhat.\n\n2. Nghia vu\n\nDoan noi dung thu hai.",
+        normalized_text="1. Tong quan\n\nDoan noi dung thu nhat.\n\n2. Nghia vu\n\nDoan noi dung thu hai.",
+        pages=[
+            ExtractedPage(
+                page_number=1,
+                text="1. Tong quan\n\nDoan noi dung thu nhat.\n\n2. Nghia vu\n\nDoan noi dung thu hai.",
+                blocks=["1. Tong quan", "Doan noi dung thu nhat.", "2. Nghia vu", "Doan noi dung thu hai."],
+                start_char=0,
+                end_char=78,
+            )
+        ],
+    )
+
+    chunks = chunker.chunk(extracted, request)
+
+    assert chunks
+    assert all(chunk.parent_section_id for chunk in chunks)
+    assert all(chunk.section_title for chunk in chunks)
+    assert all(chunk.section_path for chunk in chunks)
+    assert all(chunk.structure_strategy == "structured_generic" for chunk in chunks)
+    assert all(chunk.structure_confidence > 0 for chunk in chunks)
+    assert all(chunk.page_start == 1 and chunk.page_end == 1 for chunk in chunks)
+    assert chunker.last_chunk_artifacts["section_count"] >= 2

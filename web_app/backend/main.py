@@ -90,7 +90,7 @@ from database import (
     get_metrics_stats
 )
 from src.adapters.backend_adapter import build_chat_payload, build_search_payload
-from src.config.embedding_contract import DEFAULT_LEGAL_EMBEDDING_MODEL
+from src.config.embedding_contract import resolve_embedding_model_name
 from src.config.runtime_settings import load_runtime_settings
 from src.factories.legal_pipeline_factory import get_legal_pipeline
 from src.runtime.qdrant_contract import validate_qdrant_contract
@@ -140,9 +140,6 @@ class Config:
     LEGAL_COLLECTION = os.getenv("QDRANT_LEGAL_COLLECTION", "legal_rag_vn")  # Core legal docs
     USER_COLLECTION = "user_docs_private"   # User uploads
     
-    # Embedding
-    EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", DEFAULT_LEGAL_EMBEDDING_MODEL)
-    
     # LLM
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:9b")
     OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
@@ -181,7 +178,6 @@ Config.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 # ============================================================================
 
 _qdrant_client = None
-_embedding_model = None
 _bm25_encoder = None
 _ollama_client = None
 _chat_history: Dict[str, List[Dict]] = {}  # session_id -> messages
@@ -393,25 +389,6 @@ def get_qdrant_client():
     return _qdrant_client
 
 
-def get_embedding_model():
-    global _embedding_model
-    if _embedding_model is None:
-        import torch
-        from sentence_transformers import SentenceTransformer
-        
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-        logger.info(f"[EMBED] Loading {Config.EMBEDDING_MODEL} on {device}...")
-        
-        _embedding_model = SentenceTransformer(Config.EMBEDDING_MODEL, device=device)
-        
-        if device == "cuda":
-            _embedding_model.half()
-            import torch
-            logger.info(f"[EMBED] GPU: {torch.cuda.get_device_name(0)}, FP16 enabled")
-    
-    return _embedding_model
-
-
 def get_bm25_encoder():
     global _bm25_encoder
     if _bm25_encoder is None:
@@ -547,15 +524,15 @@ def search_legal_collection(
     query: str,
     top_k: int = 10
 ) -> List[Dict]:
-    """Search trong Kho Luật chính (read-only)"""
+    """Search trong Kho Lu?t chinh (read-only)"""
     from qdrant_client.http import models
-    
+    from src.embeddings import embed_query
+
     client = get_qdrant_client()
-    embed_model = get_embedding_model()
     bm25 = get_bm25_encoder()
-    
+
     # Generate query vectors
-    query_vector = embed_model.encode(query).tolist()
+    query_vector = embed_query(query)
     
     if bm25:
         sparse_indices, sparse_values = bm25.encode(query)
@@ -787,13 +764,11 @@ async def lifespan(app: FastAPI):
     """App lifespan - initialize resources on startup"""
     logger.info("🚀 Starting Legal RAG API...")
     
-    # Pre-load resources
+    # Pre-load lightweight runtime resources only.
     get_document_ingestion_service().initialize()
     get_qdrant_client()
-    get_embedding_model()
     get_bm25_encoder()
     get_ollama_client()
-    get_user_store()
     
     logger.info("✅ All resources loaded")
     yield
@@ -863,7 +838,7 @@ async def get_status():
             "legal_documents": legal_info.points_count,
             "user_collection": Config.USER_COLLECTION,
             "user_documents": user_count,
-            "embedding_model": Config.EMBEDDING_MODEL,
+            "embedding_model": resolve_embedding_model_name(),
             "llm_model": Config.OLLAMA_MODEL,
             "available_model_profiles": [profile.to_public_dict() for profile in list_model_profiles(enabled_only=True)],
             "collection_resolved": Config.LEGAL_COLLECTION,
@@ -1793,5 +1768,12 @@ if __name__ == "__main__":
         reload=True,
         log_level="info"
     )
+
+
+
+
+
+
+
 
 

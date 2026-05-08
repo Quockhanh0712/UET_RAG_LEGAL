@@ -34,6 +34,7 @@ class LegalAnswer:
     retrieval_query_plan: List[Dict[str, object]] = field(default_factory=list)
     query_facets: Dict[str, object] = field(default_factory=dict)
     rewrite_debug: Dict[str, object] = field(default_factory=dict)
+    retrieval_debug: Dict[str, object] = field(default_factory=dict)
 
 
 @dataclass
@@ -62,6 +63,7 @@ class LegalSearchResult:
     retrieval_query_plan: List[Dict[str, object]] = field(default_factory=list)
     query_facets: Dict[str, object] = field(default_factory=dict)
     rewrite_debug: Dict[str, object] = field(default_factory=dict)
+    retrieval_debug: Dict[str, object] = field(default_factory=dict)
 
     def format_with_citations(self) -> str:
         answer_text = str(getattr(self, "answer", "") or "")
@@ -115,4 +117,3 @@ class LegalSearchResult:
             visible_index += 1
 
         return answer_text + citation_text
-

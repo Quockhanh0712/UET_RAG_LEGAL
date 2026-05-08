@@ -39,6 +39,8 @@ function Sidebar({
   systemStatus,
   searchMode,
   setSearchMode,
+  documentScope,
+  setDocumentScope,
   rerankerEnabled,
   setRerankerEnabled,
   currentView,
@@ -89,6 +91,11 @@ function Sidebar({
     { value: 'hybrid', label: 'Kết hợp', icon: Combine, color: 'text-purple-500' },
     { value: 'legal', label: 'Văn bản luật', icon: Scale, color: 'text-blue-500' },
     { value: 'user', label: 'Tài liệu của tôi', icon: Users, color: 'text-amber-500' },
+  ];
+
+  const documentScopes = [
+    { value: 'current_session', label: 'Phiên hiện tại' },
+    { value: 'all_user_docs', label: 'Tất cả tài liệu của tôi' },
   ];
 
   return (
@@ -183,6 +190,30 @@ function Sidebar({
               </button>
             ))}
           </div>
+
+          {(searchMode === 'user' || searchMode === 'hybrid') && (
+            <div className="mt-3 rounded-lg border border-primary-200 px-3 py-3 dark:border-primary-700">
+              <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-primary-500 dark:text-primary-400">
+                Phạm vi tài liệu
+              </div>
+              <div className="space-y-1">
+                {documentScopes.map((scope) => (
+                  <button
+                    key={scope.value}
+                    onClick={() => setDocumentScope(scope.value)}
+                    className={clsx(
+                      "w-full rounded-lg px-3 py-2 text-left text-sm transition-colors",
+                      documentScope === scope.value
+                        ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300"
+                        : "text-primary-600 hover:bg-primary-100 dark:text-primary-400 dark:hover:bg-primary-800"
+                    )}
+                  >
+                    {scope.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Vietnamese Reranker Toggle */}
           <div className="mt-3 pt-3 border-t border-primary-200 dark:border-primary-600">
@@ -370,13 +401,13 @@ function Sidebar({
                       : "border-primary-300 dark:border-primary-600 hover:border-indigo-400 hover:bg-primary-100 dark:hover:bg-primary-800"
                   )}
                 >
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,.docx,.txt"
-                      onChange={handleFileSelect}
-                      className="hidden"
-                      multiple
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,.docx,.txt"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    multiple
                   />
                   <FileUp className="w-6 h-6 mx-auto text-primary-400 dark:text-primary-500 mb-2" />
                   <p className="text-xs text-primary-500 dark:text-primary-400">

@@ -66,6 +66,13 @@ class DocumentIngestionProcessor:
             )
             chunks = self.chunk_router.chunk(extracted, request)
             self.artifact_store.save_chunks(request.artifact_dir, chunks)
+            chunk_artifacts = getattr(self.chunk_router, "last_chunk_artifacts", None)
+            if chunk_artifacts:
+                self.artifact_store.save_json(
+                    request.artifact_dir,
+                    "chunk_structure.json",
+                    chunk_artifacts,
+                )
             self.indexer.upsert(chunks)
             logger.info(
                 "[INGEST] Indexed %s chunks for doc_id=%s parser=%s mode=%s",

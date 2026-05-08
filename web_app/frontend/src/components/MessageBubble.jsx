@@ -31,6 +31,7 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
   const compactQueries = rewriteContext?.rewrite_queries_compact || [];
   const queryFacets = rewriteContext?.query_facets || {};
   const rewriteDebug = message.rewriteDebug || null;
+  const retrievalDebug = message.retrievalDebug || null;
   const conditions = rewriteContext?.conditions || rewriteDebug?.conditions || [];
   const clauseUnits = rewriteContext?.clause_units || rewriteDebug?.clause_units || [];
   const namedLawHints = rewriteContext?.named_law_hints || rewriteDebug?.named_law_hints || [];
@@ -39,7 +40,7 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
 
   const handleScore = async () => {
     if (isScoring) return;
-    
+
     // If metrics already in message (from backend), use them directly
     if (message.qualityScore) {
       setScoreResult({
@@ -53,7 +54,7 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
       });
       return;
     }
-    
+
     // Otherwise, fetch from API
     if (!onScore) return;
     setIsScoring(true);
@@ -131,7 +132,7 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
                 <ChevronDown className="w-3.5 h-3.5" />
               )}
             </button>
-            
+
             {showSources && (
               <div className="flex flex-wrap gap-1.5">
                 {message.sources.map((source, i) => (
@@ -139,6 +140,27 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {!isUser && retrievalDebug && (
+          <div className="mb-2 rounded-xl border border-primary-200 bg-white px-3 py-2 text-xs text-primary-600 dark:border-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+            <div className="flex flex-wrap gap-3">
+              <span>scope: <strong>{retrievalDebug.document_scope || 'current_session'}</strong></span>
+              <span>ready: <strong>{retrievalDebug.ready_doc_count_in_scope ?? 0}</strong></span>
+              <span>total ready: <strong>{retrievalDebug.ready_doc_count_total ?? 0}</strong></span>
+              {retrievalDebug.search_strategy_used ? <span>strategy: <strong>{retrievalDebug.search_strategy_used}</strong></span> : null}
+            </div>
+            {retrievalDebug.no_result_reason ? (
+              <div className="mt-1">
+                no-result: <strong>{retrievalDebug.no_result_reason}</strong>
+              </div>
+            ) : null}
+            {retrievalDebug.scope_broaden_available ? (
+              <div className="mt-1 text-amber-700 dark:text-amber-300">
+                Có tài liệu `ready` ở ngoài phạm vi hiện tại. Hãy đổi sang `all_user_docs` nếu cần.
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -323,7 +345,7 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
               label="Tạo lại"
               onClick={onRegenerate}
             />
-            
+
             {/* Quality Score Button */}
             <button
               onClick={handleScore}
@@ -347,7 +369,7 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
                 {isScoring ? "Đang chấm..." : scoreResult ? `${scoreResult.grade} (${(scoreResult.overall_score * 100).toFixed(0)}%)` : "Chấm điểm"}
               </span>
             </button>
-            
+
             {/* View Details Button */}
             {scoreResult && (
               <button
@@ -359,7 +381,7 @@ function MessageBubble({ message, onExport, onCopy, onRegenerate, onScore }) {
                 <span className="hidden sm:inline">Chi tiết</span>
               </button>
             )}
-            
+
             {/* Performance Metrics */}
             {message.totalTime && (
               <span className="ml-2 text-xs text-primary-400 dark:text-primary-500">

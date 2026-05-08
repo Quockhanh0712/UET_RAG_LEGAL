@@ -119,6 +119,13 @@ class IngestedChunk:
     clause_spans: List[str] = field(default_factory=list)
     encoder_profile: str = "default"
     hierarchy: Dict[str, Any] = field(default_factory=dict)
+    parent_section_id: str = ""
+    section_title: str = ""
+    section_path: str = ""
+    structure_strategy: str = ""
+    structure_confidence: float = 0.0
+    page_start: Optional[int] = None
+    page_end: Optional[int] = None
     user_id: str = ""
     session_id: str = ""
     filename: str = ""

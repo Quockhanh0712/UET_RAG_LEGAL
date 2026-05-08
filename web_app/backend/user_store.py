@@ -44,8 +44,17 @@ class UserDocumentStore:
 
     def __init__(self):
         self._service = get_document_ingestion_service()
-        self._indexer = self._service.processor.indexer
-        self._artifacts = self._service.artifact_store
+        self._indexer = None
+
+    @property
+    def indexer(self):
+        if self._indexer is None:
+            self._indexer = self._service.processor.indexer
+        return self._indexer
+
+    @property
+    def artifacts(self):
+        return self._service.artifact_store
 
     def ensure_collection(self):
         self._service.initialize()
@@ -74,8 +83,8 @@ class UserDocumentStore:
         file_type = path.suffix.lower().lstrip(".")
         doc_id = f"user_{user_id}_{uuid.uuid4().hex[:12]}"
         job_id = uuid.uuid4().hex
-        artifact_dir = self._artifacts.document_dir(user_id, session_id, doc_id)
-        original_path = self._artifacts.original_file_path(user_id, session_id, doc_id, safe_filename)
+        artifact_dir = self.artifacts.document_dir(user_id, session_id, doc_id)
+        original_path = self.artifacts.original_file_path(user_id, session_id, doc_id, safe_filename)
         original_path.write_bytes(path.read_bytes())
         upload_time = datetime.now().isoformat()
 
@@ -158,13 +167,34 @@ class UserDocumentStore:
         session_id: Optional[str] = None,
         top_k: int = 5,
         use_hybrid: bool = True,
+        document_scope: str = "current_session",
+        dense_only: bool = False,
     ) -> List[Dict]:
-        return self._indexer.search(
+        return self.indexer.search(
             query=query,
             user_id=user_id,
             session_id=session_id,
             top_k=top_k,
             use_hybrid=use_hybrid,
+            document_scope=document_scope,
+            dense_only=dense_only,
+        )
+
+    def fetch_section_context(
+        self,
+        *,
+        user_id: str,
+        session_id: Optional[str],
+        parent_section_id: str,
+        document_scope: str = "current_session",
+        limit: int = 8,
+    ) -> List[Dict]:
+        return self.indexer.fetch_section_context(
+            user_id=user_id,
+            session_id=session_id,
+            parent_section_id=parent_section_id,
+            document_scope=document_scope,
+            limit=limit,
         )
 
     def get_user_documents(self, user_id: str, session_id: Optional[str] = None):
@@ -176,7 +206,7 @@ class UserDocumentStore:
         if target is None:
             return False
 
-        artifact_dir = self._artifacts.document_dir(user_id, target.session_id or "default", doc_id)
+        artifact_dir = self.artifacts.document_dir(user_id, target.session_id or "default", doc_id)
         self._service.processor.delete_document(doc_id=doc_id, user_id=user_id, artifact_dir=artifact_dir)
         delete_document_ingest_jobs(doc_id)
         delete_uploaded_document(doc_id, user_id)

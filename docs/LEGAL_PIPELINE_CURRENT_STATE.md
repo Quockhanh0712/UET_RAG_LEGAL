@@ -117,7 +117,7 @@ Ket luan thang:
 - qdrant store:
   - `src/qdrant_store.py`
 - upload/index script:
-  - `scripts/upload_qdrant_cloud_embeddings.py`
+  - `scripts/ops/upload_qdrant_cloud_embeddings.py`
 
 ### LLM services
 
@@ -596,7 +596,7 @@ Trang thai luu trong `localStorage`:
 ## 11.1 Runbook va progress log
 
 - demo runbook:
-  - `docs/CHAINLIT_HYBRID_DEMO_RUNBOOK.md`
+- `docs/archive/demos/CHAINLIT_HYBRID_DEMO_RUNBOOK.md`
 - progress log:
   - `data/gold/research/embedding_graph_execution_progress_v3.md`
 
@@ -609,11 +609,11 @@ Trang thai luu trong `localStorage`:
 
 ### Qdrant/chunking guide
 
-- `docs/plan/requery_qdrant_refactor_v1/08_qdrant_data_and_chunking_guide.md`
+- `docs/archive/plans/requery_qdrant_refactor_v1/08_qdrant_data_and_chunking_guide.md`
 
 ### Chainlit/requery plan
 
-- `docs/plan/requery_qdrant_refactor_v1/01_chainlit_requery_qdrant_plan.md`
+- `docs/archive/plans/requery_qdrant_refactor_v1/01_chainlit_requery_qdrant_plan.md`
 
 ## 11.3 Status API
 

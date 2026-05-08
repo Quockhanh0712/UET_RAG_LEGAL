@@ -232,11 +232,12 @@ class LegalRAGPipeline:
             return [], 0.0
 
         from src.qdrant_store import SearchResult
-        from src.reranker import LegalReranker
+        from src.reranker import get_legal_reranker
 
         if self._reranker is None:
-            self._reranker = LegalReranker(
+            self._reranker = get_legal_reranker(
                 model_name=os.getenv("RERANKER_MODEL", "AITeamVN/Vietnamese_Reranker"),
+                use_gpu=True,
                 max_length=int(os.getenv("RERANKER_MAX_LENGTH", "2304")),
                 batch_size=int(os.getenv("RERANKER_BATCH_SIZE", "8")),
             )
@@ -610,4 +611,3 @@ class LegalRAGPipeline:
             "llm_model": f"{self.llm.provider}/{self.llm.model}",
             "graph_enabled": graph_enabled,
         }
-

@@ -190,6 +190,8 @@ def test_shared_runtime_gate_supports_legal_user_and_hybrid(monkeypatch):
 
 
 def test_shared_search_service_handles_user_mode_user_wide_results():
+    rewrite_calls = {"count": 0}
+
     class _Settings:
         def apply_env(self):
             return None
@@ -216,6 +218,8 @@ def test_shared_search_service_handles_user_mode_user_wide_results():
         @staticmethod
         def search(**kwargs):
             assert kwargs["session_id"] == "session-b"
+            assert kwargs["document_scope"] == "current_session"
+            assert kwargs["query"] == "dieu 47 la gi"
             return [
                 {
                     "content": "Dieu 47 noi dung",
@@ -237,26 +241,17 @@ def test_shared_search_service_handles_user_mode_user_wide_results():
                 }
             ]
 
+        @staticmethod
+        def get_user_documents(user_id):
+            return [SimpleNamespace(id="doc-1", session_id="session-b", status="ready")]
+
     service = SharedLegalSearchService(
         normalize_query_mode=lambda mode: "rewrite_combine",
         backend_runtime_settings=lambda **kwargs: _Settings(),
         get_legal_pipeline=lambda settings: _Pipeline(),
         validate_qdrant_contract=lambda settings, dim: SimpleNamespace(collection_name="legal_documents__d1024"),
         build_query_rewrite_service=lambda profile_id, query_mode: SimpleNamespace(
-            rewrite=lambda question: SimpleNamespace(
-                queries=["dieu 47"],
-                retrieval_query_set=["dieu 47"],
-                status="ok",
-                rewrite_used=True,
-                fallback_reason="",
-                rewrite_strategy="structured_synthesis",
-                quality_passed=True,
-                retrieval_query_plan=[{"query": "dieu 47", "source": "rewrite", "weight": 1.0}],
-                query_facets={},
-                debug_payload={},
-                missing_numbers=[],
-                latency_ms=5,
-            )
+            rewrite=lambda question: rewrite_calls.__setitem__("count", rewrite_calls["count"] + 1)
         ),
         build_search_payload=build_search_payload,
         get_model_profile=lambda profile_id: SimpleNamespace(id="default"),
@@ -279,6 +274,9 @@ def test_shared_search_service_handles_user_mode_user_wide_results():
     assert response.collection == "user_docs_private"
     assert response.results[0]["type"] == "user"
     assert response.results[0]["citation_full"] == "PDF USER_UPLOAD | Dieu 47"
+    assert response.retrieval_debug["document_scope"] == "current_session"
+    assert response.retrieval_debug["user_query_strategy"] == "original_only"
+    assert rewrite_calls["count"] == 0
 
 
 def test_shared_chat_service_handles_hybrid_mode_with_only_user_hits():
@@ -334,6 +332,8 @@ def test_shared_chat_service_handles_hybrid_mode_with_only_user_hits():
     class _UserStore:
         @staticmethod
         def search(**kwargs):
+            assert kwargs["query"] == "hoi dieu 47"
+            assert kwargs["document_scope"] == "current_session"
             return [
                 {
                     "content": "Dieu 47 noi dung",
@@ -357,7 +357,7 @@ def test_shared_chat_service_handles_hybrid_mode_with_only_user_hits():
 
         @staticmethod
         def get_user_documents(user_id):
-            return [{"id": "doc-1"}]
+            return [SimpleNamespace(id="doc-1", session_id="session-b", status="ready")]
 
     service = SharedLegalChatService(
         normalize_query_mode=lambda mode: "rewrite_combine",
@@ -386,4 +386,65 @@ def test_shared_chat_service_handles_hybrid_mode_with_only_user_hits():
 
     assert response.answer == "Tra loi tu hybrid"
     assert response.sources[0]["type"] == "user"
+    assert response.retrieval_debug["user_query_strategy"] == "original_only"
     assert saved["count"] == 1
+
+
+def test_shared_search_service_flags_scope_broaden_when_ready_docs_exist_outside_session():
+    class _Settings:
+        def apply_env(self):
+            return None
+
+    class _Pipeline:
+        embedding_model = SimpleNamespace(embedding_dim=1024)
+
+        def __init__(self):
+            self.intent_classifier = SimpleNamespace(
+                classify=lambda question: SimpleNamespace(intent=SimpleNamespace(value="factual"))
+            )
+
+        def initialize(self):
+            return None
+
+        @staticmethod
+        def _merge_query_rankings_rrf(rankings, limit):
+            return rankings[0][:limit]
+
+    class _UserStore:
+        @staticmethod
+        def search(**kwargs):
+            return []
+
+        @staticmethod
+        def get_user_documents(user_id):
+            return [
+                SimpleNamespace(id="doc-1", session_id="session-other", status="ready"),
+                SimpleNamespace(id="doc-2", session_id="session-current", status="running"),
+            ]
+
+    service = SharedLegalSearchService(
+        normalize_query_mode=lambda mode: "original",
+        backend_runtime_settings=lambda **kwargs: _Settings(),
+        get_legal_pipeline=lambda settings: _Pipeline(),
+        validate_qdrant_contract=lambda settings, dim: SimpleNamespace(collection_name="legal_documents__d1024"),
+        build_query_rewrite_service=lambda profile_id, query_mode: SimpleNamespace(rewrite=lambda question: None),
+        build_search_payload=build_search_payload,
+        get_model_profile=lambda profile_id: SimpleNamespace(id="default"),
+        get_setting=lambda name, default: default,
+        get_user_store=lambda: _UserStore(),
+    )
+
+    response = service.run(
+        SearchRequest(
+            query="noi dung can tim",
+            user_id="user-1",
+            session_id="session-current",
+            search_mode="user",
+            top_k=5,
+            use_reranker=False,
+            document_scope="current_session",
+        )
+    )
+
+    assert response.retrieval_debug["scope_broaden_available"] is True
+    assert response.retrieval_debug["no_result_reason"] == "scope_filtered_out"

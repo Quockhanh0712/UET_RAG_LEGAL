@@ -66,10 +66,6 @@ class DocumentIngestionService:
         if self._initialized:
             return
         init_db()
-        try:
-            self.processor.indexer.ensure_collection()
-        except Exception as exc:
-            logger.warning("[INGEST] Deferred Qdrant collection init: %s", exc)
         self._initialized = True
 
     @staticmethod

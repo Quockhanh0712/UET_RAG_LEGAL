@@ -1,9 +1,10 @@
-"""Application services for shared runtime search/chat paths."""
+﻿"""Application services for shared runtime search/chat paths."""
 
 from __future__ import annotations
 
 import hashlib
 import time
+from types import SimpleNamespace
 from typing import Any, Callable, Dict, List
 
 from src.legal_rag.contracts.results import LegalAnswer, LegalSearchResult
@@ -14,6 +15,10 @@ try:
     from ..api.schemas import ChatRequest, ChatResponse, SearchRequest, SearchResponse
 except ImportError:
     from api.schemas import ChatRequest, ChatResponse, SearchRequest, SearchResponse
+
+
+DOCUMENT_SCOPE_CURRENT_SESSION = "current_session"
+DOCUMENT_SCOPE_ALL_USER_DOCS = "all_user_docs"
 
 
 def _intent_value(intent_result: Any) -> str:
@@ -66,6 +71,34 @@ class _SharedRuntimeBase:
         value = str(mode or "legal").strip().lower()
         return value if value in {"legal", "user", "hybrid"} else "legal"
 
+    @staticmethod
+    def _normalize_document_scope(scope: str | None) -> str:
+        value = str(scope or DOCUMENT_SCOPE_CURRENT_SESSION).strip().lower()
+        if value == DOCUMENT_SCOPE_ALL_USER_DOCS:
+            return DOCUMENT_SCOPE_ALL_USER_DOCS
+        return DOCUMENT_SCOPE_CURRENT_SESSION
+
+    @staticmethod
+    def _original_query_rewrite_result(question: str, query_mode: str) -> Any:
+        original_query = str(question or "").strip()
+        return SimpleNamespace(
+            queries=[original_query],
+            retrieval_query_set=[original_query],
+            status="disabled",
+            rewrite_used=False,
+            fallback_reason="user_docs_original_only",
+            rewrite_strategy="original_only",
+            quality_passed=True,
+            retrieval_query_plan=[{"query": original_query, "source": "original", "weight": 1.0}],
+            query_facets={},
+            debug_payload={
+                "user_query_strategy": "original_only",
+                "query_mode_requested": str(query_mode or "original"),
+            },
+            missing_numbers=[],
+            latency_ms=0.0,
+        )
+
     def _use_reranker(self, request: SearchRequest | ChatRequest) -> bool:
         return bool(
             request.use_reranker
@@ -101,6 +134,7 @@ class _SharedRuntimeBase:
         used_reranker: bool,
         per_subquery_hits: List[Dict[str, Any]],
         retrieval_union_count: int,
+        retrieval_debug: Dict[str, Any] | None = None,
         graph_expansion_used: bool = False,
         graph_mode: str = "none",
         pipeline: Any = None,
@@ -140,6 +174,7 @@ class _SharedRuntimeBase:
             "query_facets": dict(getattr(rewrite_result, "query_facets", {}) or {}),
             "rewrite_debug": dict(getattr(rewrite_result, "debug_payload", {}) or {}),
             "rewrite_queries_compact": rewrite_queries_compact,
+            "retrieval_debug": dict(retrieval_debug or {}),
         }
 
     @staticmethod
@@ -170,6 +205,7 @@ class _SharedRuntimeBase:
             retrieval_query_plan=list(meta["retrieval_query_plan"]),
             query_facets=dict(meta["query_facets"]),
             rewrite_debug=dict(meta["rewrite_debug"]),
+            retrieval_debug=dict(meta.get("retrieval_debug", {}) or {}),
         )
 
     @staticmethod
@@ -208,7 +244,152 @@ class _SharedRuntimeBase:
             retrieval_query_plan=list(meta["retrieval_query_plan"]),
             query_facets=dict(meta["query_facets"]),
             rewrite_debug=dict(meta["rewrite_debug"]),
+            retrieval_debug=dict(meta.get("retrieval_debug", {}) or {}),
         )
+
+    @staticmethod
+    def _document_stats(
+        *,
+        user_store: Any,
+        user_id: str,
+        session_id: str | None,
+        document_scope: str,
+    ) -> Dict[str, Any]:
+        get_documents = getattr(user_store, "get_user_documents", None)
+        all_documents = list(get_documents(user_id) or []) if callable(get_documents) else []
+        if document_scope == DOCUMENT_SCOPE_ALL_USER_DOCS:
+            scoped_documents = list(all_documents)
+        else:
+            scoped_documents = [
+                document
+                for document in all_documents
+                if str(getattr(document, "session_id", None) or "") == str(session_id or "")
+            ]
+
+        def _count(items: List[Any], status: str) -> int:
+            return sum(1 for item in items if str(getattr(item, "status", "") or "").lower() == status)
+
+        return {
+            "scoped_documents": scoped_documents,
+            "all_documents": all_documents,
+            "ready_doc_count_in_scope": _count(scoped_documents, "ready"),
+            "ready_doc_count_total": _count(all_documents, "ready"),
+            "running_doc_count_in_scope": _count(scoped_documents, "running"),
+            "failed_doc_count_in_scope": _count(scoped_documents, "failed"),
+        }
+
+    @staticmethod
+    def _no_result_reason(
+        *,
+        document_scope: str,
+        ready_doc_count_in_scope: int,
+        ready_doc_count_total: int,
+        running_doc_count_in_scope: int,
+        failed_doc_count_in_scope: int,
+        has_results: bool,
+    ) -> str:
+        if has_results:
+            return ""
+        if ready_doc_count_in_scope > 0:
+            return "retrieval_miss"
+        if (
+            document_scope == DOCUMENT_SCOPE_CURRENT_SESSION
+            and ready_doc_count_in_scope == 0
+            and ready_doc_count_total > 0
+        ):
+            return "scope_filtered_out"
+        if running_doc_count_in_scope > 0:
+            return "ingest_in_progress"
+        if failed_doc_count_in_scope > 0:
+            return "ingest_failed"
+        return "no_ready_docs_in_scope"
+
+    def _build_retrieval_debug(
+        self,
+        *,
+        user_store: Any,
+        user_id: str,
+        session_id: str | None,
+        document_scope: str,
+        search_strategy_used: str,
+        has_results: bool,
+    ) -> Dict[str, Any]:
+        stats = self._document_stats(
+            user_store=user_store,
+            user_id=user_id,
+            session_id=session_id,
+            document_scope=document_scope,
+        )
+        no_result_reason = self._no_result_reason(
+            document_scope=document_scope,
+            ready_doc_count_in_scope=int(stats["ready_doc_count_in_scope"]),
+            ready_doc_count_total=int(stats["ready_doc_count_total"]),
+            running_doc_count_in_scope=int(stats["running_doc_count_in_scope"]),
+            failed_doc_count_in_scope=int(stats["failed_doc_count_in_scope"]),
+            has_results=has_results,
+        )
+        scope_broaden_available = bool(
+            document_scope == DOCUMENT_SCOPE_CURRENT_SESSION
+            and int(stats["ready_doc_count_in_scope"]) == 0
+            and int(stats["ready_doc_count_total"]) > 0
+        )
+        return {
+            "document_scope": document_scope,
+            "ready_doc_count_in_scope": int(stats["ready_doc_count_in_scope"]),
+            "ready_doc_count_total": int(stats["ready_doc_count_total"]),
+            "search_strategy_used": str(search_strategy_used or "original_hybrid"),
+            "no_result_reason": no_result_reason,
+            "scope_broaden_available": scope_broaden_available,
+            "user_query_strategy": "original_only",
+        }
+
+    def _expand_user_section_context(
+        self,
+        *,
+        search_results: List[SearchResult],
+        user_store: Any,
+        user_id: str,
+        session_id: str | None,
+        document_scope: str,
+        limit_per_section: int = 6,
+        parent_limit: int = 3,
+    ) -> List[SearchResult]:
+        if not search_results:
+            return list(search_results or [])
+        fetch_section_context = getattr(user_store, "fetch_section_context", None)
+        if not callable(fetch_section_context):
+            return list(search_results or [])
+
+        seen_chunk_ids = {str(result.chunk_id) for result in search_results}
+        expanded_results = list(search_results)
+        visited_sections = set()
+
+        for result in list(search_results):
+            if len(visited_sections) >= max(1, int(parent_limit or 1)):
+                break
+            metadata = dict(getattr(result, "metadata", {}) or {})
+            if str(metadata.get("source_type") or "") != "user":
+                continue
+            parent_section_id = str(metadata.get("parent_section_id") or "").strip()
+            if not parent_section_id or parent_section_id in visited_sections:
+                continue
+            visited_sections.add(parent_section_id)
+            sibling_hits = fetch_section_context(
+                user_id=user_id,
+                session_id=session_id,
+                parent_section_id=parent_section_id,
+                document_scope=document_scope,
+                limit=limit_per_section,
+            )
+            base_score = float(result.score or 0.0)
+            for offset, sibling_hit in enumerate(list(sibling_hits or []), start=1):
+                sibling_result = self._normalize_user_hit(sibling_hit)
+                if sibling_result.chunk_id in seen_chunk_ids:
+                    continue
+                sibling_result.score = max(0.0, base_score - (offset * 0.001))
+                expanded_results.append(sibling_result)
+                seen_chunk_ids.add(sibling_result.chunk_id)
+        return expanded_results
 
     def _get_user_store_instance(self):
         if self._get_user_store is None:
@@ -218,6 +399,11 @@ class _SharedRuntimeBase:
     @staticmethod
     def _user_collection_name(user_store: Any) -> str:
         indexer = getattr(user_store, "_indexer", None)
+        if indexer is None:
+            try:
+                indexer = getattr(user_store, "indexer", None)
+            except Exception:
+                indexer = None
         if indexer is not None:
             try:
                 indexer.ensure_collection()
@@ -258,44 +444,60 @@ class _SharedRuntimeBase:
         self,
         *,
         question: str,
-        retrieval_queries: List[str],
         user_id: str,
         session_id: str | None,
         top_k: int,
         use_reranker: bool,
         user_store: Any,
         pipeline: Any,
-    ) -> tuple[List[SearchResult], List[Dict[str, Any]], float]:
+        document_scope: str,
+    ) -> tuple[List[SearchResult], List[Dict[str, Any]], int, str]:
         retrieval_pool_k = 100 if use_reranker else max(top_k * 2, top_k)
         rankings: List[List[SearchResult]] = []
         per_subquery_hits: List[Dict[str, Any]] = []
-        seen_queries = set()
+        query_text = str(question or "").strip()
+        search_strategy_used = "user_hybrid_original"
+        ranking: List[SearchResult] = []
 
-        for query in list(retrieval_queries or [question]):
-            query_text = str(query or "").strip()
-            if not query_text:
-                continue
-            lowered = query_text.lower()
-            if lowered in seen_queries:
-                continue
-            seen_queries.add(lowered)
-            hits = user_store.search(
+        if query_text:
+            hybrid_hits = user_store.search(
                 query=query_text,
                 user_id=user_id,
                 session_id=session_id,
                 top_k=retrieval_pool_k,
                 use_hybrid=True,
+                document_scope=document_scope,
+                dense_only=False,
             )
-            ranking = [self._normalize_user_hit(hit) for hit in list(hits or [])]
-            per_subquery_hits.append({"query": query_text, "hits": len(ranking)})
+            ranking = [self._normalize_user_hit(hit) for hit in list(hybrid_hits or [])]
             if ranking:
+                per_subquery_hits.append(
+                    {"query": query_text, "hits": len(ranking), "strategy": "user_hybrid_original"}
+                )
                 rankings.append(ranking)
+            else:
+                dense_hits = user_store.search(
+                    query=query_text,
+                    user_id=user_id,
+                    session_id=session_id,
+                    top_k=retrieval_pool_k,
+                    use_hybrid=False,
+                    document_scope=document_scope,
+                    dense_only=True,
+                )
+                ranking = [self._normalize_user_hit(hit) for hit in list(dense_hits or [])]
+                search_strategy_used = "user_hybrid_original_then_dense_only"
+                per_subquery_hits.append(
+                    {"query": query_text, "hits": len(ranking), "strategy": search_strategy_used}
+                )
+                if ranking:
+                    rankings.append(ranking)
 
         if not rankings:
-            return [], per_subquery_hits, 0.0
+            return [], per_subquery_hits, 0, search_strategy_used
 
         merged_results = pipeline._merge_query_rankings_rrf(rankings, limit=retrieval_pool_k)
-        return merged_results, per_subquery_hits, float(len(merged_results))
+        return merged_results, per_subquery_hits, int(len(merged_results)), search_strategy_used
 
     @staticmethod
     def _combine_per_subquery_hits(
@@ -333,27 +535,69 @@ class _SharedRuntimeBase:
         return results
 
     @staticmethod
-    def _empty_chat_message(mode: str, doc_count: int) -> str:
+    def _empty_chat_message(mode: str, retrieval_debug: Dict[str, Any]) -> str:
+        ready_in_scope = int(retrieval_debug.get("ready_doc_count_in_scope", 0) or 0)
+        ready_total = int(retrieval_debug.get("ready_doc_count_total", 0) or 0)
+        scope_broaden_available = bool(retrieval_debug.get("scope_broaden_available", False))
+        no_result_reason = str(retrieval_debug.get("no_result_reason", "") or "")
+        document_scope = str(retrieval_debug.get("document_scope", DOCUMENT_SCOPE_CURRENT_SESSION) or DOCUMENT_SCOPE_CURRENT_SESSION)
+
         if mode == "user":
-            if doc_count == 0:
+            if no_result_reason == "scope_filtered_out":
                 return (
-                    "❌ Bạn chưa tải lên tài liệu nào. "
-                    "Vui lòng tải lên tài liệu trước khi tìm kiếm trong 'Tài liệu của tôi'."
+                    "❌ Phiên làm việc hiện tại chưa có tài liệu `ready`, nhưng tài khoản của bạn vẫn còn tài liệu sẵn sàng ở phiên khác.\n\n"
+                    "💡 Gợi ý:\n"
+                    "• Đổi phạm vi tìm kiếm sang `Tất cả tài liệu của tôi`\n"
+                    "• Hoặc tải lại tài liệu vào phiên hiện tại nếu muốn giữ phạm vi hẹp"
+                )
+            if no_result_reason == "ingest_in_progress":
+                return (
+                    "⏳ Tài liệu trong phạm vi đang được xử lý. "
+                    "Hãy đợi ingest hoàn tất rồi thử lại."
+                )
+            if no_result_reason == "ingest_failed":
+                return (
+                    "❌ Có tài liệu trong phạm vi này bị ingest thất bại. "
+                    "Hãy kiểm tra lỗi tải lên hoặc tải lại tài liệu."
+                )
+            if no_result_reason == "no_ready_docs_in_scope":
+                scope_label = "phiên hiện tại" if document_scope == DOCUMENT_SCOPE_CURRENT_SESSION else "toàn bộ tài liệu của bạn"
+                return (
+                    f"❌ Không có tài liệu `ready` trong {scope_label}.\n\n"
+                    "💡 Gợi ý:\n"
+                    "• Tải lên tài liệu mới hoặc chờ ingest hoàn tất\n"
+                    "• Kiểm tra tài liệu có bị lỗi xử lý không"
                 )
             return (
-                f"❌ Không tìm thấy nội dung phù hợp trong {doc_count} tài liệu của bạn.\n\n"
+                f"❌ Không tìm thấy nội dung phù hợp trong phạm vi hiện tại "
+                f"({ready_in_scope} tài liệu `ready`, tổng cộng {ready_total}).\n\n"
                 "💡 Gợi ý:\n"
-                "• Chuyển sang chế độ 'Kết hợp' (tìm cả tài liệu của bạn và văn bản luật)\n"
-                "• Chuyển sang 'Văn bản pháp luật' (tìm trong kho luật)\n"
-                "• Đặt câu hỏi khác liên quan đến nội dung tài liệu đã tải lên"
+                "• Đặt câu hỏi sát hơn với nội dung tài liệu\n"
+                "• Dùng cụm từ xuất hiện trực tiếp trong tài liệu\n"
+                + (
+                    "• Đổi sang `Tất cả tài liệu của tôi`\n"
+                    if scope_broaden_available
+                    else ""
+                )
             )
         if mode == "hybrid":
+            if no_result_reason == "scope_filtered_out":
+                return (
+                    "❌ Kho luật không có kết quả phù hợp và phiên hiện tại cũng chưa có tài liệu `ready`.\n\n"
+                    "💡 Gợi ý:\n"
+                    "• Đổi phạm vi sang `Tất cả tài liệu của tôi`\n"
+                    "• Hoặc hỏi lại bằng thuật ngữ pháp lý cụ thể hơn"
+                )
             return (
-                f"❌ Không tìm thấy tài liệu phù hợp (đã tìm trong {doc_count} tài liệu riêng của bạn và kho luật).\n\n"
+                f"❌ Không tìm thấy tài liệu phù hợp (user-doc `ready` trong scope: {ready_in_scope}, tổng: {ready_total}, đã tìm cả kho luật).\n\n"
                 "💡 Gợi ý:\n"
                 "• Đặt câu hỏi rõ ràng hơn với từ khóa cụ thể\n"
                 "• Kiểm tra chính tả và ngữ pháp\n"
-                "• Tải lên thêm tài liệu liên quan nếu cần"
+                + (
+                    "• Đổi sang `Tất cả tài liệu của tôi`\n"
+                    if scope_broaden_available
+                    else ""
+                )
             )
         return (
             "❌ Không tìm thấy văn bản pháp luật phù hợp.\n\n"
@@ -395,6 +639,9 @@ class SharedLegalSearchService(_SharedRuntimeBase):
     def run(self, request: SearchRequest) -> SearchResponse:
         mode, query_mode, pipeline, contract, query_rewrite_service, model_profile = self._prepare_runtime(request)
         use_reranker = self._use_reranker(request)
+        document_scope = self._normalize_document_scope(
+            request.document_scope if mode in {"user", "hybrid"} else None
+        )
 
         if mode == "legal":
             result = pipeline.search(
@@ -422,23 +669,25 @@ class SharedLegalSearchService(_SharedRuntimeBase):
 
         if mode == "user":
             pipeline.initialize()
-            rewrite_result = query_rewrite_service.rewrite(request.query)
+            rewrite_result = self._original_query_rewrite_result(request.query, query_mode)
             intent_result = pipeline.intent_classifier.classify(request.query)
-            retrieval_queries = list(
-                getattr(rewrite_result, "retrieval_query_set", [])
-                or getattr(rewrite_result, "queries", [])
-                or [request.query]
-            )
             start_retrieval = time.time()
-            search_results, user_hits, union_count = self._retrieve_user_results(
+            search_results, user_hits, union_count, search_strategy_used = self._retrieve_user_results(
                 question=request.query,
-                retrieval_queries=retrieval_queries,
                 user_id=request.user_id,
                 session_id=request.session_id,
                 top_k=request.top_k,
                 use_reranker=use_reranker,
                 user_store=user_store,
                 pipeline=pipeline,
+                document_scope=document_scope,
+            )
+            search_results = self._expand_user_section_context(
+                search_results=search_results,
+                user_store=user_store,
+                user_id=request.user_id,
+                session_id=request.session_id,
+                document_scope=document_scope,
             )
             rerank_time = 0.0
             used_reranker = False
@@ -461,6 +710,14 @@ class SharedLegalSearchService(_SharedRuntimeBase):
                 used_reranker=used_reranker,
                 per_subquery_hits=user_hits,
                 retrieval_union_count=int(union_count),
+                retrieval_debug=self._build_retrieval_debug(
+                    user_store=user_store,
+                    user_id=request.user_id,
+                    session_id=request.session_id,
+                    document_scope=document_scope,
+                    search_strategy_used=search_strategy_used,
+                    has_results=bool(search_results),
+                ),
                 pipeline=pipeline,
             )
             result = self._build_search_contract(search_results, meta)
@@ -484,17 +741,23 @@ class SharedLegalSearchService(_SharedRuntimeBase):
             graph_expand_docs=20,
             query_rewrite_service=query_rewrite_service,
         )
-        retrieval_queries = list(legal_meta.get("retrieval_query_set", []) or [request.query])
         user_start = time.time()
-        user_results, user_hits, _ = self._retrieve_user_results(
+        user_results, user_hits, _, search_strategy_used = self._retrieve_user_results(
             question=request.query,
-            retrieval_queries=retrieval_queries,
             user_id=request.user_id,
             session_id=request.session_id,
             top_k=request.top_k,
             use_reranker=use_reranker,
             user_store=user_store,
             pipeline=pipeline,
+            document_scope=document_scope,
+        )
+        user_results = self._expand_user_section_context(
+            search_results=user_results,
+            user_store=user_store,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            document_scope=document_scope,
         )
         merged_results = pipeline._merge_results(legal_results, user_results)
         rerank_time = 0.0
@@ -517,6 +780,14 @@ class SharedLegalSearchService(_SharedRuntimeBase):
             user_hits,
         )
         meta["retrieval_union_count"] = len(pipeline._merge_results(legal_results, user_results))
+        meta["retrieval_debug"] = self._build_retrieval_debug(
+            user_store=user_store,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            document_scope=document_scope,
+            search_strategy_used=search_strategy_used,
+            has_results=bool(user_results),
+        )
         result = self._build_search_contract(merged_results, meta)
         payload = self._build_search_payload(
             result,
@@ -610,6 +881,9 @@ class SharedLegalChatService(_SharedRuntimeBase):
         mode, query_mode, pipeline, contract, query_rewrite_service, model_profile = self._prepare_runtime(request)
         use_reranker = self._use_reranker(request)
         llm_client = self._build_remote_llm(request.model_profile_id)
+        document_scope = self._normalize_document_scope(
+            request.document_scope if mode in {"user", "hybrid"} else None
+        )
 
         if mode == "legal":
             fallback_used = False
@@ -666,6 +940,7 @@ class SharedLegalChatService(_SharedRuntimeBase):
                     retrieval_query_plan=list(search_result.retrieval_query_plan),
                     query_facets=dict(search_result.query_facets),
                     rewrite_debug=dict(search_result.rewrite_debug),
+                    retrieval_debug=dict(search_result.retrieval_debug),
                     missing_numbers=list(search_result.missing_numbers),
                     per_subquery_hits=list(search_result.per_subquery_hits),
                     retrieval_union_count=int(search_result.retrieval_union_count),
@@ -691,23 +966,25 @@ class SharedLegalChatService(_SharedRuntimeBase):
 
         if mode == "user":
             pipeline.initialize()
-            rewrite_result = query_rewrite_service.rewrite(request.message)
+            rewrite_result = self._original_query_rewrite_result(request.message, query_mode)
             intent_result = pipeline.intent_classifier.classify(request.message)
-            retrieval_queries = list(
-                getattr(rewrite_result, "retrieval_query_set", [])
-                or getattr(rewrite_result, "queries", [])
-                or [request.message]
-            )
             start_retrieval = time.time()
-            search_results, user_hits, union_count = self._retrieve_user_results(
+            search_results, user_hits, union_count, search_strategy_used = self._retrieve_user_results(
                 question=request.message,
-                retrieval_queries=retrieval_queries,
                 user_id=request.user_id,
                 session_id=request.session_id,
                 top_k=request.top_k,
                 use_reranker=use_reranker,
                 user_store=user_store,
                 pipeline=pipeline,
+                document_scope=document_scope,
+            )
+            search_results = self._expand_user_section_context(
+                search_results=search_results,
+                user_store=user_store,
+                user_id=request.user_id,
+                session_id=request.session_id,
+                document_scope=document_scope,
             )
             rerank_time = 0.0
             used_reranker = False
@@ -730,14 +1007,21 @@ class SharedLegalChatService(_SharedRuntimeBase):
                 used_reranker=used_reranker,
                 per_subquery_hits=user_hits,
                 retrieval_union_count=int(union_count),
+                retrieval_debug=self._build_retrieval_debug(
+                    user_store=user_store,
+                    user_id=request.user_id,
+                    session_id=request.session_id,
+                    document_scope=document_scope,
+                    search_strategy_used=search_strategy_used,
+                    has_results=bool(search_results),
+                ),
                 pipeline=pipeline,
             )
             if not search_results:
-                doc_count = len(user_store.get_user_documents(request.user_id))
                 result = self._build_answer_contract(
                     search_results,
                     meta,
-                    answer=self._empty_chat_message(mode, doc_count),
+                    answer=self._empty_chat_message(mode, dict(meta.get("retrieval_debug", {}) or {})),
                     generation_time=0.0,
                 )
                 payload = self._build_chat_payload(
@@ -783,17 +1067,23 @@ class SharedLegalChatService(_SharedRuntimeBase):
             graph_expand_docs=20,
             query_rewrite_service=query_rewrite_service,
         )
-        retrieval_queries = list(legal_meta.get("retrieval_query_set", []) or [request.message])
         user_start = time.time()
-        user_results, user_hits, _ = self._retrieve_user_results(
+        user_results, user_hits, _, search_strategy_used = self._retrieve_user_results(
             question=request.message,
-            retrieval_queries=retrieval_queries,
             user_id=request.user_id,
             session_id=request.session_id,
             top_k=request.top_k,
             use_reranker=use_reranker,
             user_store=user_store,
             pipeline=pipeline,
+            document_scope=document_scope,
+        )
+        user_results = self._expand_user_section_context(
+            search_results=user_results,
+            user_store=user_store,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            document_scope=document_scope,
         )
         combined_results = pipeline._merge_results(legal_results, user_results)
         rerank_time = 0.0
@@ -816,12 +1106,19 @@ class SharedLegalChatService(_SharedRuntimeBase):
             user_hits,
         )
         meta["retrieval_union_count"] = len(pipeline._merge_results(legal_results, user_results))
+        meta["retrieval_debug"] = self._build_retrieval_debug(
+            user_store=user_store,
+            user_id=request.user_id,
+            session_id=request.session_id,
+            document_scope=document_scope,
+            search_strategy_used=search_strategy_used,
+            has_results=bool(user_results),
+        )
         if not combined_results:
-            doc_count = len(user_store.get_user_documents(request.user_id))
             result = self._build_answer_contract(
                 combined_results,
                 meta,
-                answer=self._empty_chat_message(mode, doc_count),
+                answer=self._empty_chat_message(mode, dict(meta.get("retrieval_debug", {}) or {})),
                 generation_time=0.0,
             )
             payload = self._build_chat_payload(

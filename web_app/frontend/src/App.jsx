@@ -25,6 +25,7 @@ function App() {
   const [messages, setMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchMode, setSearchMode] = useState('hybrid'); // legal, user, hybrid
+  const [documentScope, setDocumentScope] = useState(() => localStorage.getItem('documentScope') || 'current_session');
   const [rerankerEnabled, setRerankerEnabled] = useState(true); // Vietnamese Reranker toggle
   const [modelProfiles, setModelProfiles] = useState([]);
   const [selectedModelProfileId, setSelectedModelProfileId] = useState(() => localStorage.getItem('selectedModelProfileId') || 'qwen3_5_9b_ollama_remote');
@@ -69,6 +70,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('queryMode', queryMode);
   }, [queryMode]);
+
+  useEffect(() => {
+    localStorage.setItem('documentScope', documentScope);
+  }, [documentScope]);
 
   useEffect(() => {
     localStorage.setItem('labTab', labTab);
@@ -232,6 +237,7 @@ function App() {
         retrievalQueryPlan: msg.retrieval_query_plan || [],
         rewriteContext: msg.rewrite_context || null,
         rewriteDebug: msg.rewrite_debug || null,
+        retrievalDebug: msg.retrieval_debug || null,
         perSubqueryHits: msg.per_subquery_hits || [],
         retrievalUnionCount: msg.retrieval_union_count,
         fallbackUsed: msg.fallback_used,
@@ -281,6 +287,7 @@ function App() {
             use_reranker: rerankerEnabled,
             model_profile_id: selectedModelProfileId,
             query_mode: queryMode,
+            document_scope: documentScope,
             response_mode: 'chat',
             require_active_only: requireActiveOnly,
             use_graph: false,
@@ -317,6 +324,7 @@ function App() {
           retrievalQueryPlan: data.retrieval_query_plan || [],
           rewriteContext: data.rewrite_context || null,
           rewriteDebug: data.rewrite_debug || null,
+          retrievalDebug: data.retrieval_debug || null,
           perSubqueryHits: data.per_subquery_hits || [],
           retrievalUnionCount: data.retrieval_union_count,
           fallbackUsed: data.fallback_used,
@@ -362,8 +370,12 @@ function App() {
           user_id: userId,
           session_id: sessionId,
           search_mode: searchMode,
-          top_k: 10,
+          top_k: topK,
           use_reranker: rerankerEnabled,
+          model_profile_id: selectedModelProfileId,
+          query_mode: queryMode,
+          document_scope: documentScope,
+          require_active_only: requireActiveOnly,
         }),
       });
 
@@ -381,6 +393,25 @@ function App() {
         totalTime: data.total_time,
         rerankTime: data.rerank_time,
         rerankerUsed: data.reranker_used,
+        modelProfileId: data.model_profile_id || selectedModelProfileId,
+        modelProfileLabel: modelProfiles.find((item) => item.id === (data.model_profile_id || selectedModelProfileId))?.label,
+        queryMode: data.query_mode || queryMode,
+        rewriteUsed: data.rewrite_used,
+        rewriteStatus: data.rewrite_status,
+        rewriteFallbackReason: data.rewrite_fallback_reason,
+        rewriteStrategy: data.rewrite_strategy,
+        rewriteQualityPassed: data.rewrite_quality_passed,
+        rewrittenQueries: data.rewritten_queries || [],
+        retrievalQuerySet: data.retrieval_query_set || [],
+        retrievalQueryPlan: data.retrieval_query_plan || [],
+        rewriteContext: data.rewrite_context || null,
+        rewriteDebug: data.rewrite_debug || null,
+        retrievalDebug: data.retrieval_debug || null,
+        perSubqueryHits: data.per_subquery_hits || [],
+        retrievalUnionCount: data.retrieval_union_count,
+        fallbackUsed: data.fallback_used,
+        fallbackError: data.fallback_error,
+        collection: data.collection,
         query: content.trim(), // Store query for quality details
         // Quality metrics from backend
         qualityGrade: data.quality_grade,
@@ -703,6 +734,8 @@ ${new Date().toLocaleString('vi-VN')}
         systemStatus={systemStatus}
         searchMode={searchMode}
         setSearchMode={setSearchMode}
+        documentScope={documentScope}
+        setDocumentScope={setDocumentScope}
         rerankerEnabled={rerankerEnabled}
         setRerankerEnabled={updateRerankerSettings}
         currentView={currentView}

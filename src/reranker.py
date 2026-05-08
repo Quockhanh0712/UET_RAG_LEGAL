@@ -13,6 +13,7 @@ Supports:
 
 import os
 import logging
+from threading import Lock
 from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
 import time
@@ -69,44 +70,48 @@ class LegalReranker:
         self.tokenizer = None
         self._loaded = False
         self.device = "cpu"
+        self._load_lock = Lock()
     
     def load(self):
         """Load the reranker model"""
         if self._loaded:
             return
-        
-        import torch
-        from transformers import AutoTokenizer, AutoModelForSequenceClassification
-        
-        logger.info(f"[RERANKER] Loading {self.model_name}...")
-        start = time.time()
-        
-        try:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            
-            # Determine device first
-            if self.use_gpu and torch.cuda.is_available():
-                self.device = "cuda"
-            else:
-                self.device = "cpu"
-            
-            # Load model directly to target device to avoid meta tensor issues
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                self.model_name,
-                torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
-                low_cpu_mem_usage=True
-            ).to(self.device)
-            
-            self.model.eval()
-            
-            self._loaded = True
-            elapsed = time.time() - start
-            logger.info(f"[RERANKER] Loaded on {self.device} in {elapsed:.2f}s")
-            
-        except Exception as e:
-            logger.error(f"[RERANKER] Failed to load model: {e}")
-            # Will use fallback scoring
-            self._loaded = False
+        with self._load_lock:
+            if self._loaded:
+                return
+
+            import torch
+            from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+            logger.info(f"[RERANKER] Loading {self.model_name}...")
+            start = time.time()
+
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+
+                # Determine device first
+                if self.use_gpu and torch.cuda.is_available():
+                    self.device = "cuda"
+                else:
+                    self.device = "cpu"
+
+                # Load model directly to target device to avoid meta tensor issues
+                self.model = AutoModelForSequenceClassification.from_pretrained(
+                    self.model_name,
+                    torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
+                    low_cpu_mem_usage=True
+                ).to(self.device)
+
+                self.model.eval()
+
+                self._loaded = True
+                elapsed = time.time() - start
+                logger.info(f"[RERANKER] Loaded on {self.device} in {elapsed:.2f}s")
+
+            except Exception as e:
+                logger.error(f"[RERANKER] Failed to load model: {e}")
+                # Will use fallback scoring
+                self._loaded = False
     
     def compute_scores(
         self,
@@ -299,7 +304,7 @@ class HybridReranker:
         
         self.reranker = None
         if use_reranker:
-            self.reranker = LegalReranker(model_name=reranker_model)
+            self.reranker = get_legal_reranker(model_name=reranker_model)
     
     def fuse_and_rerank(
         self,
@@ -387,8 +392,37 @@ class HybridReranker:
             ]
 
 
-# Singleton instance
+# Singleton instances
 _reranker_instance = None
+_legal_reranker_registry: Dict[tuple[str, bool, int, int], LegalReranker] = {}
+_legal_reranker_registry_lock = Lock()
+
+
+def get_legal_reranker(
+    model_name: str = RERANKER_MODEL,
+    use_gpu: bool = True,
+    max_length: int = RERANKER_MAX_LENGTH,
+    batch_size: int = RERANKER_BATCH_SIZE,
+) -> LegalReranker:
+    """Get or create a process-wide LegalReranker singleton keyed by runtime config."""
+    key = (str(model_name), bool(use_gpu), int(max_length), int(batch_size))
+    cached = _legal_reranker_registry.get(key)
+    if cached is not None:
+        return cached
+
+    with _legal_reranker_registry_lock:
+        cached = _legal_reranker_registry.get(key)
+        if cached is not None:
+            return cached
+
+        instance = LegalReranker(
+            model_name=model_name,
+            use_gpu=use_gpu,
+            max_length=max_length,
+            batch_size=batch_size,
+        )
+        _legal_reranker_registry[key] = instance
+        return instance
 
 
 def get_reranker(use_reranker: bool = True) -> Optional[HybridReranker]:

@@ -30,9 +30,23 @@ The current shared legal demo defaults to:
 - `src/`: core legal pipeline, rewrite, retrieval, reranker, runtime services
 - `web_app/backend/`: FastAPI backend
 - `web_app/frontend/`: React frontend
-- `scripts/`: indexing and research scripts
-- `docs/`: project docs
-- `tests/`: tests
+- `tests/`: unit and integration tests
+- `data/`: operational and research data artifacts
+- `scripts/ops/`: operational indexing/upload scripts used by the current runtime
+- `scripts/research/`: benchmark, evaluation, and exploratory scripts
+- `scripts/migrations/`: collection/data migration utilities
+- `scripts/legacy/`: retained legacy loaders that are no longer the primary path
+- `docs/`: live architecture and onboarding docs
+- `docs/archive/`: historical plans, refactors, demos, and source snapshots
+
+Live docs:
+
+- `docs/LEGAL_SYSTEM_OVERVIEW.md`
+- `docs/LEGAL_REWRITE_V2.md`
+- `docs/LEGAL_PIPELINE_CURRENT_STATE.md`
+- `docs/BACKEND_ARCHITECTURE_MAINTENANCE.md`
+
+Generated/cache directories such as `__pycache__/`, `.pytest_cache/`, `web_app/frontend/dist/`, and `web_app/frontend/tmp_frontend_vite.log` are not part of the repo source-of-truth and can be removed safely.
 
 ## 4. Prerequisites
 
@@ -86,6 +100,8 @@ OLLAMA_QWEN3_ENABLED=false
 Notes:
 - `BACKEND_USE_SHARED_LEGAL_PIPELINE=true` is mandatory for the shared backend path.
 - With the flag on, the shared runtime serves `search_mode=legal|user|hybrid`.
+- Backend startup no longer preloads the legacy SentenceTransformer path from `web_app/backend/main.py`.
+- The active embedding model is resolved from the embedding contract, with default `truro7/vn-law-embedding`.
 - For `search_mode=user|hybrid`, user-document retrieval is user-wide by default:
   - the filter defaults to `user_id`
   - `session_id` is still stored for upload lineage, history, status, artifacts, and debug metadata

@@ -14,6 +14,7 @@ __pycache__/
 
 web_app/frontend/node_modules/
 web_app/frontend/dist/
+web_app/frontend/tmp_frontend_vite.log
 
 data/**/*.parquet
 data/qdrant_db/

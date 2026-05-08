@@ -13,6 +13,7 @@ class ChatRequest(BaseModel):
     user_id: str = "default_user"
     session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     search_mode: str = "hybrid"
+    document_scope: str = "current_session"
     top_k: int = 10
     use_reranker: Optional[bool] = None
     model_profile_id: Optional[str] = None
@@ -49,6 +50,7 @@ class ChatResponse(BaseModel):
     retrieval_query_plan: List[Dict[str, Any]] = Field(default_factory=list)
     rewrite_context: Dict[str, Any] = Field(default_factory=dict)
     rewrite_debug: Dict[str, Any] = Field(default_factory=dict)
+    retrieval_debug: Dict[str, Any] = Field(default_factory=dict)
     per_subquery_hits: List[Dict] = Field(default_factory=list)
     retrieval_union_count: int = 0
     fallback_used: bool = False
@@ -61,6 +63,7 @@ class SearchRequest(BaseModel):
     user_id: str = "default_user"
     session_id: Optional[str] = None
     search_mode: str = "hybrid"
+    document_scope: str = "current_session"
     top_k: int = 10
     use_reranker: Optional[bool] = None
     model_profile_id: Optional[str] = None
@@ -86,6 +89,7 @@ class SearchResponse(BaseModel):
     retrieval_query_plan: List[Dict[str, Any]] = Field(default_factory=list)
     rewrite_context: Dict[str, Any] = Field(default_factory=dict)
     rewrite_debug: Dict[str, Any] = Field(default_factory=dict)
+    retrieval_debug: Dict[str, Any] = Field(default_factory=dict)
     per_subquery_hits: List[Dict] = Field(default_factory=list)
     retrieval_union_count: int = 0
     fallback_used: bool = False

@@ -16,6 +16,7 @@ Usage:
 import os
 import time
 import logging
+from threading import Lock
 from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass
 
@@ -96,48 +97,52 @@ class VietnameseReranker:
         self.tokenizer = None
         self.device = "cpu"
         self._loaded = False
+        self._load_lock = Lock()
     
     def load(self) -> bool:
         """Load reranker model"""
         if self._loaded:
-            logger.info("[RERANKER] Already loaded")
             return True
-        
-        try:
-            from transformers import AutoModelForSequenceClassification, AutoTokenizer
-            
-            logger.info(f"[RERANKER] Loading {self.model_name}...")
-            start = time.time()
-            
-            # Load tokenizer
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-            
-            # Load model
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                self.model_name,
-                torch_dtype=torch.float16 if self.use_gpu and torch.cuda.is_available() else torch.float32
-            )
-            
-            # Move to GPU if available
-            if self.use_gpu and torch.cuda.is_available():
-                self.device = "cuda"
-                self.model = self.model.to(self.device)
-                logger.info(f"[RERANKER] Using GPU: {torch.cuda.get_device_name(0)}")
-            else:
-                self.device = "cpu"
-                logger.info("[RERANKER] Using CPU")
-            
-            self.model.eval()
-            self._loaded = True
-            
-            elapsed = time.time() - start
-            logger.info(f"[RERANKER] Loaded in {elapsed:.2f}s")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"[RERANKER] Failed to load: {e}")
-            return False
+
+        with self._load_lock:
+            if self._loaded:
+                return True
+
+            try:
+                from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+                logger.info(f"[RERANKER] Loading {self.model_name}...")
+                start = time.time()
+
+                # Load tokenizer
+                self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+
+                # Load model
+                self.model = AutoModelForSequenceClassification.from_pretrained(
+                    self.model_name,
+                    torch_dtype=torch.float16 if self.use_gpu and torch.cuda.is_available() else torch.float32
+                )
+
+                # Move to GPU if available
+                if self.use_gpu and torch.cuda.is_available():
+                    self.device = "cuda"
+                    self.model = self.model.to(self.device)
+                    logger.info(f"[RERANKER] Using GPU: {torch.cuda.get_device_name(0)}")
+                else:
+                    self.device = "cpu"
+                    logger.info("[RERANKER] Using CPU")
+
+                self.model.eval()
+                self._loaded = True
+
+                elapsed = time.time() - start
+                logger.info(f"[RERANKER] Loaded in {elapsed:.2f}s")
+
+                return True
+
+            except Exception as e:
+                logger.error(f"[RERANKER] Failed to load: {e}")
+                return False
     
     def is_loaded(self) -> bool:
         """Check if model is loaded"""
@@ -438,16 +443,20 @@ class AnswerScorer:
 # Singleton instances
 _reranker_instance: Optional[VietnameseReranker] = None
 _scorer_instance: Optional[AnswerScorer] = None
+_singleton_lock = Lock()
 
 
 def get_reranker() -> VietnameseReranker:
     """Get singleton reranker instance"""
     global _reranker_instance
-    
-    if _reranker_instance is None:
-        _reranker_instance = VietnameseReranker(use_gpu=True)
-        _reranker_instance.load()
-    
+    if _reranker_instance is not None:
+        return _reranker_instance
+
+    with _singleton_lock:
+        if _reranker_instance is None:
+            _reranker_instance = VietnameseReranker(use_gpu=True)
+            _reranker_instance.load()
+
     return _reranker_instance
 
 

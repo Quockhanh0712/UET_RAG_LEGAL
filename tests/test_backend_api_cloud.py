@@ -47,10 +47,11 @@ def qdrant_client():
 
 @pytest.fixture(scope="module")
 def embed_model():
-    """Get embedding model from backend."""
-    import main
-    main._embedding_model = None
-    return main.get_embedding_model()
+    """Get embedding model from shared embeddings module."""
+    from src.embeddings import get_model
+
+    get_model.cache_clear()
+    return get_model()
 
 
 @pytest.fixture(scope="module")
@@ -221,7 +222,6 @@ class TestEndToEndSearch:
         import main
         # Reset singletons  
         main._qdrant_client = None
-        main._embedding_model = None
         main._bm25_encoder = None
         
         results = main.search_legal_collection(
@@ -322,3 +322,5 @@ class TestPromptBuilding:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s", "--tb=short"])
+
+

@@ -60,6 +60,13 @@ class ArtifactStore:
                 handle.write(json.dumps(chunk.to_dict(), ensure_ascii=False) + "\n")
         return target
 
+    def save_json(self, artifact_dir: Path, filename: str, payload: object, subdir: str = "") -> Path:
+        directory = Path(artifact_dir) / subdir if subdir else Path(artifact_dir)
+        directory.mkdir(parents=True, exist_ok=True)
+        target = directory / filename
+        target.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        return target
+
     def ensure_subdir(self, artifact_dir: Path, name: str) -> Path:
         directory = Path(artifact_dir) / name
         directory.mkdir(parents=True, exist_ok=True)

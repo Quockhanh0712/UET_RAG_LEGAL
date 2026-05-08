@@ -46,7 +46,8 @@ body {
   @apply mb-3;
 }
 
-.markdown-content ul, .markdown-content ol {
+.markdown-content ul,
+.markdown-content ol {
   @apply ml-4 mb-3;
 }
 
@@ -90,7 +91,8 @@ body {
   @apply w-full border-collapse mb-3;
 }
 
-.markdown-content th, .markdown-content td {
+.markdown-content th,
+.markdown-content td {
   @apply border border-primary-200 dark:border-primary-700 px-3 py-2 text-left;
 }
 
@@ -103,6 +105,7 @@ body {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -113,6 +116,7 @@ body {
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -134,9 +138,20 @@ body {
 
 /* Loading animation */
 @keyframes thinking-dots {
-  0%, 20% { content: '.'; }
-  40% { content: '..'; }
-  60%, 100% { content: '...'; }
+
+  0%,
+  20% {
+    content: '.';
+  }
+
+  40% {
+    content: '..';
+  }
+
+  60%,
+  100% {
+    content: '...';
+  }
 }
 
 .thinking-dots::after {
@@ -155,6 +170,7 @@ body {
     transform: translateY(100%);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -163,4 +179,20 @@ body {
 
 .toast-enter {
   animation: slide-up 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ambient-orb {
+    display: none;
+  }
 }

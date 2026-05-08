@@ -16,7 +16,7 @@ const QualityDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // Filters & pagination
   const [searchQuery, setSearchQuery] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
@@ -25,11 +25,11 @@ const QualityDashboard = () => {
   const [page, setPage] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const LIMIT = 20;
-  
+
   // Modal state
   const [selectedMetric, setSelectedMetric] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  
+
   // Export state
   const [exporting, setExporting] = useState(false);
 
@@ -43,34 +43,34 @@ const QualityDashboard = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const params = new URLSearchParams({
         limit: LIMIT,
         offset: page * LIMIT,
         sort_by: sortBy,
         sort_order: sortOrder
       });
-      
+
       if (gradeFilter) {
         params.append('grade_filter', gradeFilter);
       }
-      
+
       const response = await fetch(`/api/metrics/all?${params}`);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Failed to load metrics: ${response.status} - ${errorText}`);
       }
-      
+
       const data = await response.json();
-      
+
       if (data.status !== 'ok') {
         throw new Error(data.message || 'Invalid response from server');
       }
-      
+
       setMetrics(data.metrics || []);
       setTotalRecords(data.total || 0);
-      
+
     } catch (err) {
       console.error('Load metrics error:', err);
       setError(err.message);
@@ -82,17 +82,17 @@ const QualityDashboard = () => {
   const loadStats = async () => {
     try {
       const response = await fetch('/api/metrics/stats?days=30');
-      
+
       if (!response.ok) {
         throw new Error('Failed to load stats');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.status === 'ok') {
         setStats(data.statistics);
       }
-      
+
     } catch (err) {
       console.error('Load stats error:', err);
     }
@@ -101,18 +101,18 @@ const QualityDashboard = () => {
   const handleExport = async (format) => {
     try {
       setExporting(true);
-      
+
       const response = await fetch(`/api/metrics/export?format=${format}`);
-      
+
       if (!response.ok) {
         throw new Error('Export failed');
       }
-      
+
       // Get filename from Content-Disposition header
       const contentDisposition = response.headers.get('Content-Disposition');
       const filenameMatch = contentDisposition?.match(/filename="?(.+)"?/);
       const filename = filenameMatch ? filenameMatch[1] : `metrics_export.${format}`;
-      
+
       // Download file
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -123,7 +123,7 @@ const QualityDashboard = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
     } catch (err) {
       console.error('Export error:', err);
       alert(`Export failed: ${err.message}`);
@@ -184,7 +184,7 @@ const QualityDashboard = () => {
               <p className="text-sm text-gray-600">Tổng quan đánh giá chất lượng câu trả lời</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={loadMetrics}
@@ -194,7 +194,7 @@ const QualityDashboard = () => {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </button>
-            
+
             <div className="flex items-center gap-2 border-l border-gray-300 pl-2">
               <button
                 onClick={() => handleExport('json')}
@@ -236,7 +236,7 @@ const QualityDashboard = () => {
                 <BarChart3 className="w-8 h-8 text-blue-600 opacity-50" />
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -246,7 +246,7 @@ const QualityDashboard = () => {
                 <TrendingUp className="w-8 h-8 text-green-600 opacity-50" />
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -256,7 +256,7 @@ const QualityDashboard = () => {
                 <Award className="w-8 h-8 text-indigo-600 opacity-50" />
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -266,7 +266,7 @@ const QualityDashboard = () => {
                 <Clock className="w-8 h-8 text-emerald-600 opacity-50" />
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -276,7 +276,7 @@ const QualityDashboard = () => {
                 <Sparkles className="w-8 h-8 text-purple-600 opacity-50" />
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -298,7 +298,7 @@ const QualityDashboard = () => {
                 const count = stats.grade_distribution[grade] || 0;
                 const maxCount = Math.max(...Object.values(stats.grade_distribution), 1);
                 const height = (count / maxCount) * 100;
-                
+
                 return (
                   <div key={grade} className="flex-1 flex flex-col items-center gap-2">
                     <div className="text-xs font-medium text-gray-600">{count}</div>
@@ -330,7 +330,7 @@ const QualityDashboard = () => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Filter className="w-5 h-5 text-gray-600" />
             <select
@@ -346,7 +346,7 @@ const QualityDashboard = () => {
               <option value="F">Grade F</option>
             </select>
           </div>
-          
+
           <select
             value={sortBy}
             onChange={(e) => { setSortBy(e.target.value); setPage(0); }}
@@ -356,7 +356,7 @@ const QualityDashboard = () => {
             <option value="overall_score">Sort by Score</option>
             <option value="grade">Sort by Grade</option>
           </select>
-          
+
           <button
             onClick={() => { setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc'); setPage(0); }}
             className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -455,7 +455,7 @@ const QualityDashboard = () => {
           <div className="text-sm text-gray-700">
             Showing {page * LIMIT + 1} to {Math.min((page + 1) * LIMIT, totalRecords)} of {totalRecords} results
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={() => setPage(Math.max(0, page - 1))}
@@ -464,28 +464,27 @@ const QualityDashboard = () => {
             >
               Previous
             </button>
-            
+
             <div className="flex items-center gap-1">
               {[...Array(Math.min(5, totalPages))].map((_, i) => {
                 const pageNum = page < 3 ? i : page - 2 + i;
                 if (pageNum >= totalPages) return null;
-                
+
                 return (
                   <button
                     key={pageNum}
                     onClick={() => setPage(pageNum)}
-                    className={`w-8 h-8 text-sm rounded-lg ${
-                      pageNum === page
+                    className={`w-8 h-8 text-sm rounded-lg ${pageNum === page
                         ? 'bg-blue-600 text-white'
                         : 'border border-gray-300 hover:bg-gray-50'
-                    }`}
+                      }`}
                   >
                     {pageNum + 1}
                   </button>
                 );
               })}
             </div>
-            
+
             <button
               onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
               disabled={page >= totalPages - 1}

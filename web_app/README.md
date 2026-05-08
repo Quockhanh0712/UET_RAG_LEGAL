@@ -1,130 +1,49 @@
 # Legal RAG Web App
 
-Giao diện web chuyên nghiệp cho hệ thống tư vấn pháp luật AI.
+Web UI and FastAPI backend for the shared legal runtime.
 
-## 🏗️ Kiến trúc
+## Source of truth
 
-### Dual-Store Architecture
+- frontend: `web_app/frontend/`
+- backend: `web_app/backend/`
+- shared runtime: `src/`
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    User Interface                        │
-│              (React + Tailwind CSS)                      │
-└───────────────────────┬─────────────────────────────────┘
-                        │
-                        ▼
-┌─────────────────────────────────────────────────────────┐
-│                   FastAPI Backend                        │
-│              (Python, Port 8080)                         │
-└───────────────────────┬─────────────────────────────────┘
-                        │
-            ┌───────────┴───────────┐
-            ▼                       ▼
-┌───────────────────┐   ┌───────────────────────┐
-│  🏛️ Kho Luật       │   │  👤 Kho Cá nhân        │
-│  (legal_rag_hybrid)│   │  (user_docs_private)  │
-│                   │   │                       │
-│  ✅ Read-Only      │   │  ✅ Read/Write/Delete  │
-│  ✅ Global Search  │   │  ✅ User Isolation     │
-│  📊 100k+ điều luật│   │  📄 PDF/DOCX/TXT       │
-└───────────────────┘   └───────────────────────┘
+The production backend path is the shared runtime controlled by:
+
+```env
+BACKEND_USE_SHARED_LEGAL_PIPELINE=true
 ```
 
-### Tech Stack
+With that flag enabled:
 
-- **Frontend**: React 18, Tailwind CSS, Lucide Icons, Vite
-- **Backend**: FastAPI, Uvicorn
-- **Vector DB**: Qdrant (Hybrid Search: Dense + BM25)
-- **Embedding**: huyydangg/DEk21_hcmute_embedding (768D)
-- **LLM**: Ollama qwen2.5:3b
+- `search_mode=legal|user|hybrid` goes through the shared backend orchestration
+- backend startup does not preload the legacy embedding model
+- embedding defaults come from the contract resolver and default to `truro7/vn-law-embedding`
 
-## 🚀 Khởi chạy
-
-### 1. Backend (Port 8080)
+## Run backend
 
 ```powershell
-cd web_app/backend
-pip install -r requirements.txt
-python main.py
+$env:BACKEND_USE_SHARED_LEGAL_PIPELINE='true'
+.\.venv\Scripts\python.exe -m uvicorn web_app.backend.main:app --host 127.0.0.1 --port 8080
 ```
 
-### 2. Frontend (Port 3000)
+## Run frontend
 
 ```powershell
-cd web_app/frontend
+cd web_app\frontend
 npm install
 npm run dev
 ```
 
-### 3. Truy cập
+## Main endpoints
 
-- **Frontend**: http://localhost:3000
-- **API Docs**: http://localhost:8080/docs
+- `GET /api/status`
+- `POST /api/search`
+- `POST /api/chat`
+- `POST /api/upload`
+- `GET /api/documents`
 
-## 📡 API Endpoints
+## Notes
 
-| Method | Endpoint | Mô tả |
-|--------|----------|-------|
-| GET | `/api/status` | Trạng thái hệ thống |
-| POST | `/api/chat` | Chat với AI |
-| POST | `/api/search` | Tìm kiếm hybrid |
-| POST | `/api/upload` | Upload tài liệu |
-| GET | `/api/documents` | Danh sách tài liệu |
-| DELETE | `/api/documents/{id}` | Xóa tài liệu |
-| GET | `/api/history` | Lịch sử chat |
-| GET | `/api/sessions` | Danh sách phiên |
-
-## ✨ Tính năng
-
-### 1. Dual-Store Search
-
-- **Kho Luật (legal)**: Tìm trong 100k+ văn bản luật
-- **Kho Cá nhân (user)**: Tìm trong file đã upload
-- **Kết hợp (hybrid)**: Tìm cả hai, merge kết quả
-
-### 2. Smart File Processing
-
-- Recursive Chunking (Paragraph → Sentence → Word)
-- Overlap 12% cho tính liên tục
-- Context Injection: `[Nguồn: file.pdf | Trang X]`
-
-### 3. Source Citations
-
-- **Badge xanh (📘)**: Nguồn từ văn bản luật chính thức
-- **Badge vàng (📄)**: Nguồn từ file upload
-
-### 4. Chat Features
-
-- Markdown rendering
-- Copy/Export/Regenerate
-- Performance metrics
-- Dark mode
-
-## 🎨 UI Components
-
-```
-├── App.jsx              # Main app, state management
-├── components/
-│   ├── Sidebar.jsx      # History, Documents, Search mode
-│   ├── ChatArea.jsx     # Message list, Input
-│   ├── MessageBubble.jsx # AI/User message, Citations
-│   └── Toast.jsx        # Notifications
-```
-
-## 🔧 Configuration
-
-Tạo file `.env` trong thư mục backend:
-
-```env
-QDRANT_HOST=localhost
-QDRANT_PORT=6333
-EMBEDDING_MODEL=huyydangg/DEk21_hcmute_embedding
-OLLAMA_MODEL=qwen2.5:3b
-TOP_K=10
-```
-
-## 📝 Notes
-
-- Đảm bảo Qdrant đang chạy: `docker start qdrant`
-- Đảm bảo Ollama đã pull model: `ollama pull qwen2.5:3b`
-- Collection `legal_rag_hybrid` phải được tạo trước
+- `web_app/frontend/node_modules/` and `web_app/frontend/dist/` are local artifacts, not repo source.
+- Historical demo docs were moved under `docs/archive/`.

@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quockhanh05 Embedding Lab</title>
+    <style>
+      :root {
+        --bg: #f4efe7;
+        --panel: #fffaf0;
+        --ink: #202017;
+        --muted: #746b5f;
+        --line: #ded0bd;
+        --accent: #176c5f;
+        --accent-2: #b85c38;
+        --bubble: #e8f3ee;
+        --source: #fff3db;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top left, rgba(23, 108, 95, 0.18), transparent 34rem),
+          linear-gradient(135deg, #f8f1e7 0%, var(--bg) 55%, #e9ded0 100%);
+        color: var(--ink);
+        font-family: Georgia, "Times New Roman", serif;
+      }
+
+      .shell {
+        width: min(1100px, calc(100vw - 32px));
+        margin: 0 auto;
+        padding: 28px 0;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: clamp(28px, 4vw, 46px);
+        line-height: 1;
+      }
+
+      .sub {
+        margin: 0;
+        color: var(--muted);
+        max-width: 780px;
+      }
+
+      .status {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 12px 14px;
+        background: rgba(255, 250, 240, 0.74);
+        color: var(--muted);
+        font-size: 13px;
+        min-width: 260px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 330px;
+        gap: 18px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(255, 250, 240, 0.88);
+        box-shadow: 0 18px 55px rgba(70, 51, 28, 0.12);
+      }
+
+      .chat {
+        min-height: 620px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .messages {
+        flex: 1;
+        padding: 18px;
+        overflow: auto;
+      }
+
+      .msg {
+        max-width: 88%;
+        margin: 0 0 14px;
+        padding: 14px 16px;
+        border-radius: 18px;
+        white-space: pre-wrap;
+        line-height: 1.48;
+      }
+
+      .user {
+        margin-left: auto;
+        background: var(--accent);
+        color: white;
+        border-bottom-right-radius: 6px;
+      }
+
+      .bot {
+        background: var(--bubble);
+        border-bottom-left-radius: 6px;
+      }
+
+      .composer {
+        border-top: 1px solid var(--line);
+        padding: 14px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+      }
+
+      textarea {
+        min-height: 58px;
+        max-height: 180px;
+        resize: vertical;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px 14px;
+        background: white;
+        color: var(--ink);
+        font: 16px/1.4 Georgia, "Times New Roman", serif;
+      }
+
+      button {
+        border: 0;
+        border-radius: 16px;
+        padding: 0 20px;
+        background: var(--accent);
+        color: white;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        cursor: wait;
+        opacity: 0.55;
+      }
+
+      .side {
+        padding: 16px;
+      }
+
+      .controls {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      input[type="number"] {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 9px 10px;
+        background: white;
+      }
+
+      .check {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .sources h2 {
+        margin: 12px 0;
+        font-size: 18px;
+      }
+
+      .source {
+        background: var(--source);
+        border: 1px solid #ead7ad;
+        border-radius: 16px;
+        padding: 12px;
+        margin-bottom: 10px;
+        font-size: 13px;
+      }
+
+      .source strong {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--accent-2);
+      }
+
+      .meta {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+
+      @media (max-width: 860px) {
+        .header,
+        .layout {
+          display: block;
+        }
+
+        .status,
+        .side {
+          margin-top: 14px;
+        }
+
+        .composer {
+          grid-template-columns: 1fr;
+        }
+
+        button {
+          min-height: 46px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="header">
+        <div>
+          <h1>Embedding Chat Lab</h1>
+          <p class="sub">
+            Isolated quick test for Quockhanh05/Vietnam_legal_embeddings with max_seq_length=256.
+            The production app and collection are not changed.
+          </p>
+        </div>
+        <div class="status" id="status">Loading status...</div>
+      </section>
+
+      <section class="layout">
+        <div class="card chat">
+          <div class="messages" id="messages">
+            <div class="msg bot">
+              Ask a Vietnamese legal question. Example: "Nguoi lao dong nghi viec
+              truoc han co duoc nhan luong khong?"
+            </div>
+          </div>
+          <form class="composer" id="chat-form">
+            <textarea id="message" placeholder="Nhap cau hoi..." required></textarea>
+            <button id="send" type="submit">Send</button>
+          </form>
+        </div>
+
+        <aside class="card side">
+          <div class="controls">
+            <label>
+              Top K
+              <input id="top-k" type="number" min="1" max="20" value="5" />
+            </label>
+            <label class="check">
+              <input id="reranker" type="checkbox" checked />
+              Use reranker
+            </label>
+            <label class="check">
+              <input id="include-inactive" type="checkbox" />
+              Include inactive docs
+            </label>
+          </div>
+          <div class="sources">
+            <h2>Sources</h2>
+            <div id="sources"></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+      const messages = document.querySelector("#messages");
+      const sources = document.querySelector("#sources");
+      const form = document.querySelector("#chat-form");
+      const send = document.querySelector("#send");
+      const messageInput = document.querySelector("#message");
+
+      function addMessage(kind, text) {
+        const node = document.createElement("div");
+        node.className = `msg ${kind}`;
+        node.textContent = text;
+        messages.appendChild(node);
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function renderSources(items) {
+        sources.innerHTML = "";
+        if (!items || items.length === 0) {
+          sources.textContent = "No sources.";
+          return;
+        }
+        for (const item of items) {
+          const node = document.createElement("div");
+          node.className = "source";
+          const title = item.citation_full || item.ten_van_ban || item.doc_id || "Source";
+          const preview = (item.content || "").slice(0, 520);
+          node.innerHTML = `
+            <strong></strong>
+            <div class="preview"></div>
+            <div class="meta"></div>
+          `;
+          node.querySelector("strong").textContent = title;
+          node.querySelector(".preview").textContent = preview;
+          node.querySelector(".meta").textContent =
+            `score=${Number(item.score || 0).toFixed(4)} | dieu=${item.dieu_so || "-"} | chunk=${item.chunk_id || "-"}`;
+          sources.appendChild(node);
+        }
+      }
+
+      async function loadStatus() {
+        const status = document.querySelector("#status");
+        try {
+          const response = await fetch("/api/status");
+          const data = await response.json();
+          status.textContent =
+            `${data.configured ? "configured" : "not configured"} | ${data.collection} | bm25=${data.bm25_exists}`;
+          if (data.error) {
+            status.textContent += ` | ${data.error}`;
+          }
+        } catch (error) {
+          status.textContent = `status error: ${error}`;
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const text = messageInput.value.trim();
+        if (!text) return;
+        addMessage("user", text);
+        messageInput.value = "";
+        send.disabled = true;
+        renderSources([]);
+
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: text,
+              top_k: Number(document.querySelector("#top-k").value || 5),
+              use_reranker: document.querySelector("#reranker").checked,
+              include_inactive: document.querySelector("#include-inactive").checked,
+            }),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || "chat failed");
+          }
+          const timings =
+            `\n\n[collection=${data.collection}, search=${Number(data.search_time || 0).toFixed(2)}s, total=${Number(data.total_time || 0).toFixed(2)}s, fallback=${data.fallback_used}]`;
+          addMessage("bot", `${data.answer}${timings}`);
+          renderSources(data.sources);
+        } catch (error) {
+          addMessage("bot", `Error: ${error.message || error}`);
+        } finally {
+          send.disabled = false;
+          messageInput.focus();
+        }
+      });
+
+      loadStatus();
+    </script>
+  </body>
+</html>

@@ -17,6 +17,7 @@ web_app/frontend/dist/
 web_app/frontend/tmp_frontend_vite.log
 
 data/**/*.parquet
+data/uploads/
 data/qdrant_db/
 data/database/
 *.log

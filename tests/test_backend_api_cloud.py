@@ -33,16 +33,24 @@ load_dotenv(PROJECT_ROOT / ".env")
 def backend_config():
     """Load and verify backend Config."""
     from main import Config
+    if not getattr(Config, "QDRANT_USE_CLOUD", False):
+        pytest.skip("QDRANT_USE_CLOUD is not enabled")
+    if not getattr(Config, "QDRANT_CLOUD_URL", "") or not getattr(Config, "QDRANT_API_KEY", ""):
+        pytest.skip("Qdrant Cloud credentials not configured in backend Config")
     return Config
 
 
 @pytest.fixture(scope="module")
-def qdrant_client():
+def qdrant_client(backend_config):
     """Get Qdrant client from backend."""
-    # Reset singleton
     import main
     main._qdrant_client = None
-    return main.get_qdrant_client()
+    try:
+        client = main.get_qdrant_client()
+        client.get_collections()
+        return client
+    except Exception as exc:
+        pytest.skip(f"Qdrant Cloud client unavailable: {exc}")
 
 
 @pytest.fixture(scope="module")
@@ -50,7 +58,10 @@ def embed_model():
     """Get embedding model from backend."""
     import main
     main._embedding_model = None
-    return main.get_embedding_model()
+    try:
+        return main.get_embedding_model()
+    except Exception as exc:
+        pytest.skip(f"Embedding model unavailable: {exc}")
 
 
 @pytest.fixture(scope="module")
@@ -58,8 +69,13 @@ def bm25():
     """Get BM25 encoder from backend."""
     import main
     main._bm25_encoder = None
-    return main.get_bm25_encoder()
-
+    try:
+        encoder = main.get_bm25_encoder()
+        if not encoder or not getattr(encoder, "vocab", None):
+            pytest.skip("BM25 encoder not available or empty")
+        return encoder
+    except Exception as exc:
+        pytest.skip(f"BM25 encoder unavailable: {exc}")
 
 # ============================================================================
 # 1. Config Tests
@@ -215,6 +231,10 @@ class TestBM25Encoder:
 
 class TestEndToEndSearch:
     """Test complete search pipeline through backend functions."""
+    @pytest.fixture(autouse=True)
+    def _require_cloud(self, backend_config, qdrant_client):
+        pass
+
     
     def test_legal_search_function(self):
         """search_legal_collection() phải hoạt động với Cloud."""

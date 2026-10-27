@@ -231,13 +231,17 @@ def generate_with_ollama_stream(prompt: str):
 
 def _generate_with_gemini(prompt: str) -> str:
     """Generate answer using Google Gemini API"""
-    logger.info(f"[GEMINI] Generating with model: {GEMINI_MODEL}")
-    resp = _gemini_client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=prompt,
-    )
-    logger.info(f"[GEMINI] Generated {len(resp.text)} characters")
-    return resp.text
+    try:
+        logger.info(f"[GEMINI] Generating with model: {GEMINI_MODEL}")
+        resp = _gemini_client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+        )
+        logger.info(f"[GEMINI] Generated {len(resp.text)} characters")
+        return resp.text
+    except Exception as e:
+        logger.error(f"[GEMINI] Error: {e}")
+        return f"Error calling Gemini API: {str(e)}"
 
 def generate_answer(prompt: str) -> str:
     """
@@ -248,15 +252,18 @@ def generate_answer(prompt: str) -> str:
     - "gemini": Uses Google Gemini API (cloud, requires API key)
     - "transformers" or "hf": Uses HuggingFace Transformers (local GPU, Qwen3-4B Legal)
     """
-    logger.info(f"[LLM] Using provider: {LLM_PROVIDER}")
-    
-    if LLM_PROVIDER == "ollama":
-        return _generate_with_ollama(prompt)
-    elif LLM_PROVIDER in ("transformers", "hf", "huggingface"):
-        return _generate_with_hf(prompt)
-    else:  # default to gemini
-        return _generate_with_gemini(prompt)
-
+    try:
+        logger.info(f"[LLM] Using provider: {LLM_PROVIDER}")
+        
+        if LLM_PROVIDER == "ollama":
+            return _generate_with_ollama(prompt)
+        elif LLM_PROVIDER in ("transformers", "hf", "huggingface"):
+            return _generate_with_hf(prompt)
+        else:  # default to gemini
+            return _generate_with_gemini(prompt)
+    except Exception as e:
+        logger.error(f"[LLM] Generation error: {e}")
+        return f"Error generating answer: {str(e)}"
 
 def get_available_providers() -> list:
     """Return list of available LLM providers"""

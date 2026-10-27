@@ -1,5 +1,5 @@
 """
-Minimal transforms module compatible with transformers image_utils import path.
+Minimal transforms package compatible with transformers image_utils import path.
 """
 
 from enum import Enum

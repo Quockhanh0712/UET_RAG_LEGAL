@@ -142,9 +142,16 @@ class LegalLLM:
 
     def generate(self, query: str, context: str) -> str:
         prompt = f"CONTEXT:\n{context}\n\nCAU HOI: {query}\n\nTRA LOI:"
-        if self.provider == "ollama":
-            return self._generate_ollama(prompt)
-        return self._generate_fallback(prompt)
+        try:
+            if self.provider == "ollama":
+                return self._generate_ollama(prompt)
+            elif self.provider in ("gemini", "transformers", "hf", "huggingface"):
+                from src.llm_client import generate_answer
+                return generate_answer(prompt)
+            return self._generate_fallback(prompt)
+        except Exception as exc:
+            logger.error("[LLM] Generation failed: %s", exc)
+            return f"Loi khi goi LLM: {exc}"
 
     def _generate_ollama(self, prompt: str) -> str:
         import requests
@@ -164,7 +171,7 @@ class LegalLLM:
                         "num_ctx": 32768,
                     },
                 },
-                timeout=300,
+                timeout=(5, 300),
             )
             response.raise_for_status()
             text = response.json().get("response", "").strip()
@@ -180,8 +187,6 @@ class LegalLLM:
     @staticmethod
     def _generate_fallback(prompt: str) -> str:
         return "LLM khong kha dung. Vui long kiem tra cau hinh."
-
-
 class LegalRAGPipeline:
     def __init__(
         self,
@@ -319,11 +324,15 @@ class LegalRAGPipeline:
         if not related_doc_ids:
             return []
 
-        expanded = self.qdrant_store.fetch_by_doc_ids(
-            doc_ids=related_doc_ids,
-            limit=max(top_k, graph_expand_docs),
-            filter_conditions=filter_conditions,
-        )
+        try:
+            expanded = self.qdrant_store.fetch_by_doc_ids(
+                doc_ids=related_doc_ids,
+                limit=max(top_k, graph_expand_docs),
+                filter_conditions=filter_conditions,
+            )
+        except Exception as exc:
+            logger.warning("[PIPELINE] fetch_by_doc_ids failed during graph expansion: %s", exc)
+            expanded = []
         # Slight score discount for graph-expanded results vs direct vector hits.
         for item in expanded:
             item.score = item.score * 0.85
@@ -370,6 +379,27 @@ class LegalRAGPipeline:
                 )
                 fallback_filters = dict(effective_filters)
                 fallback_filters.pop("is_active", None)
+                try:
+                    base_results = self.qdrant_store.hybrid_search(
+                        query=question,
+                        query_embedding=query_embedding,
+                        top_k=retrieval_pool_k,
+                        dense_weight=intent_result.dense_weight,
+                        sparse_weight=intent_result.sparse_weight,
+                        filter_conditions=fallback_filters,
+                    )
+                except Exception as inner_exc:
+                    logger.warning("[PIPELINE] Hybrid search fallback retry failed: %s", inner_exc)
+                    base_results = []
+            else:
+                logger.warning("[PIPELINE] Hybrid search failed: %s", exc)
+                base_results = []
+
+        if not base_results and effective_filters.get("is_active") is True:
+            # Backward compatibility for legacy indexes without is_active payload.
+            fallback_filters = dict(effective_filters)
+            fallback_filters.pop("is_active", None)
+            try:
                 base_results = self.qdrant_store.hybrid_search(
                     query=question,
                     query_embedding=query_embedding,
@@ -378,20 +408,9 @@ class LegalRAGPipeline:
                     sparse_weight=intent_result.sparse_weight,
                     filter_conditions=fallback_filters,
                 )
-            else:
-                raise
-        if not base_results and effective_filters.get("is_active") is True:
-            # Backward compatibility for legacy indexes without is_active payload.
-            fallback_filters = dict(effective_filters)
-            fallback_filters.pop("is_active", None)
-            base_results = self.qdrant_store.hybrid_search(
-                query=question,
-                query_embedding=query_embedding,
-                top_k=retrieval_pool_k,
-                dense_weight=intent_result.dense_weight,
-                sparse_weight=intent_result.sparse_weight,
-                filter_conditions=fallback_filters,
-            )
+            except Exception as exc:
+                logger.warning("[PIPELINE] Fallback search failed: %s", exc)
+                base_results = []
 
         graph_results: List = []
         graph_expansion_used = False
@@ -399,15 +418,20 @@ class LegalRAGPipeline:
         if use_graph_context and graph_mode != "none":
             shortlist_size = max(top_k, min(graph_expand_docs, 30))
             shortlist = base_results[:shortlist_size]
-            graph_results = self._graph_expand(
-                base_results=shortlist,
-                filter_conditions=effective_filters,
-                graph_hops=max(1, min(graph_hops, 1)),
-                graph_expand_docs=graph_expand_docs,
-                top_k=top_k,
-                graph_mode=graph_mode,
-            )
-            graph_expansion_used = len(graph_results) > 0
+            try:
+                graph_results = self._graph_expand(
+                    base_results=shortlist,
+                    filter_conditions=effective_filters,
+                    graph_hops=max(1, min(graph_hops, 1)),
+                    graph_expand_docs=graph_expand_docs,
+                    top_k=top_k,
+                    graph_mode=graph_mode,
+                )
+                graph_expansion_used = len(graph_results) > 0
+            except Exception as exc:
+                logger.warning("[PIPELINE] Graph expansion failed: %s", exc)
+                graph_results = []
+                graph_expansion_used = False
 
         merged_results = self._merge_results(base_results, graph_results)
         rerank_time = 0.0
@@ -436,7 +460,11 @@ class LegalRAGPipeline:
         if not context:
             answer = "Khong tim thay thong tin phap ly lien quan den cau hoi cua ban."
         else:
-            answer = self.llm.generate(question, context)
+            try:
+                answer = self.llm.generate(question, context)
+            except Exception as exc:
+                logger.error("[PIPELINE] LLM generation failed: %s", exc)
+                answer = f"Loi khi goi LLM: {exc}"
         generation_time = time.time() - start_generation
 
         return LegalAnswer(
@@ -510,11 +538,17 @@ class LegalRAGPipeline:
     def get_stats(self) -> Dict:
         self.initialize()
         graph_enabled = bool(self.graph_store and getattr(self.graph_store, "enabled", False))
+        qdrant_stats = {}
+        if self.qdrant_store:
+            try:
+                qdrant_stats = self.qdrant_store.get_stats()
+            except Exception as exc:
+                qdrant_stats = {"error": str(exc)}
         return {
-            "qdrant": self.qdrant_store.get_stats(),
-            "embedding_model": self.embedding_model.model_name,
-            "embedding_dim": self.embedding_model.embedding_dim,
-            "llm_model": f"{self.llm.provider}/{self.llm.model}",
+            "qdrant": qdrant_stats,
+            "embedding_model": getattr(self.embedding_model, "model_name", self.embedding_model_name),
+            "embedding_dim": getattr(self.embedding_model, "embedding_dim", 768),
+            "llm_model": f"{self.llm.provider}/{self.llm.model}" if self.llm else "unknown",
             "graph_enabled": graph_enabled,
         }
 

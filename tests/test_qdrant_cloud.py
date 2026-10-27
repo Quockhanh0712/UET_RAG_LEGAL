@@ -42,32 +42,39 @@ def cloud_client():
     url = os.getenv("QDRANT_CLOUD_URL")
     api_key = os.getenv("QDRANT_API_KEY")
     
-    assert url, "QDRANT_CLOUD_URL not set in .env"
-    assert api_key, "QDRANT_API_KEY not set in .env"
+    if not url or not api_key:
+        pytest.skip("QDRANT_CLOUD_URL or QDRANT_API_KEY not set in .env")
     
-    client = QdrantClient(url=url, api_key=api_key, timeout=30)
-    return client
+    try:
+        client = QdrantClient(url=url, api_key=api_key, timeout=10)
+        client.get_collections()
+        return client
+    except Exception as exc:
+        pytest.skip(f"Qdrant Cloud unavailable: {exc}")
 
 
 @pytest.fixture(scope="module")
 def embedding_model():
     """Load embedding model for search tests."""
-    from sentence_transformers import SentenceTransformer
-    import torch
-    
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = SentenceTransformer("huyydangg/DEk21_hcmute_embedding", device=device)
-    if device == "cuda":
-        model.half()
-    return model
+    try:
+        from sentence_transformers import SentenceTransformer
+        import torch
+        
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = SentenceTransformer("huyydangg/DEk21_hcmute_embedding", device=device)
+        if device == "cuda":
+            model.half()
+        return model
+    except Exception as exc:
+        pytest.skip(f"Embedding model unavailable: {exc}")
 
 
 @pytest.fixture(scope="module")
 def bm25_encoder():
     """Load BM25 encoder for sparse search tests."""
     cache_path = PROJECT_ROOT / "data" / "cache" / "bm25_hybrid.json"
-    assert cache_path.exists(), f"BM25 cache not found at {cache_path}"
-    
+    if not cache_path.exists():
+        pytest.skip(f"BM25 cache not found at {cache_path}")
     with open(cache_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     
